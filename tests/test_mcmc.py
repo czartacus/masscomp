@@ -5,6 +5,17 @@ from masscomp.mcmc import run_chain, Sampler
 from masscomp import events as ev
 
 
+def _ess(x):
+    x = np.asarray(x, float) - np.mean(x); n = len(x)
+    acf = np.correlate(x, x, "full")[n - 1:] / (x.var() * n)
+    s = 0.0
+    for k in range(1, n):
+        if acf[k] < 0.05:
+            break
+        s += acf[k]
+    return n / (1 + 2 * s)
+
+
 def test_mcmc_prior_only():
     """beta=0: the chain must sample the prior on lam, rho, omega. The random-walk step on lam
     is tuned for the narrow posterior, so prior samples are autocorrelated; the test compares
@@ -14,7 +25,8 @@ def test_mcmc_prior_only():
     _, out = run_chain(ds, th0, seed=3, n_sweeps=2000, burn=400, thin=4, beta=0.0, init_from_prior=True)
     lam = np.array([o["lam"] for o in out]); om = np.array([o["omega"] for o in out]); rho = np.array([o["rho"][0] for o in out])
     for i in range(4):
-        assert abs(lam[:, i].mean() - ev.LAM_MU[i]) < 0.45, (i, lam[:, i].mean())
+        tol = max(0.3, 3.5 * ev.LAM_SD / np.sqrt(_ess(lam[:, i])))   # 3.5 standard errors at the chain's ESS
+        assert abs(lam[:, i].mean() - ev.LAM_MU[i]) < tol, (i, lam[:, i].mean(), tol)
         assert 0.6 < lam[:, i].std() < 1.4, (i, lam[:, i].std())
     assert abs(om.mean() - ev.OMEGA_A / ev.OMEGA_RATE) < 0.05, om.mean()
     assert abs(rho.mean() - ev.RHO_A / ev.RHO_RATE) < 0.3, rho.mean()
