@@ -14,7 +14,7 @@ for p in ins:
     meta.update({k: v for k, v in d.items() if k not in ("rows", "partial", "summary")})
 seen = set(); uniq = []
 for r in rows:
-    key = (r.get("seed"), r.get("kind"), r.get("depth"))
+    key = (r.get("seed"), r.get("kind"), r.get("depth"), r.get("rep", 0))
     if key not in seen:
         seen.add(key); uniq.append(r)
 rows = uniq

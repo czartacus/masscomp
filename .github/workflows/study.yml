@@ -32,6 +32,10 @@ on:
       lbf_power:
         required: false
         default: "2"
+      lbf_reps:
+        description: lbf only, comma-separated replicate ids (0 = primary; >0 re-estimates the same data with fresh stepping-stone seeds)
+        required: false
+        default: "0"
 
 jobs:
   plan:
@@ -47,9 +51,11 @@ jobs:
           study = "${{ inputs.study }}"
           if study == "lbf":
               depths = [d.strip() for d in "${{ inputs.depths }}".split(",") if d.strip()]
-              cells = [{"seed": s, "depth": d} for s in seeds for d in depths]
+              reps = [r.strip() for r in "${{ inputs.lbf_reps }}".split(",") if r.strip()] or ["0"]
+              cells = [{"seed": s, "depth": d, "rep": r, "suffix": ("" if r == "0" else "_r" + r)}
+                       for s in seeds for d in depths for r in reps]
           else:
-              cells = [{"seed": s, "depth": "-"} for s in seeds]
+              cells = [{"seed": s, "depth": "-", "rep": "0", "suffix": ""} for s in seeds]
           with open(os.environ["GITHUB_OUTPUT"], "a") as fh:
               fh.write("matrix=" + json.dumps({"include": cells}) + "\n")
 
@@ -78,12 +84,12 @@ jobs:
           case "${{ inputs.study }}" in
             recovery) python studies/recovery.py 1 ${{ matrix.seed }} ${{ inputs.sweeps }} ${{ inputs.burn }} ;;
             confound) python studies/confound.py 1 ${{ matrix.seed }} ${{ inputs.sweeps }} ${{ inputs.burn }} ;;
-            lbf)      python studies/lbf.py 1 ${{ matrix.seed }} ${{ matrix.depth }} ${{ inputs.lbf_K }} ${{ inputs.sweeps }} ${{ inputs.burn }} ${{ inputs.lbf_warmup }} ${{ inputs.lbf_power }} ;;
+            lbf)      python studies/lbf.py 1 ${{ matrix.seed }} ${{ matrix.depth }} ${{ inputs.lbf_K }} ${{ inputs.sweeps }} ${{ inputs.burn }} ${{ inputs.lbf_warmup }} ${{ inputs.lbf_power }} ${{ matrix.rep }} ;;
           esac
       - uses: actions/upload-artifact@v4
         with:
-          name: cell-${{ inputs.study }}-${{ matrix.seed }}-${{ matrix.depth }}
-          path: results/${{ inputs.study }}_${{ matrix.seed }}.json
+          name: cell-${{ inputs.study }}-${{ matrix.seed }}-${{ matrix.depth }}-${{ matrix.rep }}
+          path: results/${{ inputs.study }}_${{ matrix.seed }}${{ matrix.suffix }}.json
 
   collect:
     needs: run

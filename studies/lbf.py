@@ -1,4 +1,5 @@
-"""Plan §8.3 LBF separation. Usage: python studies/lbf.py <n_per_cell> <seed0> <depths csv> [K] [sweeps] [burn] [warmup] [power]
+"""Plan §8.3 LBF separation. Usage: python studies/lbf.py <n_per_cell> <seed0> <depths csv> [K] [sweeps] [burn] [warmup] [power] [rep]
+`rep` (default 0) re-estimates the same datasets under independent stepping-stone seeds (estimator-noise check).
 Stepping stone is run downward from a beta=1 fit (see marglik.stepping_stone)."""
 import sys, time
 import numpy as np
@@ -15,6 +16,8 @@ SWEEPS = int(sys.argv[5]) if len(sys.argv) > 5 else 2000
 BURN = int(sys.argv[6]) if len(sys.argv) > 6 else 500
 WARMUP = int(sys.argv[7]) if len(sys.argv) > 7 else 1500
 POWER = float(sys.argv[8]) if len(sys.argv) > 8 else 2.0
+REP = int(sys.argv[9]) if len(sys.argv) > 9 else 0
+TAG = f"lbf_{SEED0}" + (f"_r{REP}" if REP else "")
 M = 25
 
 
@@ -25,7 +28,7 @@ def _estimate(args):
     dsh = Dataset(f, ds.M, ds.leaf_forms)
     rng = np.random.default_rng(seed)
     th = sample_theta(f, ds.M, rng)            # same draw order as before for h1; h0 uses the h0 forest's draw
-    sd = seed if hyp == "h1" else seed + 7
+    sd = (seed if hyp == "h1" else seed + 7) + 100000 * REP
     val, _, _ = stepping_stone(dsh, th, sd, K=K, n_sweeps=SWEEPS, burn=BURN, warmup=WARMUP, power=POWER)
     return f"{seed}:{label}:{hyp}", val
 
@@ -45,14 +48,14 @@ def run_cell(seed, datasets):
 
 
 import os, json as _json
-_prev = f"results/lbf_{SEED0}.json"
+_prev = f"results/{TAG}.json"
 _old = _json.load(open(_prev)) if os.path.exists(_prev) else {}
 rows = _old.get("rows", []); partial = _old.get("partial", {})
 _done = {(r["seed"], r["kind"]) for r in rows}
 
 
 def _save(summary=None):
-    save(f"lbf_{SEED0}", {"summary": summary, "rows": rows, "partial": partial, "K": K, "sweeps": SWEEPS, "burn": BURN,
+    save(TAG, {"summary": summary, "rep": REP, "rows": rows, "partial": partial, "K": K, "sweeps": SWEEPS, "burn": BURN,
                           "warmup": WARMUP, "power": POWER, "direction": "down"})
 for depth in DEPTHS:
     for i in range(N):
@@ -65,7 +68,7 @@ for depth in DEPTHS:
         run_cell(seed, pending)
         for label, ds in pending:
             l1, l0 = partial[f"{seed}:{label}:h1"], partial[f"{seed}:{label}:h0"]; lbf = l1 - l0
-            rows.append(dict(depth=depth, seed=seed, kind=label, lbf=lbf, logp_h1=l1, logp_h0=l0, secs=time.time() - t0))
+            rows.append(dict(depth=depth, seed=seed, kind=label, rep=REP, lbf=lbf, logp_h1=l1, logp_h0=l0, secs=time.time() - t0))
             print(f"depth {depth} {label} seed {seed}: LBF={lbf:+.2f} (H1 {l1:.1f}, H0 {l0:.1f}) {rows[-1]['secs']:.0f}s", flush=True)
             _save()
 
