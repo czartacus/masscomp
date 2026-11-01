@@ -1,4 +1,6 @@
 name: study
+permissions:
+  contents: write
 on:
   workflow_dispatch:
     inputs:
@@ -80,7 +82,7 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: cell-${{ inputs.study }}-${{ matrix.seed }}-${{ matrix.depth }}
-          path: results/*.json
+          path: results/${{ inputs.study }}_${{ matrix.seed }}.json
 
   collect:
     needs: run
@@ -100,7 +102,10 @@ jobs:
         run: |
           mkdir -p merged
           python studies/merge.py ${{ inputs.study }} merged/${{ inputs.study }}_${{ github.run_id }}.json $(find cells -name '*.json')
-      - uses: actions/upload-artifact@v4
-        with:
-          name: merged-${{ inputs.study }}-${{ github.run_id }}
-          path: merged/*.json
+      - name: commit merged results
+        run: |
+          mkdir -p results/cloud && cp merged/*.json results/cloud/
+          git config user.name "masscomp-actions"; git config user.email "actions@users.noreply.github.com"
+          git add results/cloud
+          git commit -m "results: ${{ inputs.study }} run ${{ github.run_id }}" || echo "nothing to commit"
+          git pull --rebase origin main && git push origin HEAD:main

@@ -1,0 +1,40 @@
+name: collect
+on:
+  workflow_dispatch:
+    inputs:
+      run_id:
+        description: study run id whose cell artifacts to merge
+        required: true
+      study:
+        description: recovery | confound | lbf
+        required: true
+
+permissions:
+  contents: write
+  actions: read
+
+jobs:
+  collect:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install numpy
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: cell-${{ inputs.study }}-*
+          path: cells
+          run-id: ${{ inputs.run_id }}
+          github-token: ${{ github.token }}
+      - name: merge and commit
+        run: |
+          mkdir -p results/cloud
+          python studies/merge.py ${{ inputs.study }} results/cloud/${{ inputs.study }}_${{ inputs.run_id }}.json $(find cells -name '${{ inputs.study }}_*.json')
+          git config user.name "masscomp-actions"; git config user.email "actions@users.noreply.github.com"
+          git add results/cloud
+          git commit -m "results: ${{ inputs.study }} run ${{ inputs.run_id }}" || echo "nothing to commit"
+          git pull --rebase origin main && git push origin HEAD:main

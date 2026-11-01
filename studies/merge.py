@@ -4,10 +4,11 @@ import sys, json
 import numpy as np
 
 study, out, ins = sys.argv[1], sys.argv[2], sys.argv[3:]
+FIELD = {"recovery": "root_set_cov", "confound": "frac_both", "lbf": "lbf"}[study]
 rows, partial, meta = [], {}, {}
 for p in ins:
     d = json.load(open(p))
-    rows.extend(d.get("rows", []))
+    rows.extend(r for r in d.get("rows", []) if FIELD in r)   # ignore files from other studies
     if isinstance(d.get("partial"), dict):
         partial.update(d["partial"])
     meta.update({k: v for k, v in d.items() if k not in ("rows", "partial", "summary")})
