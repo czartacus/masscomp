@@ -6,15 +6,26 @@ from masscomp.mcmc import run_chain
 from masscomp import events as ev
 
 
+N_PROCS = int(os.environ.get("MASSCOMP_PROCS", "1"))   # parallel processes per study job
+
+
+def _one_chain(args):
+    ds, seed, k, n_sweeps, burn, thin, kw = args
+    rng = np.random.default_rng(seed * 100 + k)
+    th0 = sample_theta(ds.forest, ds.M, rng)
+    _, out = run_chain(ds, th0, seed=seed * 100 + 50 + k, n_sweeps=n_sweeps, burn=burn, thin=thin, **kw)
+    return out
+
+
 def fit(ds, seed, n_chains=3, n_sweeps=1500, burn=500, thin=5, **kw):
-    """Run n_chains from independent prior draws; return per-chain sample lists."""
-    chains = []
-    for k in range(n_chains):
-        rng = np.random.default_rng(seed * 100 + k)
-        th0 = sample_theta(ds.forest, ds.M, rng)
-        _, out = run_chain(ds, th0, seed=seed * 100 + 50 + k, n_sweeps=n_sweeps, burn=burn, thin=thin, **kw)
-        chains.append(out)
-    return chains
+    """Run n_chains from independent prior draws; return per-chain sample lists. Chains run in
+    parallel processes when MASSCOMP_PROCS > 1 (same seeds, so results are identical either way)."""
+    jobs = [(ds, seed, k, n_sweeps, burn, thin, kw) for k in range(n_chains)]
+    if N_PROCS > 1:
+        from concurrent.futures import ProcessPoolExecutor
+        with ProcessPoolExecutor(min(N_PROCS, n_chains)) as ex:
+            return list(ex.map(_one_chain, jobs))
+    return [_one_chain(j) for j in jobs]
 
 
 def rhat(chains_values):

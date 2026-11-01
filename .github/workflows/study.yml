@@ -71,7 +71,8 @@ jobs:
       - name: run cell
         env:
           PYTHONPATH: .
-          NUMBA_NUM_THREADS: "2"
+          NUMBA_NUM_THREADS: "1"
+          MASSCOMP_PROCS: "4"
         run: |
           mkdir -p results
           case "${{ inputs.study }}" in
