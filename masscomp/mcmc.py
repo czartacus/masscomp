@@ -330,11 +330,58 @@ class Sampler:
         st.ep, st.adapt = old_ep, old_adapt
         return None
 
-    # ------------------------------------------------------------------ move 4: u_e
+    # ------------------------------------------------------------------ move 4: u (spike-and-slab)
+    U_DATA_FRAC, U_DATA_MU, U_DATA_SD = 0.5, 2.0, 1.0
+
+    def _u_counts(self, e):
+        """Crude substitution/deletion/insertion counts on edge e from the current inherited
+        (parent, child) form pairs: equal length -> position-wise mismatches; child one shorter ->
+        the segment(s) whose removal gives the child; child one longer -> the extra segment.
+        Depends on the latent forms only (not on u_e), so forward and reverse proposal
+        probabilities within move_u are computed from the same counts."""
+        st, f = self.st, self.st.f
+        p = f.parent[e]
+        counts = {}
+        for c in range(st.M):
+            if st.event[(e, c)] != ev.INHERIT:
+                continue
+            x, y = st.y[(p, c)], st.y[(e, c)]
+            if len(x) == len(y):
+                for a, b in zip(x, y):
+                    if a != b:
+                        counts[(a, b)] = counts.get((a, b), 0) + 1
+            elif len(x) == len(y) + 1:
+                for i in range(len(x)):
+                    if x[:i] + x[i + 1:] == y:
+                        counts[(x[i], EPS)] = counts.get((x[i], EPS), 0) + 1
+            elif len(y) == len(x) + 1:
+                for j in range(len(y)):
+                    if y[:j] + y[j + 1:] == x:
+                        counts[("ins", y[j])] = counts.get(("ins", y[j]), 0) + 1
+        return counts
+
+    def _u_slot_logq(self, slot, absent, counts):
+        """log q(slot) for a birth over the given absent set: mixture of uniform and count-weighted."""
+        tot = sum(counts.get(a, 0) for a in absent)
+        q = (1 - self.U_DATA_FRAC) / len(absent)
+        if tot > 0:
+            q += self.U_DATA_FRAC * counts.get(slot, 0) / tot
+        return math.log(q)
+
+    def _u_w_logq(self, w, t):
+        """log q(w): mixture of the prior slab and a data-informed positive component."""
+        a = math.log(1 - self.U_DATA_FRAC) + _lognorm(w, t * ev.SIGMA2_U)
+        b = math.log(self.U_DATA_FRAC) + _lognorm(w - self.U_DATA_MU, self.U_DATA_SD ** 2)
+        return _lse([a, b])
+
     def move_u(self, n_prop=10, perturb_sd=0.5):
+        """Birth / death / perturb on the sparse branch terms u_e. Birth proposes the slot from a
+        mixture of uniform and the mismatch counts on the edge, and the value from a mixture of
+        the prior slab and N(U_DATA_MU, U_DATA_SD^2); death uses the same densities in reverse."""
         st, f, rng = self.st, self.st.f, self.rng
         for e in f.edges:
             t = f.length[e]
+            counts = self._u_counts(e)
             for _ in range(n_prop):
                 u = st.theta.u.setdefault(e, {})
                 present = list(u.keys())
@@ -342,21 +389,31 @@ class Sampler:
                 prop = dict(u)
                 logq = 0.0
                 if kind == 0:                                  # birth
-                    n_abs = ev.N_U_SLOTS - len(present)
-                    slot = ev.U_SLOTS[int(rng.integers(ev.N_U_SLOTS))]
-                    if slot in u:
+                    absent = [sl for sl in ev.U_SLOTS if sl not in u]
+                    if not absent:
                         continue
-                    w = float(rng.normal(0, math.sqrt(t * ev.SIGMA2_U)))
+                    if rng.random() < self.U_DATA_FRAC:
+                        tot = sum(counts.get(a, 0) for a in absent)
+                        if tot > 0:
+                            wts = np.array([counts.get(a, 0) for a in absent], dtype=float) / tot
+                            slot = absent[int(rng.choice(len(absent), p=wts))]
+                        else:
+                            slot = absent[int(rng.integers(len(absent)))]
+                    else:
+                        slot = absent[int(rng.integers(len(absent)))]
+                    if rng.random() < self.U_DATA_FRAC:
+                        w = float(rng.normal(self.U_DATA_MU, self.U_DATA_SD))
+                    else:
+                        w = float(rng.normal(0, math.sqrt(t * ev.SIGMA2_U)))
                     prop[slot] = w
-                    # q_fwd = 1/n_abs * N(w); q_rev (death) = 1/(len+1)
-                    logq = -math.log(len(present) + 1) - (-math.log(n_abs) + _lognorm(w, t * ev.SIGMA2_U))
+                    logq = -math.log(len(present) + 1) - (self._u_slot_logq(slot, absent, counts) + self._u_w_logq(w, t))
                 elif kind == 1:                                # death
                     if not present:
                         continue
                     slot = present[int(rng.integers(len(present)))]
                     w = prop.pop(slot)
-                    n_abs = ev.N_U_SLOTS - len(present) + 1
-                    logq = (-math.log(n_abs) + _lognorm(w, t * ev.SIGMA2_U)) - (-math.log(len(present)))
+                    absent = [sl for sl in ev.U_SLOTS if sl not in prop]       # includes the removed slot
+                    logq = (self._u_slot_logq(slot, absent, counts) + self._u_w_logq(w, t)) - (-math.log(len(present)))
                 else:                                          # perturb
                     if not present:
                         continue

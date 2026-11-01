@@ -26,8 +26,11 @@ if study == "recovery":
     for name in rows[0]["cover"]:
         vals = [r["cover"][name] for r in rows if r["cover"][name] is not None]
         summary["coverage"][name] = float(np.mean(vals)) if vals else None
+    det = [r["cover"].get("u_detectable") for r in rows if r.get("cover", {}).get("u_detectable") is not None]
+    summary["u_detectable_coverage"] = float(np.mean(det)) if det else None
+    summary["n_u_detectable"] = int(sum(r.get("n_u_detectable", 0) for r in rows))
     summary["omega_ratio_median"] = float(np.median([r["post_mean"]["omega"] / r["truth"]["omega"] for r in rows]))
-    summary["pass"] = all(0.85 <= v <= 0.95 for k, v in summary["coverage"].items() if k != "u_big_entries" and v is not None) and summary["root_set_cov_mean"] >= 0.8
+    summary["pass"] = all(0.85 <= v <= 0.95 for k, v in summary["coverage"].items() if k not in ("u_big_entries", "u_detectable") and v is not None) and summary["root_set_cov_mean"] >= 0.8
 elif study == "confound":
     summary = dict(n=len(rows), frac_reps_with_warning=float(np.mean([(r["frac_both"] >= 0.5) or (r["frac_flagged"] >= 0.5) for r in rows])),
                    p_mass_mean=float(np.mean([r["p_mass_mean"] for r in rows if "p_mass_mean" in r])),
