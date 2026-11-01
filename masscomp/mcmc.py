@@ -1,0 +1,498 @@
+"""MCMC over (y, event, donor, theta) (plan §5), with optional tempering of the likelihood.
+
+Deviations from the plan, recorded here:
+  * rho_c and omega are updated by random-walk MH on the log scale, not Gibbs: the single-event
+    hazard probabilities are not conjugate to the Gamma prior.
+  * t_root is updated by random-walk MH on the log scale, not slice sampling.
+"""
+import math
+import numpy as np
+from .segments import N_SEG, EPS
+from .transducer import EdgeParams
+from . import events as ev
+from .likelihood import State
+from .tree import with_root_length
+
+MAX_FORM_LEN = 8
+
+
+class Sampler:
+    def __init__(self, ds, theta, rng, beta=1.0, init=None, init_from_prior=False):
+        self.rng = rng
+        self.beta = beta
+        y, event, donor = {}, {}, {}
+        f = ds.forest
+        if len(f.roots) == 1 and f.family[f.roots[0]] == -1:
+            # the sampler owns its own copy of the forest; the root-edge length is a parameter
+            from dataclasses import replace
+            ds = replace(ds, forest=with_root_length(f, theta.t_root))
+            f = ds.forest
+        if init is not None:
+            y, event, donor = init
+        elif init_from_prior:
+            # a forward simulation under theta: a typical state of the prior, not a copy of the data
+            from .simulate import simulate
+            sim = simulate(f, theta, ds.M, rng)
+            y = {k: v for k, v in sim.truth["y"].items() if k[0] not in set(f.leaves)}
+            event, donor = sim.truth["event"], sim.truth["donor"]
+        else:
+            # initialise internal forms to a child's form, events to inherit
+            leafset = set(f.leaves)
+            for c in range(ds.M):
+                for v in reversed(f.topo):
+                    if v in leafset:
+                        continue
+                    ch = f.children[v][0]
+                    src = ds.leaf_forms[(ch, c)] if (ch, c) in ds.leaf_forms else y[(ch, c)]
+                    y[(v, c)] = (src + src)[:max(2, min(len(src), 6))]
+                for e in f.edges:
+                    event[(e, c)] = ev.INHERIT
+        self.st = State(ds, theta, y, event, donor)
+        self.acc = {k: [0, 0] for k in ["y", "gibbs", "joint", "lam", "u", "rho", "omega", "troot"]}
+        self.inlattice = 1.0
+        if init is None:
+            self.move_events()   # remove impossible inherit terms from the initial state
+
+    # ------------------------------------------------------------------ helpers
+    def _accept(self, dlog):
+        return dlog >= 0 or self.rng.random() < math.exp(dlog)
+
+    def _delta_terms(self, pairs, over):
+        """Sum of (prior + beta*lik) for the given (e,c) pairs under overrides, minus current."""
+        st = self.st
+        new = {}
+        d = 0.0
+        for (e, c) in pairs:
+            pr, lk = st.edge_terms(e, c, **over.get((e, c), {}))
+            new[(e, c)] = (pr, lk)
+            d += (pr - st.t_prior[(e, c)]) + self.beta * (lk - st.t_lik[(e, c)])
+        return d, new
+
+    def _commit(self, new):
+        for k, (pr, lk) in new.items():
+            self.st.t_prior[k] = pr
+            self.st.t_lik[k] = lk
+
+    # ------------------------------------------------------------------ move 1: forms
+    def move_forms(self, n_prop=5):
+        st, f, rng = self.st, self.st.f, self.rng
+        for v in f.internal:
+            for c in range(st.M):
+                for k_prop in range(n_prop):
+                    cur = st.y[(v, c)]
+                    L = len(cur)
+                    kind = rng.integers(4) if k_prop % 2 == 0 else 3
+                    logq = 0.0
+                    if kind == 3:            # independence proposal: transduce a child's form
+                        chs = f.children[v]
+                        ch = chs[int(rng.integers(len(chs)))]
+                        prop = st.ep[ch].sample(st.y[(ch, c)], rng)
+                        if len(prop) == 0 or len(prop) > MAX_FORM_LEN or prop == cur:
+                            continue
+                        lk_ = math.log(len(chs))
+                        q_prop = _lse([st.ep[c2].logprob(st.y[(c2, c)], prop) for c2 in chs]) - lk_
+                        q_cur = _lse([st.ep[c2].logprob(st.y[(c2, c)], cur) for c2 in chs]) - lk_
+                        logq = q_cur - q_prop
+                    elif kind == 0:          # substitute
+                        pos = int(rng.integers(L))
+                        s = int(rng.integers(N_SEG - 1)); s = s + 1 if s >= cur[pos] else s
+                        prop = cur[:pos] + (s,) + cur[pos + 1:]
+                    elif kind == 1:          # delete
+                        if L <= 1:
+                            continue
+                        pos = int(rng.integers(L))
+                        prop = cur[:pos] + cur[pos + 1:]
+                        logq = -math.log(N_SEG)   # reverse insert chooses 1 of N_SEG segments
+                    else:                    # insert
+                        if L >= MAX_FORM_LEN:
+                            continue
+                        pos = int(rng.integers(L + 1))
+                        prop = cur[:pos] + (int(rng.integers(N_SEG)),) + cur[pos:]
+                        logq = math.log(N_SEG)
+                    # terms
+                    edges = st.affected_edges(v, c)
+                    over = {}
+                    for e in edges:
+                        if e == v:
+                            over[(e, c)] = dict(y_child=prop)
+                        elif f.parent[e] == v:
+                            over[(e, c)] = dict(y_parent=prop)
+                        else:
+                            over[(e, c)] = {}
+                    # borrowings from v need the donor form overridden: temporarily set
+                    old = st.y[(v, c)]
+                    st.y[(v, c)] = prop
+                    dterm, new = self._delta_terms([(e, c) for e in edges], over)
+                    droot = 0.0
+                    if f.parent[v] < 0:
+                        droot = ev.log_G(prop) - st.t_prior[("root", v, c)]
+                    self.acc["y"][1] += 1
+                    if self._accept(dterm + droot + logq):
+                        self._commit(new)
+                        if f.parent[v] < 0:
+                            st.t_prior[("root", v, c)] = ev.log_G(prop)
+                        self.acc["y"][0] += 1
+                    else:
+                        st.y[(v, c)] = old
+
+    # ------------------------------------------------------------------ move 1a: lattice Gibbs
+    def candidates(self, v, c, max_per_child=12):
+        """Candidate ancestral forms for (v, c), built from the NEIGHBOURS only (parent, children,
+        donor-linked nodes) and never from the current form, so the set is a function of the
+        conditioning state and a Gibbs draw over it is exact. Contents: each neighbour's form;
+        for each child form, the single-segment variants that the edge transducer most favours
+        as a parent (top `max_per_child` by log P(child_seg | parent_seg)); each child form with
+        one segment deleted; and the child form with its best single insertion removed."""
+        st, f = self.st, self.st.f
+        S = set()
+        if f.parent[v] >= 0:
+            S.add(st.y[(f.parent[v], c)])
+        neigh = list(f.children[v])
+        for e in f.edges:
+            if st.event.get((e, c)) == ev.BORROW and st.donor.get((e, c)) == v:
+                neigh.append(e)
+        if st.event.get((v, c)) == ev.BORROW:
+            S.add(st.y[(st.donor[(v, c)], c)])
+        for ch in neigh:
+            x = st.y[(ch, c)]
+            if not x:
+                continue
+            S.add(x)
+            ls = st.ep[ch].log_sub_np if ch in st.ep else st.adapt.log_sub_np
+            scored = []
+            for i, o in enumerate(x):
+                col = ls[:, o]                       # log P(o | s) for every parent segment s
+                for s_ in np.argsort(-col)[:3]:
+                    s_ = int(s_)
+                    if s_ != o:
+                        scored.append((col[s_], x[:i] + (s_,) + x[i + 1:]))
+            scored.sort(key=lambda t: -t[0])
+            for _, cand in scored[:max_per_child]:
+                S.add(cand)
+            if len(x) > 1:
+                for i in range(len(x)):               # child inserted a segment: parent lacks it
+                    S.add(x[:i] + x[i + 1:])
+            if len(x) < MAX_FORM_LEN:                 # child deleted a segment: parent had one more
+                ldel = ls[:, EPS]
+                s_ = int(np.argmax(ldel))
+                for i in range(len(x) + 1):
+                    S.add(x[:i] + (s_,) + x[i:])
+        S = {s for s in S if 0 < len(s) <= MAX_FORM_LEN}
+        return S
+
+    def move_forms_gibbs(self):
+        """Exact Gibbs draw of y[v,c] over candidates(v,c) when the current form is in that set;
+        otherwise no-op (the MH moves handle it). Returns fraction of (v,c) that were in-lattice."""
+        st, f, rng = self.st, self.st.f, self.rng
+        inlat = 0; tot = 0
+        for v in f.internal:
+            is_root = f.parent[v] < 0
+            for c in range(st.M):
+                cur = st.y[(v, c)]
+                S = self.candidates(v, c)
+                tot += 1
+                if cur not in S:
+                    continue
+                inlat += 1
+                cands = list(S)
+                edges = st.affected_edges(v, c)
+                logw = np.empty(len(cands)); terms = []
+                for i, cand in enumerate(cands):
+                    st.y[(v, c)] = cand
+                    w = ev.log_G(cand) if is_root else 0.0
+                    tt = {}
+                    for e in edges:
+                        pr, lk = st.edge_terms(e, c)
+                        tt[(e, c)] = (pr, lk); w += pr + self.beta * lk
+                    logw[i] = w; terms.append(tt)
+                p = np.exp(logw - logw.max()); p /= p.sum()
+                i = int(rng.choice(len(cands), p=p))
+                st.y[(v, c)] = cands[i]
+                self._commit(terms[i])
+                if is_root:
+                    st.t_prior[("root", v, c)] = ev.log_G(cands[i])
+                self.acc["gibbs"][0] += cands[i] != cur; self.acc["gibbs"][1] += 1
+        return inlat / tot if tot else 1.0
+
+    # ------------------------------------------------------------------ move 1b: joint (event, form)
+    def _gen_logq(self, v, c, kind, d, form):
+        """Density of the model's own conditional for y_v given the event kind (used as a proposal)."""
+        st, f = self.st, self.st.f
+        if kind == ev.INHERIT:
+            return st.ep[v].logprob(st.y[(f.parent[v], c)], form)
+        if kind == ev.REPLACE:
+            return ev.log_G(form)
+        return st.adapt.logprob(st.y[(d, c)], form)
+
+    def move_joint(self, n_prop=2):
+        """For internal non-root v: propose a new event on its incoming edge together with a new
+        form drawn from that event's generative distribution. Escapes the mode where sibling
+        forms are pinned together by borrowing."""
+        st, f, rng = self.st, self.st.f, self.rng
+        for v in f.internal:
+            if f.parent[v] < 0:
+                continue
+            cands = st.cands[v]
+            n_opt = 2 + len(cands)
+            for _ in range(n_prop):
+                for c in range(st.M):
+                    cur_form, cur_kind = st.y[(v, c)], st.event[(v, c)]
+                    cur_d = st.donor.get((v, c))
+                    i = int(rng.integers(n_opt))
+                    if i < 2:
+                        kind, d = i, None
+                    else:
+                        kind, d = ev.BORROW, cands[i - 2]
+                    if kind == ev.INHERIT:
+                        prop = st.ep[v].sample(st.y[(f.parent[v], c)], rng)
+                    elif kind == ev.REPLACE:
+                        prop = ev.sample_G(rng)
+                    else:
+                        prop = st.adapt.sample(st.y[(d, c)], rng)
+                    if len(prop) == 0 or len(prop) > MAX_FORM_LEN:
+                        continue
+                    logq_new = self._gen_logq(v, c, kind, d, prop)
+                    logq_old = self._gen_logq(v, c, cur_kind, cur_d, cur_form)
+                    # terms
+                    edges = st.affected_edges(v, c)
+                    over = {(v, c): dict(y_child=prop, kind=kind, d=d)}
+                    for e in edges:
+                        if e != v:
+                            over[(e, c)] = dict(y_parent=prop) if f.parent[e] == v else {}
+                    st.y[(v, c)] = prop
+                    dterm, new = self._delta_terms([(e, c) for e in edges], over)
+                    self.acc["joint"][1] += 1
+                    if self._accept(dterm + logq_old - logq_new):
+                        self._commit(new)
+                        st.event[(v, c)] = kind
+                        if kind == ev.BORROW:
+                            st.donor[(v, c)] = d
+                        else:
+                            st.donor.pop((v, c), None)
+                        self.acc["joint"][0] += 1
+                    else:
+                        st.y[(v, c)] = cur_form
+
+    # ------------------------------------------------------------------ move 2: events
+    def move_events(self):
+        st, f, rng = self.st, self.st.f, self.rng
+        for e in f.edges:
+            for c in range(st.M):
+                opts, logw = [], []
+                for k in (ev.INHERIT, ev.REPLACE):
+                    pr, lk = st.edge_terms(e, c, kind=k)
+                    opts.append((k, None, pr, lk)); logw.append(pr + self.beta * lk)
+                for d in st.cands[e]:
+                    pr, lk = st.edge_terms(e, c, kind=ev.BORROW, d=d)
+                    opts.append((ev.BORROW, d, pr, lk)); logw.append(pr + self.beta * lk)
+                w = np.array(logw); w = np.exp(w - w.max()); w /= w.sum()
+                k, d, pr, lk = opts[int(rng.choice(len(opts), p=w))]
+                st.event[(e, c)] = k
+                if k == ev.BORROW:
+                    st.donor[(e, c)] = d
+                else:
+                    st.donor.pop((e, c), None)
+                st.t_prior[(e, c)] = pr; st.t_lik[(e, c)] = lk
+
+    # ------------------------------------------------------------------ move 3: lambda
+    def move_lam(self, step=None):
+        """One joint proposal on all four components (one global recompute instead of four)."""
+        st = self.st
+        if step is None:
+            # per-component scales from measured posterior sds (deletion/insertion rates are
+            # weakly identified), widened at low beta where the prior is much broader
+            step = np.array([0.08, 0.2, 0.3, 0.08]) * (1.0 + 5.0 * (1.0 - self.beta))
+        old = st.theta.lam.copy()
+        st.theta.lam = old + self.rng.normal(0, 1, size=4) * step
+        d = self._try_global(ev.log_prior_lam(st.theta.lam) - ev.log_prior_lam(old))
+        self.acc["lam"][1] += 1
+        if d is not None:
+            self.acc["lam"][0] += 1
+        else:
+            st.theta.lam = old
+
+    def _try_global(self, dprior_param):
+        """Rebuild edge params, recompute all edge terms, accept/reject; returns delta or None."""
+        st = self.st
+        old_ep, old_adapt = st.ep, st.adapt
+        st.rebuild_edge_params()
+        d = dprior_param
+        new = {}
+        for c in range(st.M):
+            for e in st.f.edges:
+                pr, lk = st.edge_terms(e, c)
+                new[(e, c)] = (pr, lk)
+                d += (pr - st.t_prior[(e, c)]) + self.beta * (lk - st.t_lik[(e, c)])
+        if self._accept(d):
+            self._commit(new)
+            st.t_param += dprior_param
+            return d
+        st.ep, st.adapt = old_ep, old_adapt
+        return None
+
+    # ------------------------------------------------------------------ move 4: u_e
+    def move_u(self, n_prop=10, perturb_sd=0.5):
+        st, f, rng = self.st, self.st.f, self.rng
+        for e in f.edges:
+            t = f.length[e]
+            for _ in range(n_prop):
+                u = st.theta.u.setdefault(e, {})
+                present = list(u.keys())
+                kind = rng.integers(3)
+                prop = dict(u)
+                logq = 0.0
+                if kind == 0:                                  # birth
+                    n_abs = ev.N_U_SLOTS - len(present)
+                    slot = ev.U_SLOTS[int(rng.integers(ev.N_U_SLOTS))]
+                    if slot in u:
+                        continue
+                    w = float(rng.normal(0, math.sqrt(t * ev.SIGMA2_U)))
+                    prop[slot] = w
+                    # q_fwd = 1/n_abs * N(w); q_rev (death) = 1/(len+1)
+                    logq = -math.log(len(present) + 1) - (-math.log(n_abs) + _lognorm(w, t * ev.SIGMA2_U))
+                elif kind == 1:                                # death
+                    if not present:
+                        continue
+                    slot = present[int(rng.integers(len(present)))]
+                    w = prop.pop(slot)
+                    n_abs = ev.N_U_SLOTS - len(present) + 1
+                    logq = (-math.log(n_abs) + _lognorm(w, t * ev.SIGMA2_U)) - (-math.log(len(present)))
+                else:                                          # perturb
+                    if not present:
+                        continue
+                    slot = present[int(rng.integers(len(present)))]
+                    prop[slot] = u[slot] + float(rng.normal(0, perturb_sd))
+                dprior = ev.log_prior_u(prop, t) - ev.log_prior_u(u, t)
+                old_ep = st.ep[e]
+                st.ep[e] = EdgeParams(st.theta.lam, prop)
+                d = dprior + logq
+                new = {}
+                for c in range(st.M):
+                    if st.event[(e, c)] != ev.INHERIT:
+                        continue                      # REPLACE / BORROW terms do not depend on u_e
+                    pr, lk = st.edge_terms(e, c)
+                    new[(e, c)] = (pr, lk)
+                    d += (pr - st.t_prior[(e, c)]) + self.beta * (lk - st.t_lik[(e, c)])
+                self.acc["u"][1] += 1
+                if self._accept(d):
+                    st.theta.u[e] = prop
+                    self._commit(new)
+                    st.t_param += dprior
+                    self.acc["u"][0] += 1
+                else:
+                    st.ep[e] = old_ep
+
+    # ------------------------------------------------------------------ move 5/6: rates
+    def move_rates(self, step=0.3):
+        st, f, rng = self.st, self.st.f, self.rng
+        for c in range(st.M):
+            old = st.theta.rho[c]
+            prop = old * math.exp(rng.normal(0, step))
+            st.theta.rho[c] = prop
+            dprior = ev.log_prior_rho(np.array([prop])) - ev.log_prior_rho(np.array([old]))
+            jac = math.log(prop / old)
+            old_evp = {e: st.evp[e][c] for e in f.edges}
+            for e in f.edges:
+                st.evp[e][c] = ev.event_logprobs(prop, st.theta.omega if st.cands[e] else 0.0, f.length[e])
+            d = dprior + jac; new = {}
+            for e in f.edges:
+                k = st.event[(e, c)]
+                pr_old = st.t_prior[(e, c)]
+                pr = pr_old - old_evp[e][k] + st.evp[e][c][k]
+                new[(e, c)] = (pr, st.t_lik[(e, c)])
+                d += pr - pr_old
+            self.acc["rho"][1] += 1
+            if self._accept(d):
+                self._commit(new); st.t_param += dprior; self.acc["rho"][0] += 1
+            else:
+                st.theta.rho[c] = old
+                for e in f.edges:
+                    st.evp[e][c] = old_evp[e]
+        # omega
+        old = st.theta.omega
+        prop = old * math.exp(rng.normal(0, step))
+        dprior = ev.log_prior_omega(prop) - ev.log_prior_omega(old)
+        old_evp = {e: list(st.evp[e]) for e in f.edges}
+        st.theta.omega = prop
+        st.rebuild_event_probs()
+        d = dprior + math.log(prop / old); new = {}
+        for c in range(st.M):
+            for e in f.edges:
+                k = st.event[(e, c)]
+                pr = st.t_prior[(e, c)] - old_evp[e][c][k] + st.evp[e][c][k]
+                new[(e, c)] = (pr, st.t_lik[(e, c)]); d += pr - st.t_prior[(e, c)]
+        self.acc["omega"][1] += 1
+        if self._accept(d):
+            self._commit(new); st.t_param += dprior; self.acc["omega"][0] += 1
+        else:
+            st.theta.omega = old; st.evp = old_evp
+
+    # ------------------------------------------------------------------ move 7: t_root
+    def move_troot(self, step=0.3):
+        st, f, rng = self.st, self.st.f, self.rng
+        if not st.joined:
+            return
+        old = st.theta.t_root
+        prop = old * math.exp(rng.normal(0, step))
+        dprior = ev.log_prior_troot(prop) - ev.log_prior_troot(old)
+        for e in st.root_edges:
+            dprior += ev.log_prior_u(st.theta.u.get(e, {}), prop) - ev.log_prior_u(st.theta.u.get(e, {}), old)
+        old_len = list(f.length)
+        for e in st.root_edges:
+            f.length[e] = prop
+        old_evp = {e: list(st.evp[e]) for e in st.root_edges}
+        st.rebuild_event_probs(st.root_edges)
+        d = dprior + math.log(prop / old); new = {}
+        for c in range(st.M):
+            for e in st.root_edges:
+                k = st.event[(e, c)]
+                pr = st.t_prior[(e, c)] - old_evp[e][c][k] + st.evp[e][c][k]
+                new[(e, c)] = (pr, st.t_lik[(e, c)]); d += pr - st.t_prior[(e, c)]
+        self.acc["troot"][1] += 1
+        if self._accept(d):
+            st.theta.t_root = prop; self._commit(new); st.t_param += dprior; self.acc["troot"][0] += 1
+        else:
+            f.length[:] = old_len
+            for e in st.root_edges:
+                st.evp[e] = old_evp[e]
+
+    # ------------------------------------------------------------------ sweep
+    def sweep(self, clamp_latents=False, clamp_u=False, clamp_params=False):
+        if not clamp_latents:
+            self.inlattice = self.move_forms_gibbs()
+            self.move_forms(n_prop=1); self.move_joint(); self.move_events()
+        if clamp_params:
+            return
+        self.move_lam()
+        if not clamp_u:
+            self.move_u()
+        self.move_rates(); self.move_troot()
+
+    def snapshot(self):
+        st = self.st
+        return dict(lam=st.theta.lam.copy(), rho=st.theta.rho.copy(), omega=st.theta.omega, t_root=st.theta.t_root,
+                    u={e: dict(d) for e, d in st.theta.u.items()},
+                    roots={(v, c): st.y[(v, c)] for v in st.f.internal if st.f.parent[v] < 0 or st.f.parent[v] in st.f.roots for c in range(st.M)},
+                    log_lik=st.log_lik(), log_prior=st.log_prior())
+
+
+def _lse(xs):
+    m = max(xs)
+    if m <= -1e29:
+        return m
+    return m + math.log(sum(math.exp(x - m) for x in xs))
+
+
+def _lognorm(w, var):
+    return -0.5 * w * w / var - 0.5 * math.log(2 * math.pi * var)
+
+
+def run_chain(ds, theta0, seed, n_sweeps, burn, thin=10, beta=1.0, init=None, record=True, init_from_prior=False, **sweep_kw):
+    rng = np.random.default_rng(seed)
+    s = Sampler(ds, theta0.copy(), rng, beta=beta, init=init, init_from_prior=init_from_prior)
+    out = []
+    for i in range(n_sweeps):
+        s.sweep(**sweep_kw)
+        if record and i >= burn and (i - burn) % thin == 0:
+            out.append(s.snapshot())
+    return s, out

@@ -1,0 +1,106 @@
+name: study
+on:
+  workflow_dispatch:
+    inputs:
+      study:
+        description: recovery | confound | lbf
+        required: true
+        default: recovery
+      seeds:
+        description: comma-separated seeds (one job each)
+        required: true
+        default: "0,1,2,3,4"
+      depths:
+        description: lbf only, comma-separated t_root depths (one job per seed x depth)
+        required: false
+        default: "0.25,0.5,1.0"
+      sweeps:
+        description: sweeps per chain (recovery/confound) or per stone (lbf)
+        required: false
+        default: "1500"
+      burn:
+        required: false
+        default: "500"
+      lbf_K:
+        required: false
+        default: "24"
+      lbf_warmup:
+        required: false
+        default: "1200"
+      lbf_power:
+        required: false
+        default: "2"
+
+jobs:
+  plan:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.m.outputs.matrix }}
+    steps:
+      - id: m
+        shell: python
+        run: |
+          import json, os
+          seeds = [s.strip() for s in "${{ inputs.seeds }}".split(",") if s.strip()]
+          study = "${{ inputs.study }}"
+          if study == "lbf":
+              depths = [d.strip() for d in "${{ inputs.depths }}".split(",") if d.strip()]
+              cells = [{"seed": s, "depth": d} for s in seeds for d in depths]
+          else:
+              cells = [{"seed": s, "depth": "-"} for s in seeds]
+          with open(os.environ["GITHUB_OUTPUT"], "a") as fh:
+              fh.write("matrix=" + json.dumps({"include": cells}) + "\n")
+
+  run:
+    needs: plan
+    runs-on: ubuntu-latest
+    timeout-minutes: 350
+    strategy:
+      fail-fast: false
+      max-parallel: 60
+      matrix: ${{ fromJson(needs.plan.outputs.matrix) }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: pip install -r requirements.txt
+      - name: run cell
+        env:
+          PYTHONPATH: .
+          NUMBA_NUM_THREADS: "2"
+        run: |
+          mkdir -p results
+          case "${{ inputs.study }}" in
+            recovery) python studies/recovery.py 1 ${{ matrix.seed }} ${{ inputs.sweeps }} ${{ inputs.burn }} ;;
+            confound) python studies/confound.py 1 ${{ matrix.seed }} ${{ inputs.sweeps }} ${{ inputs.burn }} ;;
+            lbf)      python studies/lbf.py 1 ${{ matrix.seed }} ${{ matrix.depth }} ${{ inputs.lbf_K }} ${{ inputs.sweeps }} ${{ inputs.burn }} ${{ inputs.lbf_warmup }} ${{ inputs.lbf_power }} ;;
+          esac
+      - uses: actions/upload-artifact@v4
+        with:
+          name: cell-${{ inputs.study }}-${{ matrix.seed }}-${{ matrix.depth }}
+          path: results/*.json
+
+  collect:
+    needs: run
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install numpy
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: cell-${{ inputs.study }}-*
+          path: cells
+      - name: merge
+        run: |
+          mkdir -p merged
+          python studies/merge.py ${{ inputs.study }} merged/${{ inputs.study }}_${{ github.run_id }}.json $(find cells -name '*.json')
+      - uses: actions/upload-artifact@v4
+        with:
+          name: merged-${{ inputs.study }}-${{ github.run_id }}
+          path: merged/*.json

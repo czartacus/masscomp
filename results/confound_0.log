@@ -1,0 +1,21 @@
+rep 0: both-variants 0/6, rhat-flagged 1/6, t_root 0.97±0.30 693s
+rep 1: both-variants 0/6, rhat-flagged 0/6, t_root 1.29±0.41 796s
+rep 2: both-variants 0/6, rhat-flagged 1/6, t_root 1.72±0.51 956s
+rep 3: both-variants 1/6, rhat-flagged 0/6, t_root 1.15±0.51 928s
+rep 4: both-variants 1/6, rhat-flagged 2/6, t_root 0.81±0.29 935s
+rep 5: both-variants 0/6, rhat-flagged 0/6, t_root 1.02±0.36 950s
+rep 6: both-variants 1/6, rhat-flagged 2/6, t_root 1.23±0.35 863s
+rep 7: both-variants 0/6, rhat-flagged 1/6, t_root 1.45±0.65 899s
+rep 8: both-variants 0/6, rhat-flagged 1/6, P(root p-initial)=0.28 P(f)=0.05, t_root 1.71±0.67 698s
+rep 9: both-variants 0/6, rhat-flagged 1/6, P(root p-initial)=0.06 P(f)=0.04, t_root 1.20±0.37 806s
+rep 10: both-variants 0/6, rhat-flagged 1/6, P(root p-initial)=0.09 P(f)=0.02, t_root 0.91±0.31 821s
+rep 11: both-variants 0/6, rhat-flagged 0/6, P(root p-initial)=0.24 P(f)=0.01, t_root 0.91±0.26 853s
+rep 12: both-variants 0/6, rhat-flagged 3/6, P(root p-initial)=0.36 P(f)=0.01, t_root 1.22±0.47 797s
+rep 13: both-variants 0/6, rhat-flagged 2/6, P(root p-initial)=0.15 P(f)=0.08, t_root 1.07±0.34 924s
+rep 14: both-variants 0/6, rhat-flagged 0/6, P(root p-initial)=0.02 P(f)=0.12, t_root 1.38±0.62 887s
+rep 15: both-variants 0/6, rhat-flagged 2/6, P(root p-initial)=0.21 P(f)=0.30, t_root 0.86±0.33 925s
+rep 16: both-variants 0/6, rhat-flagged 0/6, P(root p-initial)=0.16 P(f)=0.01, t_root 0.98±0.27 877s
+rep 17: both-variants 0/6, rhat-flagged 1/6, P(root p-initial)=0.11 P(f)=0.18, t_root 0.98±0.29 974s
+rep 18: both-variants 0/6, rhat-flagged 0/6, P(root p-initial)=0.03 P(f)=0.02, t_root 1.00±0.25 845s
+rep 19: both-variants 0/6, rhat-flagged 0/6, P(root p-initial)=0.05 P(f)=0.26, t_root 1.03±0.28 829s
+SUMMARY {'n': 20, 'frac_reps_with_warning': 0.05, 'pass': False}

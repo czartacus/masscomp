@@ -1,0 +1,3 @@
+depth 1.0 related seed 10100: LBF=+86.65 (H1 -3692.6, H0 -3779.3) 1570s
+depth 1.0 unrelated seed 10100: LBF=-64.06 (H1 -3787.7, H0 -3723.6) 1561s
+SUMMARY {'1.0': {'related_mean': 86.65482526177584, 'related_sd': 0.0, 'unrelated_mean': -64.06431954192158, 'unrelated_sd': 0.0, 'unrelated_max': -64.06431954192158, 'tau': -64.06431954192158, 'power': 1.0, 'n': 1}}

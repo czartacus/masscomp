@@ -1,0 +1,4 @@
+rep 0 seed 100 1941s cover={'omega': True, 't_root': True, 'lam0': True, 'lam1': True, 'lam2': True, 'lam3': True, 'rho_mean': False, 'u_big_entries': 0.0} roots=0.16 rhat_max=1.66
+rep 1 seed 101 1775s cover={'omega': True, 't_root': True, 'lam0': True, 'lam1': True, 'lam2': True, 'lam3': True, 'rho_mean': True, 'u_big_entries': 0.0} roots=0.08 rhat_max=1.71
+rep 2 seed 102 1581s cover={'omega': False, 't_root': True, 'lam0': True, 'lam1': True, 'lam2': True, 'lam3': False, 'rho_mean': True, 'u_big_entries': 0.0} roots=0.24 rhat_max=1.64
+rep 3 seed 103 1585s cover={'omega': False, 't_root': True, 'lam0': True, 'lam1': True, 'lam2': False, 'lam3': True, 'rho_mean': True, 'u_big_entries': 0.0} roots=0.16 rhat_max=1.66
