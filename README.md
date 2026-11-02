@@ -67,7 +67,57 @@ A full §8.3 at plan settings (K=32, 2,000 sweeps, 40 datasets × 2 hypotheses) 
 in this implementation. The DP is memoised and already pure Python; the next step the plan names
 (vectorised NumPy DP) is the right one if the studies are to run at plan scale.
 
-## Study results (reduced scale, 2026-11-01)
+## Study results
+
+Settings and raw numbers are in `results/` (local) and `results/cloud/` (GitHub Actions, one job per
+replicate; see `.github/workflows/study.yml`). Status as of 2026-11-02:
+
+### §8.3 LBF separation — blocked on estimator noise (being fixed)
+
+- The stepping-stone estimator must be run **downward** (fit at β=1, cool to the prior). Run upward
+  it is biased 400–700 nats low with ±150 nat error, which produced a spurious sign flip (−63 vs +87)
+  on one dataset. Spacing β_k = (k/K)² (not cubic), K=24, warm-up 1,200 sweeps, 2,000 per stone.
+- **Horizon.** At t_root = 1.0 (prototype units) only 5 of 25 concepts remain cross-family cognates
+  and the LBF is ≈ +1 for related pairs; the grid now uses depths 0.25 / 0.5 / 1.0.
+- **Grid, 5 related + 5 unrelated per depth, one chain** (`results/cloud/lbf_41344502324.json`):
+  depth 0.25 related +13 ± 26, unrelated +4 ± 29 (max **+50.6**); depth 0.5 related +19 ± 20,
+  unrelated −19 ± 23; depth 1.0 no separation.
+- **Replicates** of the two seed-2101 cells with fresh stepping-stone seeds
+  (`results/cloud/lbf_41355534462.json`): related +28.5 / +14.6 / +40.0, unrelated +7.8 / −24.1 / −11.7.
+  The +50.6 "false positive" is estimator noise; the per-estimate noise is ~30 nats, as large as the
+  signal, so the grid above measures estimator variance, not separation. Per-stone diagnostics show
+  ESS 1–2 at mid-β stones: the chain sits in one forest/root mode per run.
+- **Fix in progress:** R independent chains per estimate (one job each), pooled stone by stone in
+  `studies/merge.py` (log-mean-exp of per-stone terms). Run 41455207637 = 5 seeds × depths 0.25, 0.5
+  × 4 chains. If pooling does not bring the replicate sd under ~10 nats, the next step is parallel
+  tempering inside the sampler.
+
+### §8.1 recovery — continuous parameters fine; ω and roots need more data, not more sampler
+
+n = 50 at M = 25 concepts, 3 chains × 1,500 sweeps (`results/recovery_all.json`, then
+`results/cloud/recovery_41346586750.json` after the u-proposal change):
+
+| | before | after data-driven u birth proposal |
+| --- | --- | --- |
+| λ₀–λ₃, t_root, mean ρ coverage | 0.80–0.92 | 0.80–0.92 |
+| ω coverage / median over-estimate | 0.50 / 2.4× | 0.48 / 1.9× |
+| root-set coverage (converged chains) | 0.58 | 0.62 |
+| chains with R̂ ≤ 1.25 | 50% | 46% |
+| planted \|w\| > 2.5 terms with ≥ 3 inherited forms to act on | 0 of 50 datasets | 0 of 50 |
+
+The large branch terms are undetectable at 25 concepts, so their 0 coverage is a property of the
+data, and the ω inflation is the model absorbing mismatches that u cannot explain. The u proposal
+(`mcmc.Sampler.move_u`: slot from mismatch counts, value from a N(2,1) mixture) is kept because
+the planted-term unit test went from 0 to 1.0 inclusion. Run 41467498208 repeats the study at
+M = 100 (`concepts` workflow input), where planted terms do become detectable.
+
+### §8.2 confound — fails as specified
+
+20 replicates: 1 of 20 flags the borrowing-vs-inheritance ambiguity (target ≥ 0.8). The model
+resolves the confound by parsimony rather than reporting it. Detection will have to come from the
+prior-sensitivity grid (spec §9), not from the posterior of a single fit.
+
+### Earlier reduced-scale smoke results (2026-11-01, two contended cores)
 
 Run on two contended cores inside one session; settings far below the plan's, so these are a
 check that the machinery works, not the study.
