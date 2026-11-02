@@ -32,6 +32,10 @@ on:
       lbf_power:
         required: false
         default: "2"
+      concepts:
+        description: recovery only, number of concepts M per simulated dataset
+        required: false
+        default: "25"
       lbf_reps:
         description: lbf only, comma-separated replicate ids (0 = primary; >0 re-estimates the same data with fresh stepping-stone seeds)
         required: false
@@ -82,7 +86,7 @@ jobs:
         run: |
           mkdir -p results
           case "${{ inputs.study }}" in
-            recovery) python studies/recovery.py 1 ${{ matrix.seed }} ${{ inputs.sweeps }} ${{ inputs.burn }} ;;
+            recovery) python studies/recovery.py 1 ${{ matrix.seed }} ${{ inputs.sweeps }} ${{ inputs.burn }} ${{ inputs.concepts }} ;;
             confound) python studies/confound.py 1 ${{ matrix.seed }} ${{ inputs.sweeps }} ${{ inputs.burn }} ;;
             lbf)      python studies/lbf.py 1 ${{ matrix.seed }} ${{ matrix.depth }} ${{ inputs.lbf_K }} ${{ inputs.sweeps }} ${{ inputs.burn }} ${{ inputs.lbf_warmup }} ${{ inputs.lbf_power }} ${{ matrix.rep }} ;;
           esac

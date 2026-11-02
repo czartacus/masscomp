@@ -1,4 +1,4 @@
-"""Plan §8.1 parameter recovery. Usage: python studies/recovery.py <n_replicates> <seed0> [sweeps] [burn]"""
+"""Plan §8.1 parameter recovery. Usage: python studies/recovery.py <n_replicates> <seed0> [sweeps] [burn] [M concepts]"""
 import sys, time
 import numpy as np
 from masscomp.simulate import simulate_pair
@@ -9,7 +9,8 @@ N_REPS = int(sys.argv[1]) if len(sys.argv) > 1 else 50
 SEED0 = int(sys.argv[2]) if len(sys.argv) > 2 else 0
 SWEEPS = int(sys.argv[3]) if len(sys.argv) > 3 else 1500
 BURN = int(sys.argv[4]) if len(sys.argv) > 4 else 500
-M, DEPTH = 25, 1.5
+M = int(sys.argv[5]) if len(sys.argv) > 5 else 25
+DEPTH = 1.5
 NAME = "recovery"
 
 import os, json as _json
@@ -24,7 +25,7 @@ for r in range(N_REPS):
     th = ds.truth["theta"]
     t0 = time.time()
     chains = fit(ds, seed, n_sweeps=SWEEPS, burn=BURN)
-    row = dict(seed=seed, secs=time.time() - t0, cover={}, rhat={}, ess={}, truth={}, post_mean={})
+    row = dict(seed=seed, M=M, secs=time.time() - t0, cover={}, rhat={}, ess={}, truth={}, post_mean={})
     scalars = {"omega": (th.omega, "omega", None), "t_root": (th.t_root, "t_root", None)}
     for i in range(4):
         scalars[f"lam{i}"] = (th.lam[i], "lam", i)
@@ -66,7 +67,7 @@ for r in range(N_REPS):
     row["root_set_cov_fam"] = root_set_coverage(chains, {k: v for k, v in rec.items() if k[0] != R})
     row["n_recoverable"] = dict(R=sum(1 for k in rec if k[0] == R), fam=sum(1 for k in rec if k[0] != R))
     rows.append(row)
-    save(f"recovery_{SEED0}", {"rows": rows, "partial": True})   # incremental, in case the run is cut short
+    save(f"recovery_{SEED0}", {"rows": rows, "partial": True, "M": M})   # incremental, in case the run is cut short
     print(f"rep {r} seed {seed} {row['secs']:.0f}s cover={ {k: (round(v,2) if isinstance(v,float) else v) for k,v in row['cover'].items()} } roots={row['root_set_cov']:.2f} (R {row['root_set_cov_R']:.2f}, fam {row['root_set_cov_fam']:.2f}) rhat_max={max(row['rhat'].values()):.2f}", flush=True)
 
 summary = {"n": N_REPS, "sweeps": SWEEPS, "burn": BURN, "coverage": {}, "root_set_cov_mean": float(np.mean([r["root_set_cov"] for r in rows]))}
@@ -75,4 +76,4 @@ for name in rows[0]["cover"]:
     summary["coverage"][name] = float(np.mean(vals)) if vals else None
 summary["pass"] = all(0.85 <= v <= 0.95 for k, v in summary["coverage"].items() if k not in ("u_big_entries", "u_detectable") and v is not None) and summary["root_set_cov_mean"] >= 0.8
 print("SUMMARY", summary)
-save(f"recovery_{SEED0}", {"summary": summary, "rows": rows})
+save(f"recovery_{SEED0}", {"summary": summary, "rows": rows, "M": M})
