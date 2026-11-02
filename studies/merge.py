@@ -49,7 +49,9 @@ elif study in ("lbf", "pt"):
     # Pool replicate chains stone by stone: each chain's stone term is log mean exp(d*ll) over its samples, so with
     # equal sample counts the pooled term is logsumexp over chains minus log R. Pooled LBF rows are added as kind
     # "<kind>" with rep="pooled" and used in the summary when present.
-    from scipy.special import logsumexp
+    def logsumexp(a, axis=0):
+        a = np.asarray(a); mx = a.max(axis=axis, keepdims=True)
+        return (mx + np.log(np.exp(a - mx).sum(axis=axis, keepdims=True))).squeeze(axis)
     terms = {}   # (seed, kind, hyp) -> list of per-chain term arrays
     for key, v in partial.items():
         if not isinstance(v, dict) or "terms" not in v:
