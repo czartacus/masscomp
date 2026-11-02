@@ -334,7 +334,7 @@ class Sampler:
     U_DATA_FRAC, U_DATA_MU, U_DATA_SD = 0.5, 2.0, 1.0
 
     def _u_counts(self, e):
-        """Crude substitution/deletion/insertion counts on edge e from the current inherited
+        """Crude substitution/deletion/insertion counts on edge e from the current
         (parent, child) form pairs: equal length -> position-wise mismatches; child one shorter ->
         the segment(s) whose removal gives the child; child one longer -> the extra segment.
         Depends on the latent forms only (not on u_e), so forward and reverse proposal
@@ -343,9 +343,7 @@ class Sampler:
         p = f.parent[e]
         counts = {}
         for c in range(st.M):
-            if st.event[(e, c)] != ev.INHERIT:
-                continue
-            x, y = st.y[(p, c)], st.y[(e, c)]
+            x, y = st.y[(p, c)], st.y[(e, c)]      # all pairs: a true inherited-with-u pair may currently be labelled borrow
             if len(x) == len(y):
                 for a, b in zip(x, y):
                     if a != b:
@@ -374,14 +372,36 @@ class Sampler:
         b = math.log(self.U_DATA_FRAC) + _lognorm(w - self.U_DATA_MU, self.U_DATA_SD ** 2)
         return _lse([a, b])
 
-    def move_u(self, n_prop=10, perturb_sd=0.5):
-        """Birth / death / perturb on the sparse branch terms u_e. Birth proposes the slot from a
-        mixture of uniform and the mismatch counts on the edge, and the value from a mixture of
-        the prior slab and N(U_DATA_MU, U_DATA_SD^2); death uses the same densities in reverse."""
+    def move_u(self, n_prop=6, perturb_sd=0.5):
+        """Birth / death / perturb on the sparse branch terms u_e, collapsed over the events on edge e.
+
+        Why collapsed: a concept whose parent-child mismatch is really a branch rule (p -> f) can be
+        explained by borrowing from a neighbour instead. Once the chain has done that, an ordinary
+        u_e proposal changes no likelihood term (borrow and replace terms do not depend on u_e) and
+        is rejected on its prior cost alone, so the rule is never found and omega inflates (seen in
+        the M=100 recovery study: 0.3% inclusion of detectable rules, omega 2.7x over). Here the
+        proposal is (u_e', events_e') with events_e' ~ p(. | u_e', rest), the exact conditional that
+        move_events samples from, so the acceptance ratio is the ratio of the per-concept sums over
+        all event options, Z_c(u') / Z_c(u), times the prior and proposal ratios on u_e.
+
+        Birth proposes the slot from a mixture of uniform and the mismatch counts on the edge, and
+        the value from a mixture of the prior slab and N(U_DATA_MU, U_DATA_SD^2); death uses the
+        same densities in reverse."""
         st, f, rng = self.st, self.st.f, self.rng
         for e in f.edges:
             t = f.length[e]
             counts = self._u_counts(e)
+            # event options that do not depend on u_e: (kind, donor, prior_part, lik_part), once per concept
+            fixed = []
+            for c in range(st.M):
+                opts = []
+                pr, lk = st.edge_terms(e, c, kind=ev.REPLACE); opts.append((ev.REPLACE, None, pr, lk))
+                for d in st.cands[e]:
+                    pr, lk = st.edge_terms(e, c, kind=ev.BORROW, d=d); opts.append((ev.BORROW, d, pr, lk))
+                fixed.append(opts)
+            # inherit terms under the current u_e, and the current per-concept log Z
+            inh = [st.edge_terms(e, c, kind=ev.INHERIT) for c in range(st.M)]
+            logZ = [_lse([pr + self.beta * lk for (_, _, pr, lk) in fixed[c]] + [inh[c][0] + self.beta * inh[c][1]]) for c in range(st.M)]
             for _ in range(n_prop):
                 u = st.theta.u.setdefault(e, {})
                 present = list(u.keys())
@@ -422,20 +442,26 @@ class Sampler:
                 dprior = ev.log_prior_u(prop, t) - ev.log_prior_u(u, t)
                 old_ep = st.ep[e]
                 st.ep[e] = EdgeParams(st.theta.lam, prop)
-                d = dprior + logq
-                new = {}
-                for c in range(st.M):
-                    if st.event[(e, c)] != ev.INHERIT:
-                        continue                      # REPLACE / BORROW terms do not depend on u_e
-                    pr, lk = st.edge_terms(e, c)
-                    new[(e, c)] = (pr, lk)
-                    d += (pr - st.t_prior[(e, c)]) + self.beta * (lk - st.t_lik[(e, c)])
+                inh_new = [st.edge_terms(e, c, kind=ev.INHERIT) for c in range(st.M)]
+                logZ_new = [_lse([pr + self.beta * lk for (_, _, pr, lk) in fixed[c]] + [inh_new[c][0] + self.beta * inh_new[c][1]]) for c in range(st.M)]
+                d = dprior + logq + sum(logZ_new) - sum(logZ)
                 self.acc["u"][1] += 1
                 if self._accept(d):
                     st.theta.u[e] = prop
-                    self._commit(new)
                     st.t_param += dprior
                     self.acc["u"][0] += 1
+                    inh, logZ = inh_new, logZ_new
+                    # events on edge e from their conditional under the new u_e
+                    for c in range(st.M):
+                        opts = fixed[c] + [(ev.INHERIT, None, inh[c][0], inh[c][1])]
+                        w = np.array([pr + self.beta * lk for (_, _, pr, lk) in opts]); w = np.exp(w - w.max()); w /= w.sum()
+                        k, dn, pr, lk = opts[int(rng.choice(len(opts), p=w))]
+                        st.event[(e, c)] = k
+                        if k == ev.BORROW:
+                            st.donor[(e, c)] = dn
+                        else:
+                            st.donor.pop((e, c), None)
+                        st.t_prior[(e, c)] = pr; st.t_lik[(e, c)] = lk
                 else:
                     st.ep[e] = old_ep
 

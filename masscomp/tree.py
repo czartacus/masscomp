@@ -60,7 +60,19 @@ class Forest:
         forms is a proper (normalised) distribution; mutual borrowing A<->B would not be."""
         bad = self.ancestors[recipient] | {recipient}
         pos = self.topo.index(recipient)
-        return [v for v in self.topo[:pos] if v not in bad]
+        out = [v for v in self.topo[:pos] if v not in bad]
+        if CROSS_FAMILY_ONLY:
+            # Within-family donors make the model degenerate: borrowing from the parent's sibling
+            # has the same likelihood as inheriting (same transducer, no branch rule), so only the
+            # prior on omega separates the two, and the chain drifts to "everything borrowed, omega
+            # large" (planted-rule trace, 2026-11-02). Cross-family borrowing is the thing the test
+            # needs omega for, so donors are restricted to nodes of other families (the joining
+            # root under H1 belongs to no family and is never a donor).
+            out = [v for v in out if self.family[v] != self.family[recipient] and self.family[v] >= 0]
+        return out
+
+
+CROSS_FAMILY_ONLY = True   # see Forest.donor_candidates
 
 
 def benchmark_a(related=False, t_root=1.5):
