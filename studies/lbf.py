@@ -18,6 +18,7 @@ WARMUP = int(sys.argv[7]) if len(sys.argv) > 7 else 1500
 POWER = float(sys.argv[8]) if len(sys.argv) > 8 else 2.0
 REP = int(sys.argv[9]) if len(sys.argv) > 9 else 0
 TAG = f"lbf_{SEED0}" + (f"_r{REP}" if REP else "")
+RK = f":r{REP}" if REP else ""      # partial-cache key suffix so replicates do not collide when merged
 M = 25
 
 
@@ -29,14 +30,19 @@ def _estimate(args):
     rng = np.random.default_rng(seed)
     th = sample_theta(f, ds.M, rng)            # same draw order as before for h1; h0 uses the h0 forest's draw
     sd = (seed if hyp == "h1" else seed + 7) + 100000 * REP
-    val, _, _ = stepping_stone(dsh, th, sd, K=K, n_sweeps=SWEEPS, burn=BURN, warmup=WARMUP, power=POWER)
-    return f"{seed}:{label}:{hyp}", val
+    val, terms, _ = stepping_stone(dsh, th, sd, K=K, n_sweeps=SWEEPS, burn=BURN, warmup=WARMUP, power=POWER)
+    # per-stone terms are kept so independent replicates (chains) can be pooled stone by stone in merge.py
+    return f"{seed}:{label}:{hyp}{RK}", {"total": val, "terms": [float(t) for t in terms]}
+
+
+def _total(v):
+    return v["total"] if isinstance(v, dict) else v
 
 
 def run_cell(seed, datasets):
     """All four log-marginals of a (related, unrelated) pair, in parallel when MASSCOMP_PROCS > 1.
     Each is cached in `partial` as soon as it finishes so an interrupted run resumes at the estimate."""
-    todo = [(seed, label, hyp, ds) for label, ds in datasets for hyp in ("h1", "h0") if f"{seed}:{label}:{hyp}" not in partial]
+    todo = [(seed, label, hyp, ds) for label, ds in datasets for hyp in ("h1", "h0") if f"{seed}:{label}:{hyp}{RK}" not in partial]
     if N_PROCS > 1 and len(todo) > 1:
         from concurrent.futures import ProcessPoolExecutor, as_completed
         with ProcessPoolExecutor(min(N_PROCS, len(todo))) as ex:
@@ -67,7 +73,7 @@ for depth in DEPTHS:
         t0 = time.time()
         run_cell(seed, pending)
         for label, ds in pending:
-            l1, l0 = partial[f"{seed}:{label}:h1"], partial[f"{seed}:{label}:h0"]; lbf = l1 - l0
+            l1, l0 = _total(partial[f"{seed}:{label}:h1{RK}"]), _total(partial[f"{seed}:{label}:h0{RK}"]); lbf = l1 - l0
             rows.append(dict(depth=depth, seed=seed, kind=label, rep=REP, lbf=lbf, logp_h1=l1, logp_h0=l0, secs=time.time() - t0))
             print(f"depth {depth} {label} seed {seed}: LBF={lbf:+.2f} (H1 {l1:.1f}, H0 {l0:.1f}) {rows[-1]['secs']:.0f}s", flush=True)
             _save()

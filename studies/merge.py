@@ -39,15 +39,43 @@ elif study == "confound":
     summary["pass"] = summary["frac_reps_with_warning"] >= 0.8
 elif study == "lbf":
     summary = {}
+    # Pool replicate chains stone by stone: each chain's stone term is log mean exp(d*ll) over its samples, so with
+    # equal sample counts the pooled term is logsumexp over chains minus log R. Pooled LBF rows are added as kind
+    # "<kind>" with rep="pooled" and used in the summary when present.
+    from scipy.special import logsumexp
+    terms = {}   # (seed, kind, hyp) -> list of per-chain term arrays
+    for key, v in partial.items():
+        if not isinstance(v, dict) or "terms" not in v:
+            continue
+        seed, kind, hyp = key.split(":")[:3]
+        terms.setdefault((int(seed), kind, hyp), []).append(np.array(v["terms"]))
+    depth_of = {(r["seed"], r["kind"]): r["depth"] for r in rows}
+    pooled = []
+    for (seed, kind), depth in depth_of.items():
+        c1, c0 = terms.get((seed, kind, "h1"), []), terms.get((seed, kind, "h0"), [])
+        if len(c1) >= 2 and len(c0) >= 2:
+            l1 = float(sum(logsumexp(np.stack(c1), axis=0) - np.log(len(c1))))
+            l0 = float(sum(logsumexp(np.stack(c0), axis=0) - np.log(len(c0))))
+            pooled.append(dict(depth=depth, seed=seed, kind=kind, rep="pooled", lbf=l1 - l0, logp_h1=l1, logp_h0=l0,
+                               n_chains=min(len(c1), len(c0))))
+    if pooled:
+        per_rep = [r for r in rows if r.get("rep") != "pooled"]
+        summary["replicate_noise_sd"] = float(np.mean([np.std([r["lbf"] for r in per_rep if (r["seed"], r["kind"]) == k])
+                                                       for k in depth_of if sum((r["seed"], r["kind"]) == k for r in per_rep) >= 2] or [np.nan]))
+        rows = [r for r in rows if r.get("rep") != "pooled"] + pooled
+        summary["n_pooled_cells"] = len(pooled)
+    use = [r for r in rows if r.get("rep") == "pooled"] or rows
+    rows_all, rows = rows, use
     for depth in sorted({r["depth"] for r in rows}):
         rel = np.array([r["lbf"] for r in rows if r["depth"] == depth and r["kind"] == "related"])
         un = np.array([r["lbf"] for r in rows if r["depth"] == depth and r["kind"] == "unrelated"])
         tau = float(np.percentile(un, 99)) if len(un) else float("nan")
-        summary[str(depth)] = dict(n_related=int(len(rel)), n_unrelated=int(len(un)),
+        summary[str(depth)] = dict(n_related=int(len(rel)), n_unrelated=int(len(un)), pooled=bool(rows and rows[0].get("rep") == "pooled"),
                                    related_mean=float(rel.mean()) if len(rel) else None, related_sd=float(rel.std()) if len(rel) else None,
                                    unrelated_mean=float(un.mean()) if len(un) else None, unrelated_sd=float(un.std()) if len(un) else None,
                                    unrelated_max=float(un.max()) if len(un) else None, tau=tau,
                                    power=float((rel > tau).mean()) if len(rel) and len(un) else None)
+    rows = rows_all if "rows_all" in dir() else rows
 else:
     raise SystemExit("unknown study")
 json.dump({"summary": summary, "rows": rows, "partial": partial, **meta}, open(out, "w"), indent=1)
