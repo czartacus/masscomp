@@ -52,3 +52,43 @@ def log_bayes_factor(ds1, ds0, theta1, theta0, seed, **kw):
     l1, _, _ = stepping_stone(ds1, theta1, seed, **kw)
     l0, _, _ = stepping_stone(ds0, theta0, seed + 1000, **kw)
     return l1 - l0, l1, l0
+
+
+def stepping_stone_pt(ds, theta0, seed, K=24, n_sweeps=2000, burn=500, thin=5, power=2.0, verbose=False,
+                      swap_every=1, **sweep_kw):
+    """Parallel-tempered stepping stone: all K+1 power posteriors run at once, and after every sweep
+    neighbouring stones propose to exchange states (accepted with prob min(1, exp((b_i - b_j)(ll_j - ll_i)))).
+    The estimator is the same as stepping_stone; the ladder only improves mixing, since a state stuck
+    in one forest/root mode at a cold stone can be replaced by one that wandered in from a hot stone.
+    Cost per sweep is (K+1) single-chain sweeps, so n_sweeps here corresponds to the per-stone chain
+    length of the sequential version. Returns (log_ml, per-stone terms, swap acceptance per pair)."""
+    rng = np.random.default_rng(seed)
+    betas = [(k / K) ** power for k in range(K + 1)]
+    chains = [Sampler(ds, theta0.copy(), np.random.default_rng(rng.integers(2 ** 31)), beta=b, init_from_prior=True)
+              for b in betas]
+    lls = [[] for _ in range(K + 1)]
+    acc = np.zeros(K); tries = np.zeros(K)
+    for i in range(n_sweeps):
+        for s in chains:
+            s.sweep(**sweep_kw)
+        if i % swap_every == 0:
+            cur = [s.st.log_lik() for s in chains]
+            for k in range(i % 2, K, 2):          # alternate even / odd pairs
+                a = (betas[k] - betas[k + 1]) * (cur[k + 1] - cur[k])
+                tries[k] += 1
+                if a >= 0 or rng.random() < math.exp(a):
+                    chains[k].st, chains[k + 1].st = chains[k + 1].st, chains[k].st
+                    cur[k], cur[k + 1] = cur[k + 1], cur[k]
+                    acc[k] += 1
+        if i >= burn and (i - burn) % thin == 0:
+            for k, s in enumerate(chains):
+                lls[k].append(s.st.log_lik())
+    log_terms = []
+    for k in range(K):
+        x = np.array(lls[k]); d = betas[k + 1] - betas[k]; m = x.max()
+        w = np.exp(d * (x - m))
+        log_terms.append(d * m + math.log(w.mean()))
+        if verbose:
+            print(f"  stone {k:2d} beta={betas[k]:.4f} mean ll={x.mean():.1f} sd={x.std():.1f} term={log_terms[-1]:.3f} "
+                  f"ess={w.sum() ** 2 / (w ** 2).sum():.1f} swap_acc={acc[k] / max(tries[k], 1):.2f}", flush=True)
+    return float(sum(log_terms)), log_terms, acc / np.maximum(tries, 1)

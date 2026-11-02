@@ -4,10 +4,17 @@ import sys, json
 import numpy as np
 
 study, out, ins = sys.argv[1], sys.argv[2], sys.argv[3:]
-FIELD = {"recovery": "root_set_cov", "confound": "frac_both", "lbf": "lbf"}[study]
+FIELD = {"recovery": "root_set_cov", "confound": "frac_both", "lbf": "lbf", "pt": "lbf"}[study]
 rows, partial, meta = [], {}, {}
 for p in ins:
     d = json.load(open(p))
+    if study == "pt":
+        if d.get("study") != "pt":
+            continue
+        d["rows"] = [dict(seed=d["seed"], kind=d["kind"], depth=d["depth"], rep=int(r), lbf=v["lbf"], logp_h1=v["h1"]["logp"],
+                          logp_h0=v["h0"]["logp"], swap_acc_min=min(v["h1"]["swap_acc"]), secs=v["h1"]["secs"] + v["h0"]["secs"])
+                     for r, v in d["reps"].items()]
+        d["partial"] = {f"{d['seed']}:{d['kind']}:{h}:r{r}": {"total": v[h]["logp"], "terms": v[h]["terms"]} for r, v in d["reps"].items() for h in ("h1", "h0")}
     rows.extend(r for r in d.get("rows", []) if FIELD in r)   # ignore files from other studies
     if isinstance(d.get("partial"), dict):
         partial.update(d["partial"])
@@ -37,7 +44,7 @@ elif study == "confound":
                    f_mass_mean=float(np.mean([r["f_mass_mean"] for r in rows if "f_mass_mean" in r])),
                    t_root_mean=float(np.mean([r["t_root_mean"] for r in rows])))
     summary["pass"] = summary["frac_reps_with_warning"] >= 0.8
-elif study == "lbf":
+elif study in ("lbf", "pt"):
     summary = {}
     # Pool replicate chains stone by stone: each chain's stone term is log mean exp(d*ll) over its samples, so with
     # equal sample counts the pooled term is logsumexp over chains minus log R. Pooled LBF rows are added as kind
