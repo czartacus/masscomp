@@ -27,6 +27,7 @@ on:
         required: false
         default: "24"
       lbf_warmup:
+        description: lbf warm-up sweeps at beta=1 (sequential estimator) / pt warm start sweeps (0 = every stone from the prior)
         required: false
         default: "1200"
       lbf_power:
@@ -106,7 +107,7 @@ jobs:
             recovery) python studies/recovery.py 1 ${{ matrix.seed }} ${{ inputs.sweeps }} ${{ inputs.burn }} ${{ inputs.concepts }} ;;
             confound) python studies/confound.py 1 ${{ matrix.seed }} ${{ inputs.sweeps }} ${{ inputs.burn }} ;;
             lbf)      python studies/lbf.py 1 ${{ matrix.seed }} ${{ matrix.depth }} ${{ inputs.lbf_K }} ${{ inputs.sweeps }} ${{ inputs.burn }} ${{ inputs.lbf_warmup }} ${{ inputs.lbf_power }} ${{ matrix.rep }} ;;
-            pt)       python studies/pt_check.py ${{ matrix.seed }} ${{ matrix.depth }} ${{ matrix.kind }} 1 ${{ inputs.lbf_K }} ${{ inputs.sweeps }} ${{ inputs.burn }} ${{ matrix.rep }} ${{ matrix.hyp }} ${{ inputs.concepts }} ;;
+            pt)       python studies/pt_check.py ${{ matrix.seed }} ${{ matrix.depth }} ${{ matrix.kind }} 1 ${{ inputs.lbf_K }} ${{ inputs.sweeps }} ${{ inputs.burn }} ${{ matrix.rep }} ${{ matrix.hyp }} ${{ inputs.concepts }} ${{ inputs.lbf_warmup }} ;;
           esac
       - uses: actions/upload-artifact@v4
         with:
