@@ -20,7 +20,9 @@ from masscomp.ffbs import draw as ffbs_draw
 N = int(sys.argv[1]) if len(sys.argv) > 1 else 1000
 M = int(sys.argv[2]) if len(sys.argv) > 2 else 6
 seed = int(sys.argv[3]) if len(sys.argv) > 3 else 1
-MODE = sys.argv[4] if len(sys.argv) > 4 else "full"   # full | params (theta moves only; latents+data resimulated
+MODE = sys.argv[4] if len(sys.argv) > 4 else "full"
+ONLY = sys.argv[5] if len(sys.argv) > 5 else None    # params mode: test one move (lam|u|rates|troot); the other theta
+                                                      # components are redrawn exactly from their prior conditional   # full | params (theta moves only; latents+data resimulated
                                                       # exactly given theta) | latents (theta fixed at one prior draw;
                                                       # latent moves only; data redrawn given theta, latents)
 NAMES = ["omega", "rho_mean", "lam0", "lam1", "lam2", "lam3", "t_root", "n_u", "sum_u2", "int_len", "leaf_len",
@@ -49,6 +51,31 @@ def redraw_data(s, rng):
             if y and len(y) <= 8:
                 st.y[(l, c)] = y
     return {(l, c): st.y[(l, c)] for l in f.leaves for c in range(st.M)}
+
+
+T_GRID = np.linspace(0.02, 12, 600)
+
+
+def resample_others(th, keep, rng):
+    """Exact draw of the theta components other than `keep` from their prior conditional given it
+    (lam, rho, omega are independent; u_e | t_root on the root edges; t_root | u on the root edges)."""
+    f = f0
+    new = sample_theta(f, M, rng)
+    R = f.roots[0]
+    if keep == "u":
+        new.u = {e: dict(d) for e, d in th.u.items()}
+        lp = np.array([ev.log_prior_troot(t) + sum(ev.log_prior_u(th.u.get(e, {}), t) for e in f.children[R]) for t in T_GRID])
+        w = np.exp(lp - lp.max()); w /= w.sum()
+        new.t_root = float(T_GRID[rng.choice(len(T_GRID), p=w)])
+    else:
+        if keep == "troot":
+            new.t_root = th.t_root
+        elif keep == "lam":
+            new.lam = th.lam.copy()
+        elif keep == "rates":
+            new.rho, new.omega = th.rho.copy(), th.omega
+        new.u = {e: ev.sample_u(new.t_root if e in f.children[R] else f.length[e], rng) for e in f.edges}
+    return new
 
 
 def ess(x):
@@ -85,6 +112,8 @@ if __name__ == "__main__":
     sc = []; acc = {}
     for i in range(N):
         s = Sampler(Dataset(f0, M, ds.leaf_forms), th, rng, init=(y, event, donor))
+        if ONLY:
+            s.PARAM_MOVES = {ONLY}
         s.sweep(clamp_latents=(MODE == "params"), clamp_params=(MODE == "latents"))
         st = s.st
         lp, ll = st.log_prior(), st.log_lik()
@@ -93,6 +122,8 @@ if __name__ == "__main__":
         for k, (a, b) in s.acc.items():
             acc[k] = [acc.get(k, [0, 0])[0] + a, acc.get(k, [0, 0])[1] + b]
         if MODE == "params":
+            if ONLY:
+                th = resample_others(th, ONLY, rng)
             ds = simulate(with_root_length(f0, th.t_root), th, M, rng)
             t = ds.truth
             y = {k: v for k, v in t["y"].items() if k[0] not in leaves}; event, donor = dict(t["event"]), dict(t["donor"])
