@@ -27,7 +27,16 @@ print(f"edge {e}, opportunities (inherited, parent has segment 0): {opp}, true o
 th0 = sample_theta(f, M, np.random.default_rng(seed + 1))
 if len(sys.argv) > 4 and sys.argv[4] == "nou":
     th0.u = {k: {} for k in f.edges}        # start without rules (the study chains start from the prior)
-_, samples = run_chain(ds, th0, seed + 2, SW, SW // 3, thin=5, init_from_prior=True)
+if len(sys.argv) > 4 and sys.argv[4] == "clamp":        # latents at truth: tests the parameter moves alone
+    leafset = set(f.leaves); tr = ds.truth
+    init = ({k: v for k, v in tr["y"].items() if k[0] not in leafset}, dict(tr["event"]), dict(tr["donor"]))
+    _, samples = run_chain(ds, th0, seed + 2, SW, SW // 3, thin=5, init=init, clamp_latents=True)
+elif len(sys.argv) > 4 and sys.argv[4] == "truth":      # start at truth, nothing clamped
+    leafset = set(f.leaves); tr = ds.truth
+    init = ({k: v for k, v in tr["y"].items() if k[0] not in leafset}, dict(tr["event"]), dict(tr["donor"]))
+    _, samples = run_chain(ds, th0, seed + 2, SW, SW // 3, thin=5, init=init)
+else:
+    _, samples = run_chain(ds, th0, seed + 2, SW, SW // 3, thin=5, init_from_prior=True)
 incl = np.mean([1.0 if (P, F) in s["u"].get(e, {}) else 0.0 for s in samples])
 w = [s["u"][e][(P, F)] for s in samples if (P, F) in s["u"].get(e, {})]
 om = np.mean([s["omega"] for s in samples])
