@@ -20,6 +20,8 @@ class Sampler:
     def __init__(self, ds, theta, rng, beta=1.0, init=None, init_from_prior=False):
         self.rng = rng
         self.beta = beta
+        self.bp = 1.0        # temperature on the prior-side terms (edge priors, events, root forms); 1 for
+                             # inference and for the stepping stone, = beta in full-tempering PT (mixing only)
         y, event, donor = {}, {}, {}
         f = ds.forest
         if len(f.roots) == 1 and f.family[f.roots[0]] == -1:
@@ -66,7 +68,7 @@ class Sampler:
         for (e, c) in pairs:
             pr, lk = st.edge_terms(e, c, **over.get((e, c), {}))
             new[(e, c)] = (pr, lk)
-            d += (pr - st.t_prior[(e, c)]) + self.beta * (lk - st.t_lik[(e, c)])
+            d += self.bp * (pr - st.t_prior[(e, c)]) + self.beta * (lk - st.t_lik[(e, c)])
         return d, new
 
     def _commit(self, new):
@@ -134,7 +136,7 @@ class Sampler:
                     dterm, new = self._delta_terms([(e, c) for e in edges], over)
                     droot = 0.0
                     if f.parent[v] < 0:
-                        droot = ev.log_G(prop) - st.t_prior[("root", v, c)]
+                        droot = self.bp * (ev.log_G(prop) - st.t_prior[("root", v, c)])
                     self.acc["y"][1] += 1
                     if self._accept(dterm + droot + logq):
                         self._commit(new)
@@ -208,11 +210,11 @@ class Sampler:
                 logw = np.empty(len(cands)); terms = []
                 for i, cand in enumerate(cands):
                     st.y[(v, c)] = cand
-                    w = ev.log_G(cand) if is_root else 0.0
+                    w = self.bp * ev.log_G(cand) if is_root else 0.0
                     tt = {}
                     for e in edges:
                         pr, lk = st.edge_terms(e, c)
-                        tt[(e, c)] = (pr, lk); w += pr + self.beta * lk
+                        tt[(e, c)] = (pr, lk); w += self.bp * pr + self.beta * lk
                     logw[i] = w; terms.append(tt)
                 p = np.exp(logw - logw.max()); p /= p.sum()
                 i = int(rng.choice(len(cands), p=p))
@@ -262,7 +264,7 @@ class Sampler:
                 over[(e, c)] = {}
         st.y[(v, c)] = prop
         dterm, new = self._delta_terms([(e, c) for e in edges], over)
-        droot = (ev.log_G(prop) - st.t_prior[("root", v, c)]) if is_root else 0.0
+        droot = self.bp * (ev.log_G(prop) - st.t_prior[("root", v, c)]) if is_root else 0.0
         self.acc["ffbs"][1] += 1
         if self._accept(dterm + droot + logq):
             self._commit(new)
@@ -432,10 +434,10 @@ class Sampler:
         opts, logw = [], []
         for k in (ev.INHERIT, ev.REPLACE):
             pr, lk = st.edge_terms(e, c, kind=k)
-            opts.append((k, None, pr, lk)); logw.append(pr + self.beta * lk)
+            opts.append((k, None, pr, lk)); logw.append(self.bp * pr + self.beta * lk)
         for d in st.cands[e]:
             pr, lk = st.edge_terms(e, c, kind=ev.BORROW, d=d)
-            opts.append((ev.BORROW, d, pr, lk)); logw.append(pr + self.beta * lk)
+            opts.append((ev.BORROW, d, pr, lk)); logw.append(self.bp * pr + self.beta * lk)
         w = np.array(logw); w = np.exp(w - w.max()); w /= w.sum()
         k, d, pr, lk = opts[int(rng.choice(len(opts), p=w))]
         st.event[(e, c)] = k
@@ -547,7 +549,7 @@ class Sampler:
             for e in st.f.edges:
                 pr, lk = st.edge_terms(e, c)
                 new[(e, c)] = (pr, lk)
-                d += (pr - st.t_prior[(e, c)]) + self.beta * (lk - st.t_lik[(e, c)])
+                d += self.bp * (pr - st.t_prior[(e, c)]) + self.beta * (lk - st.t_lik[(e, c)])
         if self._accept(d):
             self._commit(new)
             st.t_param += dprior_param
@@ -626,7 +628,7 @@ class Sampler:
                 fixed.append(opts)
             # inherit terms under the current u_e, and the current per-concept log Z
             inh = [st.edge_terms(e, c, kind=ev.INHERIT) for c in range(st.M)]
-            logZ = [_lse([pr + self.beta * lk for (_, _, pr, lk) in fixed[c]] + [inh[c][0] + self.beta * inh[c][1]]) for c in range(st.M)]
+            logZ = [_lse([self.bp * pr + self.beta * lk for (_, _, pr, lk) in fixed[c]] + [self.bp * inh[c][0] + self.beta * inh[c][1]]) for c in range(st.M)]
             for _ in range(n_prop):
                 u = st.theta.u.setdefault(e, {})
                 present = list(u.keys())
@@ -668,7 +670,7 @@ class Sampler:
                 old_ep = st.ep[e]
                 st.ep[e] = EdgeParams(st.theta.lam, prop)
                 inh_new = [st.edge_terms(e, c, kind=ev.INHERIT) for c in range(st.M)]
-                logZ_new = [_lse([pr + self.beta * lk for (_, _, pr, lk) in fixed[c]] + [inh_new[c][0] + self.beta * inh_new[c][1]]) for c in range(st.M)]
+                logZ_new = [_lse([self.bp * pr + self.beta * lk for (_, _, pr, lk) in fixed[c]] + [self.bp * inh_new[c][0] + self.beta * inh_new[c][1]]) for c in range(st.M)]
                 d = dprior + logq + sum(logZ_new) - sum(logZ)
                 self.acc["u"][1] += 1
                 if self._accept(d):
@@ -679,7 +681,7 @@ class Sampler:
                     # events on edge e from their conditional under the new u_e
                     for c in range(st.M):
                         opts = fixed[c] + [(ev.INHERIT, None, inh[c][0], inh[c][1])]
-                        w = np.array([pr + self.beta * lk for (_, _, pr, lk) in opts]); w = np.exp(w - w.max()); w /= w.sum()
+                        w = np.array([self.bp * pr + self.beta * lk for (_, _, pr, lk) in opts]); w = np.exp(w - w.max()); w /= w.sum()
                         k, dn, pr, lk = opts[int(rng.choice(len(opts), p=w))]
                         st.event[(e, c)] = k
                         if k == ev.BORROW:
@@ -712,13 +714,13 @@ class Sampler:
 
     def _logZ(self, rem):
         st = self.st
-        return {ec: _lse([r + st.evp[ec[0]][ec[1]][k] + self.beta * lk for (k, _, r, lk) in opts]) for ec, opts in rem.items()}
+        return {ec: _lse([self.bp * (r + st.evp[ec[0]][ec[1]][k]) + self.beta * lk for (k, _, r, lk) in opts]) for ec, opts in rem.items()}
 
     def _resample_events(self, rem):
         """Gibbs draw of the events in rem from their conditional under the current evp."""
         st, rng = self.st, self.rng
         for (e, c), opts in rem.items():
-            w = np.array([r + st.evp[e][c][k] + self.beta * lk for (k, _, r, lk) in opts]); w = np.exp(w - w.max()); w /= w.sum()
+            w = np.array([self.bp * (r + st.evp[e][c][k]) + self.beta * lk for (k, _, r, lk) in opts]); w = np.exp(w - w.max()); w /= w.sum()
             k, dn, r, lk = opts[int(rng.choice(len(opts), p=w))]
             st.event[(e, c)] = k
             if k == ev.BORROW:

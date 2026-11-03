@@ -54,7 +54,7 @@ def log_bayes_factor(ds1, ds0, theta1, theta0, seed, **kw):
     return l1 - l0, l1, l0
 
 
-def _pt_worker(conn, ds, theta0, seeds, betas, sweep_kw, init=None, from_prior=True):
+def _pt_worker(conn, ds, theta0, seeds, betas, sweep_kw, init=None, from_prior=True, full=False):
     """Owns a block of PT chains. Protocol: receive list of betas for its chains (or None to stop),
     sweep each chain once at that beta, reply with the untempered log-likelihoods."""
     chains = [Sampler(ds, theta0.copy(), np.random.default_rng(sd), beta=b, init=init, init_from_prior=init is None and from_prior)
@@ -66,6 +66,8 @@ def _pt_worker(conn, ds, theta0, seeds, betas, sweep_kw, init=None, from_prior=T
         bl, snap = msg if isinstance(msg, tuple) else (msg, -1)
         for s, b in zip(chains, bl):
             s.beta = b
+            if full:
+                s.bp = b
             s.sweep(**sweep_kw)
         conn.send(([s.st.log_lik() for s in chains], chains[snap].snapshot() if snap >= 0 else None))
     conn.close()
@@ -73,7 +75,7 @@ def _pt_worker(conn, ds, theta0, seeds, betas, sweep_kw, init=None, from_prior=T
 
 def stepping_stone_pt(ds, theta0, seed, K=24, n_sweeps=2000, burn=500, thin=5, power=2.0, verbose=False,
                       swap_every=1, n_procs=None, adapt=True, adapt_every=25, warmup=0, record_cold=False,
-                      init_from_prior=True, **sweep_kw):
+                      init_from_prior=True, full=False, **sweep_kw):
     """Parallel-tempered stepping stone: all K+1 power posteriors run at once, and after every sweep
     neighbouring stones propose to exchange states (accepted with prob min(1, exp((b_i - b_j)(ll_j - ll_i)))).
     The estimator is the same as stepping_stone; the ladder only improves mixing, since a state stuck
@@ -92,6 +94,11 @@ def stepping_stone_pt(ds, theta0, seed, K=24, n_sweeps=2000, burn=500, thin=5, p
     record_cold=True also returns, in info["cold"], the snapshots (Sampler.snapshot) of whichever chain
     holds beta = 1 at each recorded sweep: a tempered posterior sample for studies whose single chains
     cannot leave the child-copy basin (root_diag, 3 Nov 2026).
+
+    full=True also tempers the prior-side terms (Sampler.bp = beta): the whole target is flattened, so
+    hot replicas can cross barriers that sit in the internal-edge / event terms rather than the leaf
+    likelihood. The stepping-stone value is then NOT a marginal likelihood; use with record_cold for
+    mixing only.
 
     warmup > 0 first runs one chain at beta = 1 for that many sweeps from a prior draw and starts every
     stone from its final state (parameters and latents); the stones then relax downhill to their own
@@ -177,7 +184,7 @@ def stepping_stone_pt(ds, theta0, seed, K=24, n_sweeps=2000, burn=500, thin=5, p
         for blk in blocks:
             parent, child = ctx.Pipe()
             p = ctx.Process(target=_pt_worker, args=(child, ds, theta0, [seeds[c] for c in blk],
-                                                      [betas[c] for c in blk], sweep_kw, init, init_from_prior), daemon=True)
+                                                      [betas[c] for c in blk], sweep_kw, init, init_from_prior, full), daemon=True)
             p.start(); procs.append(p); conns.append(parent)
         try:
             for i in range(n_sweeps):
@@ -212,6 +219,8 @@ def stepping_stone_pt(ds, theta0, seed, K=24, n_sweeps=2000, burn=500, thin=5, p
         for i in range(n_sweeps):
             for c, s in enumerate(chains):
                 s.beta = betas[rank[c]]
+                if full:
+                    s.bp = s.beta
                 s.sweep(**sweep_kw)
             cur_by_chain = [s.st.log_lik() for s in chains]
             if record_cold and i >= burn and (i - burn) % thin == 0:
