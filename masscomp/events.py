@@ -11,7 +11,11 @@ LOG_G_LEN = -math.log(MAX_LEN - MIN_LEN + 1)
 # ---- priors -----------------------------------------------------------------------
 LAM_MU = np.array([4.5, 3.0, 2.0, 6.0])   # identity bonus, feature distance, deletion, insertion
 LAM_SD = 1.0
-SIGMA2_U = 1.0                            # u_e[s,s'] ~ N(0, t_e * SIGMA2_U)
+SIGMA2_U = 16.0                           # u_e[s,s'] ~ N(0, t_e * SIGMA2_U); slab sd 4*sqrt(t).
+# With sd 1 (the plan's value) a prior-drawn rule almost never changes a substitution probability
+# by more than a few percent (identity sits at logit ~6, a one-feature neighbour at ~ -0.3), so
+# no prior-drawn rule is audible in the data and the u layer cannot be tested. Sound laws are
+# near-categorical: a slab wide enough to reach logit parity with identity is the right prior.
 N_U_SLOTS = N_SEG * (N_OUT - 1) + N_SEG   # off-diagonal sub/del entries + insertion entries
 PI_U = 3.0 / N_U_SLOTS                    # each slot present with this prob (expected 3 per edge)
 RHO_A, RHO_RATE = 2.0, 2.0

@@ -3,6 +3,7 @@ import sys, time
 import numpy as np
 from masscomp.simulate import simulate_pair
 from masscomp import events as ev
+from masscomp.segments import EPS
 from studies.common import fit, rhat, ess, covered, pooled, per_chain, root_set_coverage, recoverable_roots, save
 
 N_REPS = int(sys.argv[1]) if len(sys.argv) > 1 else 50
@@ -12,6 +13,22 @@ BURN = int(sys.argv[4]) if len(sys.argv) > 4 else 500
 M = int(sys.argv[5]) if len(sys.argv) > 5 else 25
 DEPTH = 1.5
 NAME = "recovery"
+
+
+def fired(ds, e, slot):
+    """Number of inherited concepts on edge e where the rule's output is visible in the child."""
+    tr, f, p, n = ds.truth, ds.forest, ds.forest.parent[e], 0
+    for c in range(ds.M):
+        if tr["event"].get((e, c)) != ev.INHERIT:
+            continue
+        yp, yc = tr["y"][(p, c)], tr["y"][(e, c)]
+        if slot[0] == "ins":
+            n += yc.count(slot[1]) > yp.count(slot[1])
+        else:
+            s, o = slot
+            if s in yp and ((o == EPS and yc.count(s) < yp.count(s)) or (o != EPS and yc.count(o) > yp.count(o))):
+                n += 1
+    return n
 
 import os, json as _json
 _prev = f"results/{NAME}_{SEED0}.json"
@@ -40,8 +57,10 @@ for r in range(N_REPS):
         row["truth"][name] = float(truth); row["post_mean"][name] = float(vals.mean())
     # nonzero u_e entries: spike-and-slab, so report posterior inclusion probability and, for
     # entries with |w| > 1 (the only ones the data can see), interval coverage of the value
-    # "detectable" entries: |w| > 2.5 with at least 3 inherited concepts whose parent form offers
-    # the input segment (otherwise the entry has no observable effect and no method can find it)
+    # "detectable" entries: |w| > 2.5 that visibly fired on >= 3 inherited concepts (child shows the
+    # rule's output where the parent did not). An entry that never fired has no observable effect,
+    # whatever its w, and no method can find it; studies/u_diag.py showed the old "opportunity"
+    # criterion counted such entries.
     incl, uc_big, uc_det, inc_det = [], [], [], []
     tr = ds.truth; f = ds.forest
     for e, ud in th.u.items():
@@ -51,9 +70,7 @@ for r in range(N_REPS):
             nz = vals[vals != 0]
             if abs(w) > 1.0:
                 uc_big.append(covered(w, nz) if len(nz) > 10 else False)
-            seg = slot[1] if slot[0] == "ins" else slot[0]
-            opp = sum(1 for c in range(M) if tr["event"].get((e, c)) == ev.INHERIT and (slot[0] == "ins" or seg in tr["y"][(f.parent[e], c)]))
-            if abs(w) > 2.5 and opp >= 3:
+            if abs(w) > 2.5 and fired(ds, e, slot) >= 3:
                 uc_det.append(covered(w, nz) if len(nz) > 10 else False); inc_det.append(float((vals != 0).mean()))
     row["u_inclusion_mean"] = float(np.mean(incl)) if incl else None
     row["cover"]["u_big_entries"] = float(np.mean(uc_big)) if uc_big else None

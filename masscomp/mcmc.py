@@ -331,7 +331,7 @@ class Sampler:
         return None
 
     # ------------------------------------------------------------------ move 4: u (spike-and-slab)
-    U_DATA_FRAC, U_DATA_MU, U_DATA_SD = 0.5, 2.0, 1.0
+    U_DATA_FRAC, U_DATA_MU, U_DATA_SD = 0.5, 4.0, 2.0
 
     def _u_counts(self, e):
         """Crude substitution/deletion/insertion counts on edge e from the current

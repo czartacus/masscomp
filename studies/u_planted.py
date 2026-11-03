@@ -25,6 +25,8 @@ ds = simulate(f, th, M, rng, root_forms=roots)
 opp = sum(1 for c in range(M) if ds.truth["event"].get((e, c)) == ev.INHERIT and P in ds.truth["y"][(f.parent[e], c)])
 print(f"edge {e}, opportunities (inherited, parent has segment 0): {opp}, true omega {th.omega:.3f}")
 th0 = sample_theta(f, M, np.random.default_rng(seed + 1))
+if len(sys.argv) > 4 and sys.argv[4] == "nou":
+    th0.u = {k: {} for k in f.edges}        # start without rules (the study chains start from the prior)
 _, samples = run_chain(ds, th0, seed + 2, SW, SW // 3, thin=5, init_from_prior=True)
 incl = np.mean([1.0 if (P, F) in s["u"].get(e, {}) else 0.0 for s in samples])
 w = [s["u"][e][(P, F)] for s in samples if (P, F) in s["u"].get(e, {})]
