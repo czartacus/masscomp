@@ -3,6 +3,7 @@ posterior-calibration problem? Fit one recovery dataset three ways and compare t
   copy  : the study protocol (child-copy init, theta from the prior)
   truth : latents and theta started at the simulated truth
   prior : latents and theta from a prior draw
+  ptK   : parallel-tempered chain with K rungs (study start), recording the beta = 1 replica
 If 'truth' covers ~0.9 and 'copy' ~0.6 the sampler is stuck near its start; if all are ~0.6 the sampler
 mixes but the posterior sets are too narrow for another reason (metric, or a simulate/infer mismatch).
 Usage: python studies/root_diag.py <seed> [sweeps] [burn] [modes]"""
@@ -32,6 +33,14 @@ def one(args):
     elif mode == "prior":
         th0 = sample_theta(ds.forest, ds.M, rng)
         _, out = run_chain(ds, th0, seed=seed * 100 + 50 + k, n_sweeps=SW, burn=BURN, thin=5, init_from_prior=True)
+    elif mode.startswith("pt"):
+        # parallel-tempered chain, K rungs; the beta = 1 replica is the sample. Study-protocol start.
+        from masscomp.marglik import stepping_stone_pt
+        Kpt = int(mode[2:]) if len(mode) > 2 else 4
+        th0 = sample_theta(ds.forest, ds.M, rng)
+        _, _, _, _, info = stepping_stone_pt(ds, th0, seed * 100 + 50 + k, K=Kpt, n_sweeps=SW, burn=BURN, thin=5,
+                                             n_procs=N_PROCS, record_cold=True, init_from_prior=False)
+        out = info["cold"]
     else:
         th0 = sample_theta(ds.forest, ds.M, rng)
         _, out = run_chain(ds, th0, seed=seed * 100 + 50 + k, n_sweeps=SW, burn=BURN, thin=5)
@@ -41,7 +50,9 @@ def one(args):
 if __name__ == "__main__":
     jobs = [(m, k) for m in modes for k in range(3)]
     t0 = time.time()
-    if N_PROCS > 1:
+    if any(m.startswith("pt") for m in modes):
+        res = [one(j) for j in jobs]          # the PT runs use the processes internally
+    elif N_PROCS > 1:
         from concurrent.futures import ProcessPoolExecutor
         with ProcessPoolExecutor(N_PROCS) as ex:
             res = list(ex.map(one, jobs))

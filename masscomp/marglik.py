@@ -54,24 +54,26 @@ def log_bayes_factor(ds1, ds0, theta1, theta0, seed, **kw):
     return l1 - l0, l1, l0
 
 
-def _pt_worker(conn, ds, theta0, seeds, betas, sweep_kw, init=None):
+def _pt_worker(conn, ds, theta0, seeds, betas, sweep_kw, init=None, from_prior=True):
     """Owns a block of PT chains. Protocol: receive list of betas for its chains (or None to stop),
     sweep each chain once at that beta, reply with the untempered log-likelihoods."""
-    chains = [Sampler(ds, theta0.copy(), np.random.default_rng(sd), beta=b, init=init, init_from_prior=init is None)
+    chains = [Sampler(ds, theta0.copy(), np.random.default_rng(sd), beta=b, init=init, init_from_prior=init is None and from_prior)
               for sd, b in zip(seeds, betas)]
     while True:
         msg = conn.recv()
         if msg is None:
             break
-        for s, b in zip(chains, msg):
+        bl, snap = msg if isinstance(msg, tuple) else (msg, -1)
+        for s, b in zip(chains, bl):
             s.beta = b
             s.sweep(**sweep_kw)
-        conn.send([s.st.log_lik() for s in chains])
+        conn.send(([s.st.log_lik() for s in chains], chains[snap].snapshot() if snap >= 0 else None))
     conn.close()
 
 
 def stepping_stone_pt(ds, theta0, seed, K=24, n_sweeps=2000, burn=500, thin=5, power=2.0, verbose=False,
-                      swap_every=1, n_procs=None, adapt=True, adapt_every=25, warmup=0, **sweep_kw):
+                      swap_every=1, n_procs=None, adapt=True, adapt_every=25, warmup=0, record_cold=False,
+                      init_from_prior=True, **sweep_kw):
     """Parallel-tempered stepping stone: all K+1 power posteriors run at once, and after every sweep
     neighbouring stones propose to exchange states (accepted with prob min(1, exp((b_i - b_j)(ll_j - ll_i)))).
     The estimator is the same as stepping_stone; the ladder only improves mixing, since a state stuck
@@ -87,6 +89,10 @@ def stepping_stone_pt(ds, theta0, seed, K=24, n_sweeps=2000, burn=500, thin=5, p
     that d_beta * sd(ll) is equal across stones (see maybe_adapt); beta_0 = 0 and beta_K = 1 stay fixed
     and the ladder is frozen before any likelihood is recorded, so the estimator is unchanged.
 
+    record_cold=True also returns, in info["cold"], the snapshots (Sampler.snapshot) of whichever chain
+    holds beta = 1 at each recorded sweep: a tempered posterior sample for studies whose single chains
+    cannot leave the child-copy basin (root_diag, 3 Nov 2026).
+
     warmup > 0 first runs one chain at beta = 1 for that many sweeps from a prior draw and starts every
     stone from its final state (parameters and latents); the stones then relax downhill to their own
     equilibria, which is fast, instead of each climbing from the prior, which the form sampler does slowly
@@ -100,7 +106,7 @@ def stepping_stone_pt(ds, theta0, seed, K=24, n_sweeps=2000, burn=500, thin=5, p
     seeds = [int(rng.integers(2 ** 31)) for _ in range(K + 1)]
     init = None
     if warmup > 0:
-        warm = Sampler(ds, theta0.copy(), np.random.default_rng(int(rng.integers(2 ** 31))), beta=1.0, init_from_prior=True)
+        warm = Sampler(ds, theta0.copy(), np.random.default_rng(int(rng.integers(2 ** 31))), beta=1.0, init_from_prior=init_from_prior)
         for _ in range(warmup):
             warm.sweep(**sweep_kw)
         theta0 = warm.st.theta.copy()
@@ -108,6 +114,7 @@ def stepping_stone_pt(ds, theta0, seed, K=24, n_sweeps=2000, burn=500, thin=5, p
         if verbose:
             print(f"  warmup {warmup} sweeps at beta=1: ll={warm.st.log_lik():.1f}", flush=True)
     lls = [[] for _ in range(K + 1)]
+    cold = []            # snapshots of whichever chain holds beta = 1 (record_cold)
     acc = np.zeros(K); tries = np.zeros(K)
     # rank[c] = stone index currently held by chain c; chain_of[k] = chain holding stone k
     rank = list(range(K + 1)); chain_of = list(range(K + 1))
@@ -170,16 +177,21 @@ def stepping_stone_pt(ds, theta0, seed, K=24, n_sweeps=2000, burn=500, thin=5, p
         for blk in blocks:
             parent, child = ctx.Pipe()
             p = ctx.Process(target=_pt_worker, args=(child, ds, theta0, [seeds[c] for c in blk],
-                                                      [betas[c] for c in blk], sweep_kw, init), daemon=True)
+                                                      [betas[c] for c in blk], sweep_kw, init, init_from_prior), daemon=True)
             p.start(); procs.append(p); conns.append(parent)
         try:
             for i in range(n_sweeps):
+                want = record_cold and i >= burn and (i - burn) % thin == 0
                 for blk, conn in zip(blocks, conns):
-                    conn.send([betas[rank[c]] for c in blk])
+                    local = blk.index(chain_of[K]) if (want and chain_of[K] in blk) else -1
+                    conn.send(([betas[rank[c]] for c in blk], local))
                 cur_by_chain = [0.0] * (K + 1)
                 for blk, conn in zip(blocks, conns):
-                    for c, ll in zip(blk, conn.recv()):
+                    lls_blk, snap = conn.recv()
+                    for c, ll in zip(blk, lls_blk):
                         cur_by_chain[c] = ll
+                    if snap is not None:
+                        cold.append(snap)
                 if i == burn:
                     acc[:] = 0; tries[:] = 0            # report acceptance on the frozen ladder
                 if i % swap_every == 0:
@@ -195,13 +207,15 @@ def stepping_stone_pt(ds, theta0, seed, K=24, n_sweeps=2000, burn=500, thin=5, p
             for p in procs:
                 p.join()
     else:
-        chains = [Sampler(ds, theta0.copy(), np.random.default_rng(sd), beta=b, init=init, init_from_prior=init is None)
+        chains = [Sampler(ds, theta0.copy(), np.random.default_rng(sd), beta=b, init=init, init_from_prior=init is None and init_from_prior)
                   for sd, b in zip(seeds, betas)]
         for i in range(n_sweeps):
             for c, s in enumerate(chains):
                 s.beta = betas[rank[c]]
                 s.sweep(**sweep_kw)
             cur_by_chain = [s.st.log_lik() for s in chains]
+            if record_cold and i >= burn and (i - burn) % thin == 0:
+                cold.append(chains[chain_of[K]].snapshot())
             if i == burn:
                 acc[:] = 0; tries[:] = 0
             if i % swap_every == 0:
@@ -213,7 +227,7 @@ def stepping_stone_pt(ds, theta0, seed, K=24, n_sweeps=2000, burn=500, thin=5, p
                     lls[k].append(cur[k])
     log_terms = []
     info = dict(mean_ll=[float(np.mean(lls[k])) for k in range(K + 1)], sd_ll=[float(np.std(lls[k])) for k in range(K + 1)],
-                ess=[], warmup=warmup)
+                ess=[], warmup=warmup, cold=cold)
     for k in range(K):
         x = np.array(lls[k]); d = betas[k + 1] - betas[k]; m = x.max()
         w = np.exp(d * (x - m))
