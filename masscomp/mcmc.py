@@ -674,9 +674,12 @@ class Sampler:
     def _u_slot_logq(self, slot, absent, counts):
         """log q(slot) for a birth over the given absent set: mixture of uniform and count-weighted."""
         tot = sum(counts.get(a, 0) for a in absent)
-        q = (1 - self.U_DATA_FRAC) / len(absent)
-        if tot > 0:
-            q += self.U_DATA_FRAC * counts.get(slot, 0) / tot
+        if tot == 0:
+            # the data-informed branch falls back to a uniform draw when there are no mismatches,
+            # so the whole mixture is uniform (the old (1 - FRAC)/n understated q by log 2 and
+            # accepted births too often; Geweke test, 3 Nov 2026)
+            return -math.log(len(absent))
+        q = (1 - self.U_DATA_FRAC) / len(absent) + self.U_DATA_FRAC * counts.get(slot, 0) / tot
         return math.log(q)
 
     def _u_w_logq(self, w, t):
