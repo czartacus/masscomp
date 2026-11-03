@@ -67,6 +67,8 @@ if __name__ == "__main__":
     # marginal-conditional
     mc = []
     th_fix = sample_theta(f0, M, rng) if MODE == "latents" else None
+    if th_fix is not None:
+        th_fix.lam[3] = 7.0; th_fix.t_root = 1.0     # keep forms short: the sampler truncates at MAX_FORM_LEN
     for i in range(N):
         th = th_fix if th_fix is not None else sample_theta(f0, M, rng)
         ds = simulate(with_root_length(f0, th.t_root), th, M, rng)

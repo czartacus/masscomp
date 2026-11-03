@@ -894,27 +894,43 @@ class Sampler:
     # ------------------------------------------------------------------ sweep
     FFBS_P = 0.25      # fraction of (node, concept) visited by the lattice FFBS move per sweep (0 = off)
     REGROW_P = float(__import__("os").environ.get("MASSCOMP_REGROW_P", "0"))   # fraction of (subtree root, concept) regrown per sweep
-    TEMPER_P = float(__import__("os").environ.get("MASSCOMP_TEMPER_P", "0"))   # fraction of concepts given a tempered excursion per sweep
+    TEMPER_P = float(__import__("os").environ.get("MASSCOMP_TEMPER_P", "0"))
+    LATENT_MOVES = set(__import__("os").environ.get("MASSCOMP_LATENT_MOVES", "gibbs,ffbs,jffbs,forms,joint,events").split(","))
+    PARAM_MOVES = set(__import__("os").environ.get("MASSCOMP_PARAM_MOVES", "lam,u,rates,troot").split(","))   # diagnostics only   # fraction of concepts given a tempered excursion per sweep
 
     def sweep(self, clamp_latents=False, clamp_u=False, clamp_params=False):
         if not clamp_latents:
-            self.inlattice = self.move_forms_gibbs()
+            lm = self.LATENT_MOVES
+            if "gibbs" in lm:
+                self.inlattice = self.move_forms_gibbs()
             if self.FFBS_P > 0:
-                self.move_forms_ffbs(self.FFBS_P)
-                self.move_joint_ffbs(self.FFBS_P)
+                if "ffbs" in lm:
+                    self.move_forms_ffbs(self.FFBS_P)
+                if "jffbs" in lm:
+                    self.move_joint_ffbs(self.FFBS_P)
             if self.REGROW_P > 0:
                 self.move_regrow(self.REGROW_P)
             if self.TEMPER_P > 0:
                 cs = [c for c in range(self.st.M) if self.rng.random() < self.TEMPER_P]
                 if cs:
                     self.move_tempered(cs)
-            self.move_forms(n_prop=1); self.move_joint(); self.move_events()
+            if "forms" in lm:
+                self.move_forms(n_prop=1)
+            if "joint" in lm:
+                self.move_joint()
+            if "events" in lm:
+                self.move_events()
         if clamp_params:
             return
-        self.move_lam()
-        if not clamp_u:
+        pm = self.PARAM_MOVES
+        if "lam" in pm:
+            self.move_lam()
+        if not clamp_u and "u" in pm:
             self.move_u()
-        self.move_rates(); self.move_troot()
+        if "rates" in pm:
+            self.move_rates()
+        if "troot" in pm:
+            self.move_troot()
 
     def snapshot(self):
         st = self.st
