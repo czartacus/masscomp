@@ -17,7 +17,8 @@ for p in ins:
             for h in ("h1", "h0"):
                 if h in v:
                     cell[h] = v[h]
-                    partial[f"{d['seed']}:{d['kind']}:{d['depth']}:{h}:r{r}"] = {"total": v[h]["logp"], "terms": v[h]["terms"]}
+                    partial[f"{d['seed']}:{d['kind']}:{d['depth']}:{h}:r{r}"] = {"total": v[h]["logp"], "terms": v[h]["terms"],
+                                                                                "betas": v[h].get("betas")}
         d["rows"] = []
     rows.extend(r for r in d.get("rows", []) if FIELD in r)   # ignore files from other studies
     if isinstance(d.get("partial"), dict):
@@ -72,16 +73,22 @@ elif study in ("lbf", "pt"):
         else:                                    # legacy key without depth
             seed, kind, hyp = int(parts[0]), parts[1], parts[2]
             depth = next((r["depth"] for r in rows if r["seed"] == seed and r["kind"] == kind), None)
-        terms.setdefault((seed, kind, depth, hyp), []).append(np.array(v["terms"]))
+        terms.setdefault((seed, kind, depth, hyp), []).append((np.array(v["terms"]), v.get("betas"), v["total"]))
     cells = sorted({(r["seed"], r["kind"], r["depth"]) for r in rows})
     pooled = []
+    def pool(chains):
+        """Stone-by-stone pooling is only valid when every chain used the same ladder (fixed betas);
+        with adaptive ladders the stone terms are not comparable, so fall back to the mean of the totals."""
+        ladders = [tuple(np.round(b, 6)) if b is not None else None for _, b, _ in chains]
+        if all(l is not None and l == ladders[0] for l in ladders):
+            return float(sum(logsumexp(np.stack([t for t, _, _ in chains]), axis=0) - np.log(len(chains)))), "stones"
+        return float(np.mean([tot for _, _, tot in chains])), "mean"
     for seed, kind, depth in cells:
         c1, c0 = terms.get((seed, kind, depth, "h1"), []), terms.get((seed, kind, depth, "h0"), [])
         if len(c1) >= 2 and len(c0) >= 2:
-            l1 = float(sum(logsumexp(np.stack(c1), axis=0) - np.log(len(c1))))
-            l0 = float(sum(logsumexp(np.stack(c0), axis=0) - np.log(len(c0))))
+            (l1, m1), (l0, m0) = pool(c1), pool(c0)
             pooled.append(dict(depth=depth, seed=seed, kind=kind, rep="pooled", lbf=l1 - l0, logp_h1=l1, logp_h0=l0,
-                               n_chains=min(len(c1), len(c0))))
+                               n_chains=min(len(c1), len(c0)), pooling=m1 if m1 == m0 else "mixed"))
     if pooled:
         per_rep = [r for r in rows if r.get("rep") != "pooled"]
         summary["replicate_noise_sd"] = float(np.mean([np.std([r["lbf"] for r in per_rep if (r["seed"], r["kind"], r["depth"]) == k])
