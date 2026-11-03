@@ -56,3 +56,8 @@ if __name__ == "__main__":
         # how often does the chain's root form equal the truth (per recorded sample)
         exact = np.mean([o["roots"].get(k) == v for ch in chains for o in ch for k, v in rec.items() if k[0] == R])
         print(f"{m:6s} root cov R={covR:.2f} fam={covF:.2f} exact(R)={exact:.2f} mean ll={ll:.1f} omega x{om / ds.truth['theta'].omega:.2f} ({time.time() - t0:.0f}s)", flush=True)
+        lam = np.mean([o["lam"] for ch in chains for o in ch], axis=0); tr = np.mean([o["t_root"] for ch in chains for o in ch])
+        rho = np.mean([o["rho"].mean() for ch in chains for o in ch]); nu = np.mean([sum(len(d) for d in o["u"].values()) for ch in chains for o in ch])
+        lp = np.mean([o["log_prior"] for ch in chains for o in ch])
+        th = ds.truth["theta"]
+        print(f"       lam={np.round(lam, 2)} (truth {np.round(th.lam, 2)}) t_root={tr:.2f} (truth {th.t_root}) rho_mean={rho:.3f} (truth {th.rho.mean():.3f}) |u|={nu:.1f} (truth {sum(len(d) for d in th.u.values())}) log_prior={lp:.1f}", flush=True)
