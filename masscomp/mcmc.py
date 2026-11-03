@@ -482,42 +482,82 @@ class Sampler:
                     return 1, st.adapt, st.y[(st.donor[(v, c)], c)]
             return 0, None, None
 
-        def outs(v, forms):
-            return [(st.ep[ch], forms[ch] if ch in forms else st.y[(ch, c)]) for ch in f.children[v] if st.event[(ch, c)] == ev.INHERIT][:2]
+        # child edges whose event is re-decided (inherit vs replace) along with the parent form; borrowing
+        # edges keep their event and donor. At most two edges enter the lattice as outputs.
+        free = {v: [ch for ch in f.children[v] if st.event[(ch, c)] != ev.BORROW][:2] for v in sub} if self.REGROW_EVENTS \
+            else {v: [] for v in sub}
+        cur_ev = {ch: st.event[(ch, c)] for v in sub for ch in free[v]}
 
-        def logq(forms):
+        def form_of(ch, forms):
+            return forms[ch] if ch in forms else st.y[(ch, c)]
+
+        def outs(v, forms, events):
+            """Lattice outputs of v: inheriting children (re-decided ones per `events`, fixed ones as they are)."""
+            fr = free[v]
+            lat = [(st.ep[ch], form_of(ch, forms)) for ch in fr if events[ch] == ev.INHERIT]
+            lat += [(st.ep[ch], form_of(ch, forms)) for ch in f.children[v] if ch not in fr and st.event[(ch, c)] == ev.INHERIT]
+            return lat[:2]
+
+        def configs(v, forms):
+            """(events dict, log weight) for each inherit/replace assignment of v's free child edges: the event
+            prior, the innovation density of replaced children, and the lattice mass of the inheriting ones."""
+            in_mode, tab, x = inputs(v)
+            tabs = (tab.log_sub_np, tab.log_ins_np) if tab is not None else None
+            fr = free[v]
+            out = []
+            for bits in range(1 << len(fr)):
+                events = {ch: (ev.INHERIT if bits >> i & 1 else ev.REPLACE) for i, ch in enumerate(fr)}
+                lw = 0.0
+                for ch in fr:
+                    lw += st.evp[ch][c][events[ch]] + (ev.log_G(form_of(ch, forms)) if events[ch] == ev.REPLACE else 0.0)
+                lat = outs(v, forms, events)
+                lz = ffbs_logZ(in_mode, tabs, x, [(ep.log_sub_np, ep.log_ins_np, z) for ep, z in lat])
+                out.append((events, lw + lz, lz, lat))
+            return in_mode, tab, x, out
+
+        def logq(forms, events):
             q = 0.0
             for v in reversed(sub):
-                in_mode, tab, x = inputs(v)
-                lat = outs(v, forms)
-                tabs = (tab.log_sub_np, tab.log_ins_np) if tab is not None else None
-                q += self._ffbs_score(in_mode, tab, x, lat, forms[v]) - ffbs_logZ(in_mode, tabs, x, [(ep.log_sub_np, ep.log_ins_np, z) for ep, z in lat])
+                in_mode, tab, x, cfgs = configs(v, forms)
+                ws = np.array([lw for _, lw, _, _ in cfgs])
+                tot = _lse(ws)
+                for evs, lw, lz, lat in cfgs:
+                    if all(events[ch] == evs[ch] for ch in free[v]):
+                        q += lw - tot + self._ffbs_score(in_mode, tab, x, lat, forms[v]) - lz
+                        break
             return q
 
-        prop = {}
+        prop, prop_ev = {}, {}
         for v in reversed(sub):
-            in_mode, tab, x = inputs(v)
-            lat = outs(v, prop)
+            in_mode, tab, x, cfgs = configs(v, prop)
+            ws = np.array([lw for _, lw, _, _ in cfgs])
+            p = np.exp(ws - ws.max()); p /= p.sum()
+            evs, lw, lz, lat = cfgs[int(rng.choice(len(cfgs), p=p))]
+            prop_ev.update(evs)
             y, _ = ffbs_draw(rng, in_mode, (tab.log_sub_np, tab.log_ins_np) if tab is not None else None, x,
                              [(ep.log_sub_np, ep.log_ins_np, z) for ep, z in lat])
             if not y or len(y) > MAX_FORM_LEN:
                 return
             prop[v] = y
-        if all(prop[v] == cur[v] for v in sub):
+        if all(prop[v] == cur[v] for v in sub) and all(prop_ev[ch] == cur_ev[ch] for ch in cur_ev):
             return
-        lq = logq(cur) - logq(prop)
+        lq = logq(cur, cur_ev) - logq(prop, prop_ev)
         edges = set()
         for v in sub:
             edges.update(st.affected_edges(v, c))
         for v in sub:
             st.y[(v, c)] = prop[v]
-        dterm, new = self._delta_terms([(e, c) for e in edges], {(e, c): {} for e in edges})
+        over = {(e, c): (dict(kind=prop_ev[e]) if e in prop_ev else {}) for e in edges}
+        dterm, new = self._delta_terms([(e, c) for e in edges], over)
         droot = 0.0
         if f.parent[w] < 0:
             droot = self.bp * (ev.log_G(prop[w]) - st.t_prior[("root", w, c)])
         self.acc["regrow"][1] += 1
         if self._accept(dterm + droot + lq):
             self._commit(new)
+            for ch, k in prop_ev.items():
+                st.event[(ch, c)] = k
+                st.donor.pop((ch, c), None)
             if f.parent[w] < 0:
                 st.t_prior[("root", w, c)] = ev.log_G(prop[w])
             self.acc["regrow"][0] += 1
@@ -898,6 +938,7 @@ class Sampler:
     FFBS_P = 0.25      # fraction of (node, concept) visited by the lattice FFBS move per sweep (0 = off)
     REGROW_P = float(__import__("os").environ.get("MASSCOMP_REGROW_P", "0"))   # fraction of (subtree root, concept) regrown per sweep
     TEMPER_P = float(__import__("os").environ.get("MASSCOMP_TEMPER_P", "0"))
+    REGROW_EVENTS = __import__("os").environ.get("MASSCOMP_REGROW_EVENTS", "1") == "1"   # regrow re-decides inherit/replace on subtree edges
     LATENT_MOVES = set(__import__("os").environ.get("MASSCOMP_LATENT_MOVES", "gibbs,ffbs,jffbs,forms,joint,events").split(","))
     PARAM_MOVES = set(__import__("os").environ.get("MASSCOMP_PARAM_MOVES", "lam,u,rates,troot").split(","))   # diagnostics only   # fraction of concepts given a tempered excursion per sweep
 
