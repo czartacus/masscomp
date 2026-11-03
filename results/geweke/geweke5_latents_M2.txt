@@ -1,0 +1,20 @@
+marginal-conditional done (156s)
+successive-conditional done (2578s)   moves: y=82832/1056006 gibbs=189415/605643 ffbs=171641/172656 jffbs=7015/173980 joint=96482/1919846
+stat          mc mean    sc mean       z  ess_sc
+omega           0.032      0.032    0.00   30000
+rho_mean        0.758      0.758    0.00   30000
+lam0            3.366      3.366    0.00   30000
+lam1            2.933      2.933    0.00   30000
+lam2            1.992      1.992    0.00   30000
+/home/claude/masscomp-proto/studies/geweke.py:162: RuntimeWarning: invalid value encountered in scalar divide
+  z = (a.mean() - b.mean()) / np.sqrt(a.var() / len(a) + b.var() / e)
+lam3            7.000      7.000     nan   30000
+t_root          1.000      1.000     nan   30000
+n_u            52.000     52.000     nan   30000
+sum_u2        173.446    173.446    0.00   30000
+int_len         4.052      4.228   -1.47      36
+leaf_len        4.102      4.262   -1.56      38
+f_inherit       0.765      0.770   -2.06     577
+f_replace       0.227      0.222    1.52     428
+f_borrow        0.009      0.008    1.74     879
+(2578s)

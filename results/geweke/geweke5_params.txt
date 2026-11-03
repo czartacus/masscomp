@@ -1,0 +1,18 @@
+marginal-conditional done (238s)
+successive-conditional done (1094s)   moves: lam=8546/12000 u=733620/1252381 rho=56406/72000 omega=10216/12000 troot=8713/12000
+stat          mc mean    sc mean       z  ess_sc
+omega           0.099      0.096    0.33     145
+rho_mean        1.004      1.008   -0.27     306
+lam0            4.495      4.567   -0.23      11
+lam1            2.994      2.874    1.46     125
+lam2            2.004      2.011   -0.12     236
+lam3            5.996      6.199   -0.80      13
+t_root          1.993      2.168   -1.78     227
+n_u            53.907     53.778    0.65    1512
+sum_u2        412.754    432.093   -1.57     364
+int_len         4.227      4.174    2.07     283
+leaf_len        4.496      4.371    2.24      89
+f_inherit       0.697      0.695    0.67     332
+f_replace       0.277      0.280   -0.91     348
+f_borrow        0.026      0.025    0.34     174
+(1094s)

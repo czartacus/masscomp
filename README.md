@@ -131,18 +131,52 @@ times (the old criterion counted rules with opportunities that never fired).
 
 | | v2, M=25 | **v3, M=25** | **v3, M=100** | **v4, M=25** | **v4, M=100** |
 | --- | --- | --- | --- | --- | --- |
-| ω coverage / median over-estimate | 0.48 / 1.9× | 0.78 / 1.5× | 0.57 / 1.3× | 0.84 / 1.5× | run 41558066414 |
-| λ₀–λ₃, ρ coverage | 0.80–0.92 | 0.84–0.94 | 0.84–0.94 | 0.78–0.88 | |
-| t_root coverage | 0.92 | 0.94 | 0.67 | 0.98 | |
-| root-set coverage / chains R̂ ≤ 1.25 | 0.62 / 0.46 | 0.60 / 0.39 | 0.60 / 0.37 | 0.60 / 0.31 | |
-| detectable-rule coverage (n rules) | 0 | 0 (2) | 0.01 | 0.38 (15) | |
+| ω coverage / median over-estimate | 0.48 / 1.9× | 0.78 / 1.5× | 0.57 / 1.3× | 0.84 / 1.5× | 0.69 / 1.3× |
+| λ₀–λ₃, ρ coverage | 0.80–0.92 | 0.84–0.94 | 0.84–0.94 | 0.78–0.88 | 0.76–0.90 |
+| t_root coverage | 0.92 | 0.94 | 0.67 | 0.98 | 0.69 |
+| root-set coverage / chains R̂ ≤ 1.25 | 0.62 / 0.46 | 0.60 / 0.39 | 0.60 / 0.37 | 0.60 / 0.31 | 0.60 / 0.24 |
+| detectable-rule coverage (n rules) | 0 | 0 (2) | 0.01 | 0.38 (15) | 0.47 (101) |
 
-(`results/cloud/recovery_41515150819.json`, `recovery_41515170630.json`, `recovery_41558063972.json`.)
+(`results/cloud/recovery_41515150819.json`, `recovery_41515170630.json`, `recovery_41558063972.json`,
+`recovery_41558066414.json`.)
 The planted-rule traces behind v4 (`studies/u_planted.py`, `u_diag.py`): with latents clamped at
 truth the sampler finds the planted rule with inclusion 1.0 and ω exact; started from the study's
 child-copy initialisation, inclusion 1.0 and ω 1.2–1.3×; started from a prior draw it lands in a
 wrong basin (inclusion 0.6, ω 24×). So the parameter moves are sound and the residual ω bias and the
 unchanged root-set coverage are the ancestral-form layer, which no version has moved.
+
+### Sampler correctness and mixing (2026-11-03)
+
+The root-set coverage of 0.60 has not moved across four model versions, and only 24–46% of the
+chains agree with each other (R̂), so the question was whether the sampler is *wrong* or merely
+*stuck*. Two lines of work, both in `studies/`:
+
+**Getting it right (Geweke 2004), `studies/geweke.py`.** Marginal-conditional draws (θ from the
+prior, data simulated) against successive-conditional draws (one sampler sweep, then the leaf forms
+redrawn exactly from their conditional through the FFBS lattice). The test found two real bugs —
+`move_u` understated the birth-slot density by log 2 on edges with no mismatch counts (bba12c5), and
+the exact side had to draw root-edge rules at t_root rather than the forest's fixed length — and then
+produced apparent z-scores of 5–16 on the form-length statistics for every latent-move subset, in
+inconsistent directions. Those were an artefact of the error bars: batch-means ESS (b = √n)
+overstates the ESS of a chain whose autocorrelation time for form lengths is in the thousands. With
+Geyer's initial-positive-sequence ESS and long runs (`results/geweke/`; 30,000 iterations × 2
+sweeps for the latent and full tests, 12,000 × 6 for the parameter moves) every statistic is within
+noise: max |z| 2.1 over 5 latent statistics (ESS 36–879), 2.4 over 14 in the full test, 2.2 over 14
+for the parameter moves — 33 z-scores in all, none beyond 2.5. **The sampler targets the posterior.**
+The remaining problem is mixing.
+
+**Mixing.** `studies/basin_swap.py` locates the gap between a chain started from child copies and
+one started from the truth (130–340 nats at depth 0.25): swapping the truth latents under the copy
+chain's θ recovers +136 nats as a sum of per-concept gains (16/25 concepts, 8–52 nats each), while
+swapping θ alone recovers +34, so the basins are coupled through θ *and* through many independent
+per-concept latents — no single-site move crosses. Tried and insufficient on their own: exact FFBS
+Gibbs over an ancestor form (`move_forms_ffbs`, up to two outgoing edges), the collapsed
+event-plus-form move (`move_joint_ffbs`), tempered transitions per concept (`move_tempered`,
+`MASSCOMP_TEMPER_P`), prior-side tempering in the PT ladder (`Sampler.bp`, which in fact pulled ω
+up 2×), and a subtree regrow move (`move_regrow`, `MASSCOMP_REGROW_P`; accepted ~49% of the time and
+correct under Geweke, but it does not leave the basin at depth 1.5 or 0.25). Both starts put t_root
+at 0.6–1.8 against a truth of 0.25. Candidates not yet tried: a joint θ-plus-latents proposal,
+SMC/annealed importance sampling from the prior, and more PT rungs at the cold end.
 
 ### Pre-v3 notes (kept for the record)
 
