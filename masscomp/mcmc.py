@@ -466,27 +466,67 @@ class Sampler:
                     st.ep[e] = old_ep
 
     # ------------------------------------------------------------------ move 5/6: rates
+    def _event_remainders(self, cs):
+        """For each (e, c) with c in cs: the event options (kind, donor, pr_minus_evp, lk), i.e. the
+        edge terms with the rate-dependent event log-probability removed. These depend on the forms
+        and u_e only, so a rate proposal changes just the evp part and the per-(e, c) sum over
+        options can be recomputed cheaply."""
+        st, f = self.st, self.st.f
+        rem = {}
+        for c in cs:
+            for e in f.edges:
+                opts = []
+                for k in (ev.INHERIT, ev.REPLACE):
+                    pr, lk = st.edge_terms(e, c, kind=k)
+                    opts.append((k, None, pr - st.evp[e][c][k], lk))
+                for d in st.cands[e]:
+                    pr, lk = st.edge_terms(e, c, kind=ev.BORROW, d=d)
+                    opts.append((ev.BORROW, d, pr - st.evp[e][c][ev.BORROW], lk))
+                rem[(e, c)] = opts
+        return rem
+
+    def _logZ(self, rem):
+        st = self.st
+        return {ec: _lse([r + st.evp[ec[0]][ec[1]][k] + self.beta * lk for (k, _, r, lk) in opts]) for ec, opts in rem.items()}
+
+    def _resample_events(self, rem):
+        """Gibbs draw of the events in rem from their conditional under the current evp."""
+        st, rng = self.st, self.rng
+        for (e, c), opts in rem.items():
+            w = np.array([r + st.evp[e][c][k] + self.beta * lk for (k, _, r, lk) in opts]); w = np.exp(w - w.max()); w /= w.sum()
+            k, dn, r, lk = opts[int(rng.choice(len(opts), p=w))]
+            st.event[(e, c)] = k
+            if k == ev.BORROW:
+                st.donor[(e, c)] = dn
+            else:
+                st.donor.pop((e, c), None)
+            st.t_prior[(e, c)] = r + st.evp[e][c][k]; st.t_lik[(e, c)] = lk
+
     def move_rates(self, step=0.3):
+        """Log random walks on rho_c and omega, collapsed over the events they govern.
+
+        Why collapsed: a state with many concepts labelled 'borrow' makes omega large, and a large
+        omega makes 'borrow' cheap; with the events held fixed a rate proposal can only ever move
+        within that loop (seen as omega 10-20x over truth with the planted rule unfound). The
+        proposal is (rate', events') with events' from their exact conditional under rate', so the
+        acceptance ratio is the product over (e, c) of Z_ec(rate') / Z_ec(rate)."""
         st, f, rng = self.st, self.st.f, self.rng
         for c in range(st.M):
             old = st.theta.rho[c]
             prop = old * math.exp(rng.normal(0, step))
-            st.theta.rho[c] = prop
             dprior = ev.log_prior_rho(np.array([prop])) - ev.log_prior_rho(np.array([old]))
-            jac = math.log(prop / old)
+            rem = self._event_remainders([c])
+            logZ_old = self._logZ(rem)
             old_evp = {e: st.evp[e][c] for e in f.edges}
+            st.theta.rho[c] = prop
             for e in f.edges:
                 st.evp[e][c] = ev.event_logprobs(prop, st.theta.omega if st.cands[e] else 0.0, f.length[e])
-            d = dprior + jac; new = {}
-            for e in f.edges:
-                k = st.event[(e, c)]
-                pr_old = st.t_prior[(e, c)]
-                pr = pr_old - old_evp[e][k] + st.evp[e][c][k]
-                new[(e, c)] = (pr, st.t_lik[(e, c)])
-                d += pr - pr_old
+            logZ_new = self._logZ(rem)
+            d = dprior + math.log(prop / old) + sum(logZ_new.values()) - sum(logZ_old.values())
             self.acc["rho"][1] += 1
             if self._accept(d):
-                self._commit(new); st.t_param += dprior; self.acc["rho"][0] += 1
+                st.t_param += dprior; self.acc["rho"][0] += 1
+                self._resample_events(rem)
             else:
                 st.theta.rho[c] = old
                 for e in f.edges:
@@ -495,18 +535,17 @@ class Sampler:
         old = st.theta.omega
         prop = old * math.exp(rng.normal(0, step))
         dprior = ev.log_prior_omega(prop) - ev.log_prior_omega(old)
+        rem = self._event_remainders(range(st.M))
+        logZ_old = self._logZ(rem)
         old_evp = {e: list(st.evp[e]) for e in f.edges}
         st.theta.omega = prop
         st.rebuild_event_probs()
-        d = dprior + math.log(prop / old); new = {}
-        for c in range(st.M):
-            for e in f.edges:
-                k = st.event[(e, c)]
-                pr = st.t_prior[(e, c)] - old_evp[e][c][k] + st.evp[e][c][k]
-                new[(e, c)] = (pr, st.t_lik[(e, c)]); d += pr - st.t_prior[(e, c)]
+        logZ_new = self._logZ(rem)
+        d = dprior + math.log(prop / old) + sum(logZ_new.values()) - sum(logZ_old.values())
         self.acc["omega"][1] += 1
         if self._accept(d):
-            self._commit(new); st.t_param += dprior; self.acc["omega"][0] += 1
+            st.t_param += dprior; self.acc["omega"][0] += 1
+            self._resample_events(rem)
         else:
             st.theta.omega = old; st.evp = old_evp
 
