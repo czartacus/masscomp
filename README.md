@@ -83,39 +83,66 @@ intends); and `mcmc.Sampler.move_u` now marginalises the edge's events when prop
 rule can be found while the concepts it explains are still labelled "borrowed". Everything below
 that is marked **v3** ran under this model; earlier numbers did not.
 
-### §8.3 LBF separation — estimator settled (parallel tempering), grid rerunning under v3
+### §8.3 LBF separation — first v3 grid: no separation; the PT estimator rebuilt
 
-- Downward stepping stone, β_k = (k/K)², K=24 (see earlier notes below). Single-chain replicate
-  noise ~30 nats; 4 chains pooled stone by stone (`results/cloud/lbf_41455207637.json`) 17 nats per
-  chain and the pooled value dominated by the best chain: four chains, four modes.
-- **Parallel-tempered stepping stone** (`marglik.stepping_stone_pt`: all 25 stones run together with
-  neighbour swaps) on the same seed-2101 pair, 4 replicates each
-  (`results/cloud/pt_41469491586.json`): replicate sd **9.4 nats** at the same sweep budget. Swap
-  acceptance is 10–50% for β < 0.3 and 1–2% for the top ten stones, so the schedule still needs more
-  stones near β = 1; left as is for now. PT is the standard estimator from here.
-- The pooled grid and the PT check both ran on the pre-v3 model, where unrelated pairs scored up
-  to +68 (H1 offers more donors to abuse). Run 41550036592 = the depth 0.25 / 0.5 grid, 5 related +
-  5 unrelated per depth, 2 PT replicates per cell, under v3.
+Run 41550036592 (v3 model, M=25, K=24, 1,500 sweeps / 400 burn per stone, 2 PT replicates per
+cell, 5 related + 5 unrelated seeds, depths 0.25 and 0.5; `results/cloud/pt_41550036592.json`):
 
-### §8.1 recovery — v3 fixes most of the ω bias; ancestral forms still the bottleneck
+| depth | related LBF, mean (sd) | unrelated LBF, mean (sd, max) | power at the 99% null quantile |
+| --- | --- | --- | --- |
+| 0.25 | +9 (10) | +6 (27, +57) | 0 |
+| 0.5 | −2 (15) | same data as above | 0 |
 
-3 chains × 3,000 sweeps / 1,500 burn (`results/cloud/recovery_41515150819.json` M=25,
-`recovery_41515170630.json` M=100), n = 49 each:
+Replicates of the same marginal differ by up to 80 nats (sd of a single estimate ~19 nats, versus
+9.4 in the earlier noise check), swap acceptance at the cold end of the ladder is 0.00 in every
+cell, and the +57/+77 unrelated outliers are single replicates: the estimator, not the model, is
+what blocks this study. (Two bugs found in the same read: `merge.py` pooled related cells across
+depths because its key omitted depth — the numbers above are from the corrected merge — and
+unrelated data were simulated per depth although depth does not enter them.)
 
-| | v2, M=25 | pre-v3, M=100 | **v3, M=25** | **v3, M=100** |
-| --- | --- | --- | --- | --- |
-| ω coverage / median over-estimate | 0.48 / 1.9× | 0.14 / 2.7× | 0.78 / 1.5× | 0.57 / 1.3× |
-| ω coverage, true ω < 0.03 | 0.08 | — | 0.81 | — |
-| λ₀–λ₃, ρ coverage | 0.80–0.92 | 0.71–0.96 | 0.84–0.94 | 0.84–0.94 |
-| t_root coverage | 0.92 | 0.55 | 0.94 | 0.67 |
-| root-set coverage / chains R̂ ≤ 1.25 | 0.62 / 0.46 | 0.59 / 0.37 | 0.60 / 0.39 | 0.60 / 0.37 |
-| detectable \|w\| > 2.5 rule inclusion | 0 | 0 | 0 | 0.01 |
+What was wrong, and the fixes (commits 629a327, 3ca97e1, d29da3c):
 
-The donor change removed most of the ω inflation; what remains (1.3× at M=100, where the intervals
-are narrow enough to miss) and the still-undetected planted rules both point at the ancestral-form
-sampler, whose coverage and convergence have not moved across any version. `studies/u_diag.py`
-fits one detectable-rule dataset with latents clamped at truth / started at truth / from the prior
-to separate the u move from the form sampler.
+- **Stones started from the prior and had not equilibrated.** A local trace showed stones still
+  drifting by hundreds of nats after 200 sweeps, with a non-monotone ll(β) curve. `stepping_stone_pt(warmup=N)`
+  now runs one β = 1 chain first and starts every stone from its state; the stones relax downhill
+  quickly and the curve is monotone.
+- **Fixed (k/K)² ladder.** During the first 80% of burn-in the interior betas are re-spaced so that
+  Δβ · sd(ll) is equal across stones (equal swap difficulty, equal stone-term variance); the ladder
+  is frozen before recording, so the estimator is unchanged. An acceptance-gradient (Vousden) update
+  was tried first and cannot move when all acceptances are zero.
+- **One core of four.** The K+1 chains now run in persistent worker processes; a swap exchanges β
+  labels, not states, so only scalars cross the pipes (identical results, ~3.5× on the runners).
+- H1 and H0 are separate jobs (`pt_hyps`), unrelated data run once per seed.
+
+What remains is arithmetic: sd(ll) per stone is 25–70 nats at M=25, so ~1 nat of Δβ · sd per stone —
+acceptance in the tens of percent — needs ~50 stones, and ~100 at M=100. Runs 41618398207 (K=24)
+and 41618402064 (K=48), 3 warm-started replicates per marginal on one related and one unrelated
+pair, measure the noise under the rebuilt estimator before the grid is rerun under v4.
+
+### §8.1 recovery — v4 (wide slab, collapsed rate moves, reverse proposals)
+
+Model v4 (commits b8a659e, 3a39a13, 32505b5): the rule slab is widened from sd 1 to sd 4√t
+(`events.SIGMA2_U = 16`; with the identity logit near 6 an sd-1 rule was inaudible), ρ_c and ω are
+updated with the edge events marginalised out, and half the ancestor proposals go through the
+reversed transducer. "Detectable" now means |w| > 2.5 *and* the rule visibly fired at least three
+times (the old criterion counted rules with opportunities that never fired).
+
+3 chains × 3,000 sweeps / 1,500 burn, n = 49 per cell:
+
+| | v2, M=25 | **v3, M=25** | **v3, M=100** | **v4, M=25** | **v4, M=100** |
+| --- | --- | --- | --- | --- | --- |
+| ω coverage / median over-estimate | 0.48 / 1.9× | 0.78 / 1.5× | 0.57 / 1.3× | 0.84 / 1.5× | run 41558066414 |
+| λ₀–λ₃, ρ coverage | 0.80–0.92 | 0.84–0.94 | 0.84–0.94 | 0.78–0.88 | |
+| t_root coverage | 0.92 | 0.94 | 0.67 | 0.98 | |
+| root-set coverage / chains R̂ ≤ 1.25 | 0.62 / 0.46 | 0.60 / 0.39 | 0.60 / 0.37 | 0.60 / 0.31 | |
+| detectable-rule coverage (n rules) | 0 | 0 (2) | 0.01 | 0.38 (15) | |
+
+(`results/cloud/recovery_41515150819.json`, `recovery_41515170630.json`, `recovery_41558063972.json`.)
+The planted-rule traces behind v4 (`studies/u_planted.py`, `u_diag.py`): with latents clamped at
+truth the sampler finds the planted rule with inclusion 1.0 and ω exact; started from the study's
+child-copy initialisation, inclusion 1.0 and ω 1.2–1.3×; started from a prior draw it lands in a
+wrong basin (inclusion 0.6, ω 24×). So the parameter moves are sound and the residual ω bias and the
+unchanged root-set coverage are the ancestral-form layer, which no version has moved.
 
 ### Pre-v3 notes (kept for the record)
 
