@@ -35,6 +35,8 @@ elif len(sys.argv) > 4 and sys.argv[4] == "truth":      # start at truth, nothin
     leafset = set(f.leaves); tr = ds.truth
     init = ({k: v for k, v in tr["y"].items() if k[0] not in leafset}, dict(tr["event"]), dict(tr["donor"]))
     _, samples = run_chain(ds, th0, seed + 2, SW, SW // 3, thin=5, init=init)
+elif len(sys.argv) > 4 and sys.argv[4] == "anneal":     # prior start with a tempering ramp over the burn-in
+    _, samples = run_chain(ds, th0, seed + 2, SW, SW // 3, thin=5, init_from_prior=True, anneal=SW // 3)
 else:
     _, samples = run_chain(ds, th0, seed + 2, SW, SW // 3, thin=5, init_from_prior=True)
 incl = np.mean([1.0 if (P, F) in s["u"].get(e, {}) else 0.0 for s in samples])

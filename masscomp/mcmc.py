@@ -614,11 +614,18 @@ def _lognorm(w, var):
     return -0.5 * w * w / var - 0.5 * math.log(2 * math.pi * var)
 
 
-def run_chain(ds, theta0, seed, n_sweeps, burn, thin=10, beta=1.0, init=None, record=True, init_from_prior=False, **sweep_kw):
+def run_chain(ds, theta0, seed, n_sweeps, burn, thin=10, beta=1.0, init=None, record=True, init_from_prior=False, anneal=0, **sweep_kw):
+    """anneal > 0: the first `anneal` sweeps run at beta_i = beta * (i / anneal)^2, i.e. from the prior up
+    to the target. A chain started cold from a prior draw at beta = 1 settles into whichever mode the
+    first few sweeps happen to find (seen: omega 20x over truth with the planted rule half found,
+    while the same chain started at the truth stays there); the ramp lets the forms organise under a
+    soft likelihood first. Annealed sweeps are never recorded."""
     rng = np.random.default_rng(seed)
     s = Sampler(ds, theta0.copy(), rng, beta=beta, init=init, init_from_prior=init_from_prior)
     out = []
     for i in range(n_sweeps):
+        if anneal:
+            s.beta = beta * min(1.0, i / anneal) ** 2
         s.sweep(**sweep_kw)
         if record and i >= burn and (i - burn) % thin == 0:
             out.append(s.snapshot())
