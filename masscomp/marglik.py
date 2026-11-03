@@ -54,35 +54,104 @@ def log_bayes_factor(ds1, ds0, theta1, theta0, seed, **kw):
     return l1 - l0, l1, l0
 
 
+def _pt_worker(conn, ds, theta0, seeds, betas, sweep_kw):
+    """Owns a block of PT chains. Protocol: receive list of betas for its chains (or None to stop),
+    sweep each chain once at that beta, reply with the untempered log-likelihoods."""
+    chains = [Sampler(ds, theta0.copy(), np.random.default_rng(sd), beta=b, init_from_prior=True)
+              for sd, b in zip(seeds, betas)]
+    while True:
+        msg = conn.recv()
+        if msg is None:
+            break
+        for s, b in zip(chains, msg):
+            s.beta = b
+            s.sweep(**sweep_kw)
+        conn.send([s.st.log_lik() for s in chains])
+    conn.close()
+
+
 def stepping_stone_pt(ds, theta0, seed, K=24, n_sweeps=2000, burn=500, thin=5, power=2.0, verbose=False,
-                      swap_every=1, **sweep_kw):
+                      swap_every=1, n_procs=None, **sweep_kw):
     """Parallel-tempered stepping stone: all K+1 power posteriors run at once, and after every sweep
     neighbouring stones propose to exchange states (accepted with prob min(1, exp((b_i - b_j)(ll_j - ll_i)))).
     The estimator is the same as stepping_stone; the ladder only improves mixing, since a state stuck
     in one forest/root mode at a cold stone can be replaced by one that wandered in from a hot stone.
     Cost per sweep is (K+1) single-chain sweeps, so n_sweeps here corresponds to the per-stone chain
-    length of the sequential version. Returns (log_ml, per-stone terms, swap acceptance per pair)."""
+    length of the sequential version. Returns (log_ml, per-stone terms, swap acceptance per pair).
+
+    n_procs > 1 (default: env MASSCOMP_PROCS) spreads the K+1 chains over persistent worker processes.
+    A swap then exchanges the two chains' beta labels rather than their states, so only scalars cross
+    process boundaries; the sampled distribution is identical (each chain keeps its own RNG stream)."""
+    import os
+    if n_procs is None:
+        n_procs = int(os.environ.get("MASSCOMP_PROCS", "1"))
     rng = np.random.default_rng(seed)
     betas = [(k / K) ** power for k in range(K + 1)]
-    chains = [Sampler(ds, theta0.copy(), np.random.default_rng(rng.integers(2 ** 31)), beta=b, init_from_prior=True)
-              for b in betas]
+    seeds = [int(rng.integers(2 ** 31)) for _ in range(K + 1)]
     lls = [[] for _ in range(K + 1)]
     acc = np.zeros(K); tries = np.zeros(K)
-    for i in range(n_sweeps):
-        for s in chains:
-            s.sweep(**sweep_kw)
-        if i % swap_every == 0:
-            cur = [s.st.log_lik() for s in chains]
-            for k in range(i % 2, K, 2):          # alternate even / odd pairs
-                a = (betas[k] - betas[k + 1]) * (cur[k + 1] - cur[k])
-                tries[k] += 1
-                if a >= 0 or rng.random() < math.exp(a):
-                    chains[k].st, chains[k + 1].st = chains[k + 1].st, chains[k].st
-                    cur[k], cur[k + 1] = cur[k + 1], cur[k]
-                    acc[k] += 1
-        if i >= burn and (i - burn) % thin == 0:
-            for k, s in enumerate(chains):
-                lls[k].append(s.st.log_lik())
+    # rank[c] = stone index currently held by chain c; chain_of[k] = chain holding stone k
+    rank = list(range(K + 1)); chain_of = list(range(K + 1))
+
+    def do_swaps(i, cur_by_chain):
+        cur = [cur_by_chain[chain_of[k]] for k in range(K + 1)]   # ll by stone
+        for k in range(i % 2, K, 2):
+            a = (betas[k] - betas[k + 1]) * (cur[k + 1] - cur[k])
+            tries[k] += 1
+            if a >= 0 or rng.random() < math.exp(a):
+                ca, cb = chain_of[k], chain_of[k + 1]
+                chain_of[k], chain_of[k + 1] = cb, ca
+                rank[ca], rank[cb] = k + 1, k
+                cur[k], cur[k + 1] = cur[k + 1], cur[k]
+                acc[k] += 1
+        return cur
+
+    if n_procs > 1:
+        import multiprocessing as mp
+        ctx = mp.get_context("fork")
+        n_procs = min(n_procs, K + 1)
+        blocks = [list(range(w, K + 1, n_procs)) for w in range(n_procs)]
+        procs, conns = [], []
+        for blk in blocks:
+            parent, child = ctx.Pipe()
+            p = ctx.Process(target=_pt_worker, args=(child, ds, theta0, [seeds[c] for c in blk],
+                                                      [betas[c] for c in blk], sweep_kw), daemon=True)
+            p.start(); procs.append(p); conns.append(parent)
+        try:
+            for i in range(n_sweeps):
+                for blk, conn in zip(blocks, conns):
+                    conn.send([betas[rank[c]] for c in blk])
+                cur_by_chain = [0.0] * (K + 1)
+                for blk, conn in zip(blocks, conns):
+                    for c, ll in zip(blk, conn.recv()):
+                        cur_by_chain[c] = ll
+                if i % swap_every == 0:
+                    cur = do_swaps(i, cur_by_chain)
+                else:
+                    cur = [cur_by_chain[chain_of[k]] for k in range(K + 1)]
+                if i >= burn and (i - burn) % thin == 0:
+                    for k in range(K + 1):
+                        lls[k].append(cur[k])
+        finally:
+            for conn in conns:
+                conn.send(None)
+            for p in procs:
+                p.join()
+    else:
+        chains = [Sampler(ds, theta0.copy(), np.random.default_rng(sd), beta=b, init_from_prior=True)
+                  for sd, b in zip(seeds, betas)]
+        for i in range(n_sweeps):
+            for c, s in enumerate(chains):
+                s.beta = betas[rank[c]]
+                s.sweep(**sweep_kw)
+            cur_by_chain = [s.st.log_lik() for s in chains]
+            if i % swap_every == 0:
+                cur = do_swaps(i, cur_by_chain)
+            else:
+                cur = [cur_by_chain[chain_of[k]] for k in range(K + 1)]
+            if i >= burn and (i - burn) % thin == 0:
+                for k in range(K + 1):
+                    lls[k].append(cur[k])
     log_terms = []
     for k in range(K):
         x = np.array(lls[k]); d = betas[k + 1] - betas[k]; m = x.max()
