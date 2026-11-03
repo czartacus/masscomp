@@ -48,7 +48,8 @@ class Sampler:
                 for e in f.edges:
                     event[(e, c)] = ev.INHERIT
         self.st = State(ds, theta, y, event, donor)
-        self.acc = {k: [0, 0] for k in ["y", "gibbs", "ffbs", "jffbs", "joint", "lam", "u", "rho", "omega", "troot"]}
+        self._cs = None      # concept restriction for the latent moves (move_tempered)
+        self.acc = {k: [0, 0] for k in ["y", "gibbs", "ffbs", "jffbs", "temper", "joint", "lam", "u", "rho", "omega", "troot"]}
         self.inlattice = 1.0
         if init is None:
             self.move_events()   # remove impossible inherit terms from the initial state
@@ -73,11 +74,14 @@ class Sampler:
             self.st.t_prior[k] = pr
             self.st.t_lik[k] = lk
 
+    def _concepts(self):
+        return self._cs if self._cs is not None else range(self.st.M)
+
     # ------------------------------------------------------------------ move 1: forms
     def move_forms(self, n_prop=5):
         st, f, rng = self.st, self.st.f, self.rng
         for v in f.internal:
-            for c in range(st.M):
+            for c in self._concepts():
                 for k_prop in range(n_prop):
                     cur = st.y[(v, c)]
                     L = len(cur)
@@ -192,7 +196,7 @@ class Sampler:
         inlat = 0; tot = 0
         for v in f.internal:
             is_root = f.parent[v] < 0
-            for c in range(st.M):
+            for c in self._concepts():
                 cur = st.y[(v, c)]
                 S = self.candidates(v, c)
                 tot += 1
@@ -230,62 +234,43 @@ class Sampler:
         probability p_select per sweep (a draw costs a few ms). Floored (impossible) transducer values
         make q slightly inexact for states the lattice cannot reach; such states are left with
         probability ~e^-40 and never proposed, so the stationary distribution is unaffected in practice."""
+        rng = self.rng
+        for v in self.st.f.internal:
+            for c in self._concepts():
+                if rng.random() < p_select:
+                    self._ffbs_site(v, c)
+
+    def _ffbs_site(self, v, c):
         from .ffbs import draw as ffbs_draw
         st, f, rng = self.st, self.st.f, self.rng
-        for v in f.internal:
-            is_root = f.parent[v] < 0
-            for c in range(st.M):
-                if rng.random() >= p_select:
-                    continue
-                cur = st.y[(v, c)]
-                # incoming factor
-                if is_root or st.event[(v, c)] == ev.REPLACE:
-                    in_mode, tab, x = 0, None, None
-                elif st.event[(v, c)] == ev.INHERIT:
-                    in_mode, tab, x = 1, st.ep[v], st.y[(f.parent[v], c)]
-                else:
-                    in_mode, tab, x = 1, st.adapt, st.y[(st.donor[(v, c)], c)]
-                # outgoing factors
-                outs = []
-                for ch in f.children[v]:
-                    if st.event[(ch, c)] == ev.INHERIT:
-                        outs.append((st.ep[ch], st.y[(ch, c)]))
-                for e in f.edges:
-                    if st.event.get((e, c)) == ev.BORROW and st.donor.get((e, c)) == v:
-                        outs.append((st.adapt, st.y[(e, c)]))
-                lat = outs[:2]
-                prop, _ = ffbs_draw(rng, in_mode, (tab.log_sub_np, tab.log_ins_np) if tab is not None else None, x,
-                                    [(ep.log_sub_np, ep.log_ins_np, z) for ep, z in lat])
-                if not prop or len(prop) > MAX_FORM_LEN or prop == cur:
-                    continue
-
-                def score(y):
-                    sc = ev.log_G(y) if in_mode == 0 else tab.logprob(x, y)
-                    for ep, z in lat:
-                        sc += ep.logprob(y, z)
-                    return sc
-                logq = score(cur) - score(prop)          # log q(cur) - log q(prop); logZ cancels
-                edges = st.affected_edges(v, c)
-                over = {}
-                for e in edges:
-                    if e == v:
-                        over[(e, c)] = dict(y_child=prop)
-                    elif f.parent[e] == v:
-                        over[(e, c)] = dict(y_parent=prop)
-                    else:
-                        over[(e, c)] = {}
-                old = st.y[(v, c)]
-                st.y[(v, c)] = prop
-                dterm, new = self._delta_terms([(e, c) for e in edges], over)
-                droot = (ev.log_G(prop) - st.t_prior[("root", v, c)]) if is_root else 0.0
-                self.acc["ffbs"][1] += 1
-                if self._accept(dterm + droot + logq):
-                    self._commit(new)
-                    if is_root:
-                        st.t_prior[("root", v, c)] = ev.log_G(prop)
-                    self.acc["ffbs"][0] += 1
-                else:
-                    st.y[(v, c)] = old
+        is_root = f.parent[v] < 0
+        cur = st.y[(v, c)]
+        in_mode, tab, x, lat = self._ffbs_setup(v, c)
+        prop, _ = ffbs_draw(rng, in_mode, (tab.log_sub_np, tab.log_ins_np) if tab is not None else None, x,
+                            [(ep.log_sub_np, ep.log_ins_np, z) for ep, z in lat])
+        if not prop or len(prop) > MAX_FORM_LEN or prop == cur:
+            return
+        logq = self._ffbs_score(in_mode, tab, x, lat, cur) - self._ffbs_score(in_mode, tab, x, lat, prop)
+        edges = st.affected_edges(v, c)
+        over = {}
+        for e in edges:
+            if e == v:
+                over[(e, c)] = dict(y_child=prop)
+            elif f.parent[e] == v:
+                over[(e, c)] = dict(y_parent=prop)
+            else:
+                over[(e, c)] = {}
+        st.y[(v, c)] = prop
+        dterm, new = self._delta_terms([(e, c) for e in edges], over)
+        droot = (ev.log_G(prop) - st.t_prior[("root", v, c)]) if is_root else 0.0
+        self.acc["ffbs"][1] += 1
+        if self._accept(dterm + droot + logq):
+            self._commit(new)
+            if is_root:
+                st.t_prior[("root", v, c)] = ev.log_G(prop)
+            self.acc["ffbs"][0] += 1
+        else:
+            st.y[(v, c)] = cur
 
     def _ffbs_setup(self, v, c, kind=None, d=None):
         """(in_mode, tables, x, lattice outs, all outs) for the FFBS lattice of (v, c) under the given
@@ -326,52 +311,55 @@ class Sampler:
         ratio reduces to evp[kind'] Z_kind' / (evp[kind] Z_kind): the exact collapsed conditional.
         This is what lets borrow/inherit labels move when the form they imply differs from the
         current one (move_joint proposes forms from the generative side only, blind to the children)."""
+        rng = self.rng
+        for v in self.st.f.internal:
+            if self.st.f.parent[v] < 0:
+                continue
+            for c in self._concepts():
+                if rng.random() < p_select:
+                    self._jffbs_site(v, c)
+
+    def _jffbs_site(self, v, c):
         from .ffbs import draw as ffbs_draw, log_Z as ffbs_logZ
         st, f, rng = self.st, self.st.f, self.rng
 
         def tables(tab):
             return (tab.log_sub_np, tab.log_ins_np) if tab is not None else None
 
-        for v in f.internal:
-            if f.parent[v] < 0:
-                continue
-            cands = st.cands[v]
-            n_opt = 2 + len(cands)
-            for c in range(st.M):
-                if rng.random() >= p_select:
-                    continue
-                cur, cur_kind, cur_d = st.y[(v, c)], st.event[(v, c)], st.donor.get((v, c))
-                i = int(rng.integers(n_opt))
-                kind, d = (i, None) if i < 2 else (ev.BORROW, cands[i - 2])
-                if kind == cur_kind and d == cur_d:
-                    continue
-                m_new, tab_new, x_new, lat = self._ffbs_setup(v, c, kind, d)
-                m_cur, tab_cur, x_cur, _ = self._ffbs_setup(v, c)
-                lat_t = [(ep.log_sub_np, ep.log_ins_np, z) for ep, z in lat]
-                prop, logZ_new = ffbs_draw(rng, m_new, tables(tab_new), x_new, lat_t)
-                if not prop or len(prop) > MAX_FORM_LEN:
-                    continue
-                logZ_cur = ffbs_logZ(m_cur, tables(tab_cur), x_cur, lat_t)
-                logq_new = self._ffbs_score(m_new, tab_new, x_new, lat, prop) - logZ_new
-                logq_cur = self._ffbs_score(m_cur, tab_cur, x_cur, lat, cur) - logZ_cur
-                edges = st.affected_edges(v, c)
-                over = {(v, c): dict(y_child=prop, kind=kind, d=d)}
-                for e in edges:
-                    if e != v:
-                        over[(e, c)] = dict(y_parent=prop) if f.parent[e] == v else {}
-                st.y[(v, c)] = prop
-                dterm, new = self._delta_terms([(e, c) for e in edges], over)
-                self.acc["jffbs"][1] += 1
-                if self._accept(dterm + logq_cur - logq_new):
-                    self._commit(new)
-                    st.event[(v, c)] = kind
-                    if kind == ev.BORROW:
-                        st.donor[(v, c)] = d
-                    else:
-                        st.donor.pop((v, c), None)
-                    self.acc["jffbs"][0] += 1
-                else:
-                    st.y[(v, c)] = cur
+        cands = st.cands[v]
+        n_opt = 2 + len(cands)
+        cur, cur_kind, cur_d = st.y[(v, c)], st.event[(v, c)], st.donor.get((v, c))
+        i = int(rng.integers(n_opt))
+        kind, d = (i, None) if i < 2 else (ev.BORROW, cands[i - 2])
+        if kind == cur_kind and d == cur_d:
+            return
+        m_new, tab_new, x_new, lat = self._ffbs_setup(v, c, kind, d)
+        m_cur, tab_cur, x_cur, _ = self._ffbs_setup(v, c)
+        lat_t = [(ep.log_sub_np, ep.log_ins_np, z) for ep, z in lat]
+        prop, logZ_new = ffbs_draw(rng, m_new, tables(tab_new), x_new, lat_t)
+        if not prop or len(prop) > MAX_FORM_LEN:
+            return
+        logZ_cur = ffbs_logZ(m_cur, tables(tab_cur), x_cur, lat_t)
+        logq_new = self._ffbs_score(m_new, tab_new, x_new, lat, prop) - logZ_new
+        logq_cur = self._ffbs_score(m_cur, tab_cur, x_cur, lat, cur) - logZ_cur
+        edges = st.affected_edges(v, c)
+        over = {(v, c): dict(y_child=prop, kind=kind, d=d)}
+        for e in edges:
+            if e != v:
+                over[(e, c)] = dict(y_parent=prop) if f.parent[e] == v else {}
+        st.y[(v, c)] = prop
+        dterm, new = self._delta_terms([(e, c) for e in edges], over)
+        self.acc["jffbs"][1] += 1
+        if self._accept(dterm + logq_cur - logq_new):
+            self._commit(new)
+            st.event[(v, c)] = kind
+            if kind == ev.BORROW:
+                st.donor[(v, c)] = d
+            else:
+                st.donor.pop((v, c), None)
+            self.acc["jffbs"][0] += 1
+        else:
+            st.y[(v, c)] = cur
 
     # ------------------------------------------------------------------ move 1b: joint (event, form)
     def _gen_logq(self, v, c, kind, d, form):
@@ -394,7 +382,7 @@ class Sampler:
             cands = st.cands[v]
             n_opt = 2 + len(cands)
             for _ in range(n_prop):
-                for c in range(st.M):
+                for c in self._concepts():
                     cur_form, cur_kind = st.y[(v, c)], st.event[(v, c)]
                     cur_d = st.donor.get((v, c))
                     i = int(rng.integers(n_opt))
@@ -434,24 +422,102 @@ class Sampler:
 
     # ------------------------------------------------------------------ move 2: events
     def move_events(self):
-        st, f, rng = self.st, self.st.f, self.rng
-        for e in f.edges:
-            for c in range(st.M):
-                opts, logw = [], []
-                for k in (ev.INHERIT, ev.REPLACE):
-                    pr, lk = st.edge_terms(e, c, kind=k)
-                    opts.append((k, None, pr, lk)); logw.append(pr + self.beta * lk)
-                for d in st.cands[e]:
-                    pr, lk = st.edge_terms(e, c, kind=ev.BORROW, d=d)
-                    opts.append((ev.BORROW, d, pr, lk)); logw.append(pr + self.beta * lk)
-                w = np.array(logw); w = np.exp(w - w.max()); w /= w.sum()
-                k, d, pr, lk = opts[int(rng.choice(len(opts), p=w))]
-                st.event[(e, c)] = k
-                if k == ev.BORROW:
-                    st.donor[(e, c)] = d
+        for e in self.st.f.edges:
+            for c in self._concepts():
+                self._event_site(e, c)
+
+    def _event_site(self, e, c):
+        """Gibbs draw of the event (and donor) on edge e, concept c, given all forms."""
+        st, rng = self.st, self.rng
+        opts, logw = [], []
+        for k in (ev.INHERIT, ev.REPLACE):
+            pr, lk = st.edge_terms(e, c, kind=k)
+            opts.append((k, None, pr, lk)); logw.append(pr + self.beta * lk)
+        for d in st.cands[e]:
+            pr, lk = st.edge_terms(e, c, kind=ev.BORROW, d=d)
+            opts.append((ev.BORROW, d, pr, lk)); logw.append(pr + self.beta * lk)
+        w = np.array(logw); w = np.exp(w - w.max()); w /= w.sum()
+        k, d, pr, lk = opts[int(rng.choice(len(opts), p=w))]
+        st.event[(e, c)] = k
+        if k == ev.BORROW:
+            st.donor[(e, c)] = d
+        else:
+            st.donor.pop((e, c), None)
+        st.t_prior[(e, c)] = pr; st.t_lik[(e, c)] = lk
+
+    # ------------------------------------------------------------------ move 1d: tempered transitions
+    def move_tempered(self, concepts, betas=(0.6, 0.35, 0.2, 0.1, 0.05), sweeps_per=1):
+        """Neal's (1996) tempered transitions, one concept at a time. Concepts are independent given
+        the parameters, so heating only concept c's leaf-likelihood terms (self.beta while moving only
+        c's latents) is a tempering of c's conditional. Up the ladder beta_1 > ... > beta_n and back,
+        with a reversible kernel at each level (site moves in forward order going up, reverse order
+        coming down), the excursion is accepted with
+            sum_i (beta_i - beta_{i-1}) ll(x_{i-1})  +  sum_i (beta_{i-1} - beta_i) ll(x^_{i-1})
+        where ll is c's leaf log-likelihood. Lets a whole path of ancestral forms reorganise under a
+        weak likelihood, which single-site moves cannot do (root_diag, 3 Nov 2026: three starts, three
+        basins, 100-170 nats apart in posterior, none left in 800-1500 sweeps)."""
+        st, f = self.st, self.st.f
+        beta0 = self.beta
+        ladder = [beta0] + [beta0 * b for b in betas]
+        n = len(ladder) - 1
+        internal = list(f.internal)
+        nonroot = [v for v in internal if f.parent[v] >= 0]
+        edges = list(f.edges)
+        for c in concepts:
+            keys = [(e, c) for e in edges if st.is_leaf[e]]
+
+            def llc():
+                return sum(st.t_lik[k] for k in keys)
+
+            def kernel(reverse):
+                vs = internal[::-1] if reverse else internal
+                es = edges[::-1] if reverse else edges
+                if reverse:
+                    for e in es:
+                        self._event_site(e, c)
+                    for v in vs:
+                        if f.parent[v] >= 0:
+                            self._jffbs_site(v, c)
+                        self._ffbs_site(v, c)
                 else:
+                    for v in vs:
+                        self._ffbs_site(v, c)
+                        if f.parent[v] >= 0:
+                            self._jffbs_site(v, c)
+                    for e in es:
+                        self._event_site(e, c)
+
+            saved = (dict((v, st.y[(v, c)]) for v in internal), dict((e, st.event[(e, c)]) for e in edges),
+                     dict((e, st.donor[(e, c)]) for e in edges if (e, c) in st.donor),
+                     dict((e, (st.t_prior[(e, c)], st.t_lik[(e, c)])) for e in edges),
+                     dict((r, st.t_prior[("root", r, c)]) for r in f.roots))
+            logr = 0.0
+            for i in range(1, n + 1):
+                logr += (ladder[i] - ladder[i - 1]) * llc()
+                self.beta = ladder[i]
+                for _ in range(sweeps_per):
+                    kernel(False)
+            for i in range(n, 0, -1):
+                self.beta = ladder[i]
+                for _ in range(sweeps_per):
+                    kernel(True)
+                logr += (ladder[i - 1] - ladder[i]) * llc()
+            self.beta = beta0
+            self.acc["temper"][1] += 1
+            if self._accept(logr):
+                self.acc["temper"][0] += 1
+            else:
+                ys, evs, dns, terms, roots = saved
+                for v in internal:
+                    st.y[(v, c)] = ys[v]
+                for e in edges:
+                    st.event[(e, c)] = evs[e]
                     st.donor.pop((e, c), None)
-                st.t_prior[(e, c)] = pr; st.t_lik[(e, c)] = lk
+                    st.t_prior[(e, c)], st.t_lik[(e, c)] = terms[e]
+                for e, d in dns.items():
+                    st.donor[(e, c)] = d
+                for r in f.roots:
+                    st.t_prior[("root", r, c)] = roots[r]
 
     # ------------------------------------------------------------------ move 3: lambda
     def move_lam(self, step=None):
@@ -739,6 +805,7 @@ class Sampler:
 
     # ------------------------------------------------------------------ sweep
     FFBS_P = 0.25      # fraction of (node, concept) visited by the lattice FFBS move per sweep (0 = off)
+    TEMPER_P = float(__import__("os").environ.get("MASSCOMP_TEMPER_P", "0"))   # fraction of concepts given a tempered excursion per sweep
 
     def sweep(self, clamp_latents=False, clamp_u=False, clamp_params=False):
         if not clamp_latents:
@@ -746,6 +813,10 @@ class Sampler:
             if self.FFBS_P > 0:
                 self.move_forms_ffbs(self.FFBS_P)
                 self.move_joint_ffbs(self.FFBS_P)
+            if self.TEMPER_P > 0:
+                cs = [c for c in range(self.st.M) if self.rng.random() < self.TEMPER_P]
+                if cs:
+                    self.move_tempered(cs)
             self.move_forms(n_prop=1); self.move_joint(); self.move_events()
         if clamp_params:
             return
