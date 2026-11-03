@@ -70,9 +70,56 @@ in this implementation. The DP is memoised and already pure Python; the next ste
 ## Study results
 
 Settings and raw numbers are in `results/` (local) and `results/cloud/` (GitHub Actions, one job per
-replicate; see `.github/workflows/study.yml`). Status as of 2026-11-02:
+replicate; see `.github/workflows/study.yml`). Status as of 2026-11-03.
 
-### §8.3 LBF separation — blocked on estimator noise (being fixed)
+### Model change on 2026-11-02: cross-family borrowing donors, collapsed u move
+
+A planted-rule trace (`studies/u_planted.py`) showed the chain preferring "every concept borrowed
+from an uncle, ω large" to "one branch rule": with donors inside the recipient's own family,
+borrow-from-uncle is the same likelihood as inheritance with the rule, and the event prior does not
+pay for the rule. Two changes (commit 66348e4): `tree.CROSS_FAMILY_ONLY = True` restricts donors to
+the other family (within-family contact is left to the sound-change model, as the spec's §4.4
+intends); and `mcmc.Sampler.move_u` now marginalises the edge's events when proposing a rule, so a
+rule can be found while the concepts it explains are still labelled "borrowed". Everything below
+that is marked **v3** ran under this model; earlier numbers did not.
+
+### §8.3 LBF separation — estimator settled (parallel tempering), grid rerunning under v3
+
+- Downward stepping stone, β_k = (k/K)², K=24 (see earlier notes below). Single-chain replicate
+  noise ~30 nats; 4 chains pooled stone by stone (`results/cloud/lbf_41455207637.json`) 17 nats per
+  chain and the pooled value dominated by the best chain: four chains, four modes.
+- **Parallel-tempered stepping stone** (`marglik.stepping_stone_pt`: all 25 stones run together with
+  neighbour swaps) on the same seed-2101 pair, 4 replicates each
+  (`results/cloud/pt_41469491586.json`): replicate sd **9.4 nats** at the same sweep budget. Swap
+  acceptance is 10–50% for β < 0.3 and 1–2% for the top ten stones, so the schedule still needs more
+  stones near β = 1; left as is for now. PT is the standard estimator from here.
+- The pooled grid and the PT check both ran on the pre-v3 model, where unrelated pairs scored up
+  to +68 (H1 offers more donors to abuse). Run 41550036592 = the depth 0.25 / 0.5 grid, 5 related +
+  5 unrelated per depth, 2 PT replicates per cell, under v3.
+
+### §8.1 recovery — v3 fixes most of the ω bias; ancestral forms still the bottleneck
+
+3 chains × 3,000 sweeps / 1,500 burn (`results/cloud/recovery_41515150819.json` M=25,
+`recovery_41515170630.json` M=100), n = 49 each:
+
+| | v2, M=25 | pre-v3, M=100 | **v3, M=25** | **v3, M=100** |
+| --- | --- | --- | --- | --- |
+| ω coverage / median over-estimate | 0.48 / 1.9× | 0.14 / 2.7× | 0.78 / 1.5× | 0.57 / 1.3× |
+| ω coverage, true ω < 0.03 | 0.08 | — | 0.81 | — |
+| λ₀–λ₃, ρ coverage | 0.80–0.92 | 0.71–0.96 | 0.84–0.94 | 0.84–0.94 |
+| t_root coverage | 0.92 | 0.55 | 0.94 | 0.67 |
+| root-set coverage / chains R̂ ≤ 1.25 | 0.62 / 0.46 | 0.59 / 0.37 | 0.60 / 0.39 | 0.60 / 0.37 |
+| detectable \|w\| > 2.5 rule inclusion | 0 | 0 | 0 | 0.01 |
+
+The donor change removed most of the ω inflation; what remains (1.3× at M=100, where the intervals
+are narrow enough to miss) and the still-undetected planted rules both point at the ancestral-form
+sampler, whose coverage and convergence have not moved across any version. `studies/u_diag.py`
+fits one detectable-rule dataset with latents clamped at truth / started at truth / from the prior
+to separate the u move from the form sampler.
+
+### Pre-v3 notes (kept for the record)
+
+#### §8.3 LBF separation — blocked on estimator noise
 
 - The stepping-stone estimator must be run **downward** (fit at β=1, cool to the prior). Run upward
   it is biased 400–700 nats low with ±150 nat error, which produced a spurious sign flip (−63 vs +87)
@@ -92,7 +139,7 @@ replicate; see `.github/workflows/study.yml`). Status as of 2026-11-02:
   × 4 chains. If pooling does not bring the replicate sd under ~10 nats, the next step is parallel
   tempering inside the sampler.
 
-### §8.1 recovery — continuous parameters fine; ω and roots need more data, not more sampler
+#### §8.1 recovery (pre-v3) — continuous parameters fine; ω and roots need more data, not more sampler
 
 n = 50 at M = 25 concepts, 3 chains × 1,500 sweeps (`results/recovery_all.json`, then
 `results/cloud/recovery_41346586750.json` after the u-proposal change):
@@ -111,13 +158,13 @@ data, and the ω inflation is the model absorbing mismatches that u cannot expla
 the planted-term unit test went from 0 to 1.0 inclusion. Run 41467498208 repeats the study at
 M = 100 (`concepts` workflow input), where planted terms do become detectable.
 
-### §8.2 confound — fails as specified
+#### §8.2 confound — fails as specified
 
 20 replicates: 1 of 20 flags the borrowing-vs-inheritance ambiguity (target ≥ 0.8). The model
 resolves the confound by parsimony rather than reporting it. Detection will have to come from the
 prior-sensitivity grid (spec §9), not from the posterior of a single fit.
 
-### Earlier reduced-scale smoke results (2026-11-01, two contended cores)
+#### Earlier reduced-scale smoke results (2026-11-01, two contended cores)
 
 Run on two contended cores inside one session; settings far below the plan's, so these are a
 check that the machinery works, not the study.
