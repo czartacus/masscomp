@@ -83,15 +83,20 @@ class Sampler:
                     L = len(cur)
                     kind = rng.integers(4) if k_prop % 2 == 0 else 3
                     logq = 0.0
-                    if kind == 3:            # independence proposal: transduce a child's form
+                    if kind == 3:            # independence proposal from a child's form
+                        # forward (apply the child's edge transducer to the child) or reverse
+                        # (approximate inverse transducer: the parent segment the child's segment
+                        # most plausibly came from, rules included); mixture over children
                         chs = f.children[v]
                         ch = chs[int(rng.integers(len(chs)))]
-                        prop = st.ep[ch].sample(st.y[(ch, c)], rng)
+                        rev = rng.random() < 0.5
+                        T = (lambda c2: st.ep[c2].reverse()) if rev else (lambda c2: st.ep[c2])
+                        prop = T(ch).sample(st.y[(ch, c)], rng)
                         if len(prop) == 0 or len(prop) > MAX_FORM_LEN or prop == cur:
                             continue
                         lk_ = math.log(len(chs))
-                        q_prop = _lse([st.ep[c2].logprob(st.y[(c2, c)], prop) for c2 in chs]) - lk_
-                        q_cur = _lse([st.ep[c2].logprob(st.y[(c2, c)], cur) for c2 in chs]) - lk_
+                        q_prop = _lse([T(c2).logprob(st.y[(c2, c)], prop) for c2 in chs]) - lk_
+                        q_cur = _lse([T(c2).logprob(st.y[(c2, c)], cur) for c2 in chs]) - lk_
                         logq = q_cur - q_prop
                     elif kind == 0:          # substitute
                         pos = int(rng.integers(L))

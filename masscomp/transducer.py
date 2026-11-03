@@ -112,6 +112,42 @@ class EdgeParams:
         self._c_ins = np.cumsum(self._p_ins, axis=1)
         self._cache = {}
 
+    @classmethod
+    def from_tables(cls, log_sub, log_ins):
+        """An EdgeParams over given (already normalised) log tables; used for proposal transducers."""
+        self = cls.__new__(cls)
+        self.log_sub_np = np.asarray(log_sub, dtype=float); self.log_ins_np = np.asarray(log_ins, dtype=float)
+        self.log_sub = self.log_sub_np.tolist(); self.log_ins = self.log_ins_np.tolist()
+        self._p_sub = np.exp(self.log_sub_np); self._p_ins = np.exp(self.log_ins_np)
+        self._c_sub = np.cumsum(self._p_sub, axis=1); self._c_ins = np.cumsum(self._p_ins, axis=1)
+        self._cache = {}
+        return self
+
+    def reverse(self):
+        """Approximate inverse transducer child -> parent, for proposing ancestral forms.
+
+        Row o of the reverse substitution table is P(parent segment s | child segment o) under a
+        uniform prior on s, i.e. column o of the forward table renormalised; its EPS entry (the
+        child segment was inserted, so the parent has nothing here) is the forward insertion
+        probability of o averaged over contexts. Reverse insertion of s (the parent had an s the
+        child deleted) gets the forward deletion probability of s. A rule s -> o with large u_e
+        therefore makes the reverse propose s wherever the child shows o, which the forward
+        transducer applied to the child never does. Exact as a proposal (its density is computed by
+        the same DP); approximate as an inverse."""
+        r = getattr(self, "_rev", None)
+        if r is None:
+            ls, li = self.log_sub_np, self.log_ins_np
+            rs = np.full((N_SEG, N_OUT), NEG)
+            rs[:, :N_SEG] = ls[:, :N_SEG].T                                    # rs[o, s] = log P(o | s)
+            rs[:, EPS] = np.logaddexp.reduce(li[:, :N_SEG], axis=0) - math.log(li.shape[0])
+            rs -= np.logaddexp.reduce(rs, axis=1, keepdims=True)
+            ri = np.zeros((N_SEG + 1, N_SEG + 1))
+            ri[:, :N_SEG] = ls[:, EPS][None, :] - math.log(N_SEG)              # insert s back w.p. ~ P(s deleted) / N_SEG
+            ri[:, NOINS] = 0.0
+            ri -= np.logaddexp.reduce(ri, axis=1, keepdims=True)
+            r = self._rev = EdgeParams.from_tables(rs, ri)
+        return r
+
     def logprob(self, y1, y2):
         key = (y1, y2)
         v = self._cache.get(key)
