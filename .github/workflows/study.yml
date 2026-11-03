@@ -33,9 +33,13 @@ on:
         required: false
         default: "2"
       concepts:
-        description: recovery only, number of concepts M per simulated dataset
+        description: recovery and pt, number of concepts M per simulated dataset
         required: false
         default: "25"
+      pt_hyps:
+        description: pt only, semicolon-separated marginal sets per job ("h1;h0" = one job per hypothesis, "h1,h0" = both in one job)
+        required: false
+        default: "h1;h0"
       lbf_reps:
         description: lbf only, comma-separated replicate ids (0 = primary; >0 re-estimates the same data with fresh stepping-stone seeds)
         required: false
@@ -56,15 +60,23 @@ jobs:
           if study == "pt":
               reps = [r.strip() for r in "${{ inputs.lbf_reps }}".split(",") if r.strip()] or ["1"]
               depths = [d.strip() for d in "${{ inputs.depths }}".split(",") if d.strip()]
-              cells = [{"seed": s.split(":")[0], "kind": s.split(":")[1], "depth": d, "rep": r, "suffix": "_" + s.split(":")[1] + "_r" + r}
-                       for s in seeds for d in depths for r in reps]
+              hyps = [h.strip() for h in "${{ inputs.pt_hyps }}".split(";") if h.strip()] or ["h1,h0"]
+              cells = []
+              for s in seeds:
+                  seed, kind = s.split(":")
+                  # unrelated data do not depend on depth: run them once, at the first depth
+                  for d in (depths if kind == "related" else depths[:1]):
+                      for r in reps:
+                          for h in hyps:
+                              cells.append({"seed": seed, "kind": kind, "depth": d, "rep": r, "hyp": h,
+                                            "suffix": "_" + kind + "_r" + r + ("" if "," in h else "_" + h)})
           elif study == "lbf":
               depths = [d.strip() for d in "${{ inputs.depths }}".split(",") if d.strip()]
               reps = [r.strip() for r in "${{ inputs.lbf_reps }}".split(",") if r.strip()] or ["0"]
-              cells = [{"seed": s, "depth": d, "rep": r, "suffix": ("" if r == "0" else "_r" + r), "kind": "-"}
+              cells = [{"seed": s, "depth": d, "rep": r, "suffix": ("" if r == "0" else "_r" + r), "kind": "-", "hyp": "-"}
                        for s in seeds for d in depths for r in reps]
           else:
-              cells = [{"seed": s, "depth": "-", "rep": "0", "suffix": "", "kind": "-"} for s in seeds]
+              cells = [{"seed": s, "depth": "-", "rep": "0", "suffix": "", "kind": "-", "hyp": "-"} for s in seeds]
           with open(os.environ["GITHUB_OUTPUT"], "a") as fh:
               fh.write("matrix=" + json.dumps({"include": cells}) + "\n")
 
@@ -94,11 +106,11 @@ jobs:
             recovery) python studies/recovery.py 1 ${{ matrix.seed }} ${{ inputs.sweeps }} ${{ inputs.burn }} ${{ inputs.concepts }} ;;
             confound) python studies/confound.py 1 ${{ matrix.seed }} ${{ inputs.sweeps }} ${{ inputs.burn }} ;;
             lbf)      python studies/lbf.py 1 ${{ matrix.seed }} ${{ matrix.depth }} ${{ inputs.lbf_K }} ${{ inputs.sweeps }} ${{ inputs.burn }} ${{ inputs.lbf_warmup }} ${{ inputs.lbf_power }} ${{ matrix.rep }} ;;
-            pt)       python studies/pt_check.py ${{ matrix.seed }} ${{ matrix.depth }} ${{ matrix.kind }} 1 ${{ inputs.lbf_K }} ${{ inputs.sweeps }} ${{ inputs.burn }} ${{ matrix.rep }} ;;
+            pt)       python studies/pt_check.py ${{ matrix.seed }} ${{ matrix.depth }} ${{ matrix.kind }} 1 ${{ inputs.lbf_K }} ${{ inputs.sweeps }} ${{ inputs.burn }} ${{ matrix.rep }} ${{ matrix.hyp }} ${{ inputs.concepts }} ;;
           esac
       - uses: actions/upload-artifact@v4
         with:
-          name: cell-${{ inputs.study }}-${{ matrix.seed }}-${{ matrix.depth }}-${{ matrix.rep }}-${{ matrix.kind }}
+          name: cell-${{ inputs.study }}-${{ matrix.seed }}-${{ matrix.depth }}-${{ matrix.rep }}-${{ matrix.kind }}-${{ matrix.hyp }}
           path: results/${{ inputs.study }}_${{ matrix.seed }}${{ matrix.suffix }}.json
 
   collect:

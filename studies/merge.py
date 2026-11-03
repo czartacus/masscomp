@@ -5,20 +5,30 @@ import numpy as np
 
 study, out, ins = sys.argv[1], sys.argv[2], sys.argv[3:]
 FIELD = {"recovery": "root_set_cov", "confound": "frac_both", "lbf": "lbf", "pt": "lbf"}[study]
-rows, partial, meta = [], {}, {}
+rows, partial, meta, pt_cells = [], {}, {}, {}
 for p in ins:
     d = json.load(open(p))
     if study == "pt":
         if d.get("study") != "pt":
             continue
-        d["rows"] = [dict(seed=d["seed"], kind=d["kind"], depth=d["depth"], rep=int(r), lbf=v["lbf"], logp_h1=v["h1"]["logp"],
-                          logp_h0=v["h0"]["logp"], swap_acc_min=min(v["h1"]["swap_acc"]), secs=v["h1"]["secs"] + v["h0"]["secs"])
-                     for r, v in d["reps"].items()]
-        d["partial"] = {f"{d['seed']}:{d['kind']}:{h}:r{r}": {"total": v[h]["logp"], "terms": v[h]["terms"]} for r, v in d["reps"].items() for h in ("h1", "h0")}
+        # One file holds one or both marginals of (seed, kind, depth, rep); split h1/h0 jobs are joined here.
+        for r, v in d["reps"].items():
+            cell = pt_cells.setdefault((d["seed"], d["kind"], d["depth"], int(r)), {})
+            for h in ("h1", "h0"):
+                if h in v:
+                    cell[h] = v[h]
+                    partial[f"{d['seed']}:{d['kind']}:{d['depth']}:{h}:r{r}"] = {"total": v[h]["logp"], "terms": v[h]["terms"]}
+        d["rows"] = []
     rows.extend(r for r in d.get("rows", []) if FIELD in r)   # ignore files from other studies
     if isinstance(d.get("partial"), dict):
         partial.update(d["partial"])
     meta.update({k: v for k, v in d.items() if k not in ("rows", "partial", "summary")})
+if study == "pt":
+    for (seed, kind, depth, rep), v in sorted(pt_cells.items()):
+        if "h1" in v and "h0" in v:
+            rows.append(dict(seed=seed, kind=kind, depth=depth, rep=rep, lbf=v["h1"]["logp"] - v["h0"]["logp"],
+                             logp_h1=v["h1"]["logp"], logp_h0=v["h0"]["logp"], swap_acc_min=min(v["h1"]["swap_acc"]),
+                             swap_acc_mean=float(np.mean(v["h1"]["swap_acc"])), secs=v["h1"]["secs"] + v["h0"]["secs"]))
 seen = set(); uniq = []
 for r in rows:
     key = (r.get("seed"), r.get("kind"), r.get("depth"), r.get("rep", 0))
@@ -52,16 +62,21 @@ elif study in ("lbf", "pt"):
     def logsumexp(a, axis=0):
         a = np.asarray(a); mx = a.max(axis=axis, keepdims=True)
         return (mx + np.log(np.exp(a - mx).sum(axis=axis, keepdims=True))).squeeze(axis)
-    terms = {}   # (seed, kind, hyp) -> list of per-chain term arrays
+    terms = {}   # (seed, kind, depth, hyp) -> list of per-chain term arrays
     for key, v in partial.items():
         if not isinstance(v, dict) or "terms" not in v:
             continue
-        seed, kind, hyp = key.split(":")[:3]
-        terms.setdefault((int(seed), kind, hyp), []).append(np.array(v["terms"]))
-    depth_of = {(r["seed"], r["kind"]): r["depth"] for r in rows}
+        parts = key.split(":")
+        if len(parts) >= 5:
+            seed, kind, depth, hyp = int(parts[0]), parts[1], float(parts[2]), parts[3]
+        else:                                    # legacy key without depth
+            seed, kind, hyp = int(parts[0]), parts[1], parts[2]
+            depth = next((r["depth"] for r in rows if r["seed"] == seed and r["kind"] == kind), None)
+        terms.setdefault((seed, kind, depth, hyp), []).append(np.array(v["terms"]))
+    cells = sorted({(r["seed"], r["kind"], r["depth"]) for r in rows})
     pooled = []
-    for (seed, kind), depth in depth_of.items():
-        c1, c0 = terms.get((seed, kind, "h1"), []), terms.get((seed, kind, "h0"), [])
+    for seed, kind, depth in cells:
+        c1, c0 = terms.get((seed, kind, depth, "h1"), []), terms.get((seed, kind, depth, "h0"), [])
         if len(c1) >= 2 and len(c0) >= 2:
             l1 = float(sum(logsumexp(np.stack(c1), axis=0) - np.log(len(c1))))
             l0 = float(sum(logsumexp(np.stack(c0), axis=0) - np.log(len(c0))))
@@ -69,15 +84,19 @@ elif study in ("lbf", "pt"):
                                n_chains=min(len(c1), len(c0))))
     if pooled:
         per_rep = [r for r in rows if r.get("rep") != "pooled"]
-        summary["replicate_noise_sd"] = float(np.mean([np.std([r["lbf"] for r in per_rep if (r["seed"], r["kind"]) == k])
-                                                       for k in depth_of if sum((r["seed"], r["kind"]) == k for r in per_rep) >= 2] or [np.nan]))
+        summary["replicate_noise_sd"] = float(np.mean([np.std([r["lbf"] for r in per_rep if (r["seed"], r["kind"], r["depth"]) == k])
+                                                       for k in cells if sum((r["seed"], r["kind"], r["depth"]) == k for r in per_rep) >= 2] or [np.nan]))
+        # noise of a single log-marginal estimate, from replicate pairs of the same (cell, hypothesis)
+        pairs = [np.std([pt_cells[c][h]["logp"] for c in pt_cells if c[:3] == k and h in pt_cells[c]], ddof=1)
+                 for k in cells for h in ("h1", "h0") if sum(c[:3] == k and h in pt_cells[c] for c in pt_cells) >= 2]
+        summary["logp_noise_sd"] = float(np.mean(pairs)) if pairs else None
         rows = [r for r in rows if r.get("rep") != "pooled"] + pooled
         summary["n_pooled_cells"] = len(pooled)
     use = [r for r in rows if r.get("rep") == "pooled"] or rows
     rows_all, rows = rows, use
-    for depth in sorted({r["depth"] for r in rows}):
+    for depth in sorted({r["depth"] for r in rows if r["kind"] == "related"} or {r["depth"] for r in rows}):
         rel = np.array([r["lbf"] for r in rows if r["depth"] == depth and r["kind"] == "related"])
-        un = np.array([r["lbf"] for r in rows if r["depth"] == depth and r["kind"] == "unrelated"])
+        un = np.array([r["lbf"] for r in rows if r["kind"] == "unrelated" and (r["depth"] == depth or r["depth"] in (0, 0.0, "-"))])
         tau = float(np.percentile(un, 99)) if len(un) else float("nan")
         summary[str(depth)] = dict(n_related=int(len(rel)), n_unrelated=int(len(un)), pooled=bool(rows and rows[0].get("rep") == "pooled"),
                                    related_mean=float(rel.mean()) if len(rel) else None, related_sd=float(rel.std()) if len(rel) else None,

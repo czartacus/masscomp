@@ -71,7 +71,7 @@ def _pt_worker(conn, ds, theta0, seeds, betas, sweep_kw):
 
 
 def stepping_stone_pt(ds, theta0, seed, K=24, n_sweeps=2000, burn=500, thin=5, power=2.0, verbose=False,
-                      swap_every=1, n_procs=None, **sweep_kw):
+                      swap_every=1, n_procs=None, adapt=True, adapt_every=25, **sweep_kw):
     """Parallel-tempered stepping stone: all K+1 power posteriors run at once, and after every sweep
     neighbouring stones propose to exchange states (accepted with prob min(1, exp((b_i - b_j)(ll_j - ll_i)))).
     The estimator is the same as stepping_stone; the ladder only improves mixing, since a state stuck
@@ -81,7 +81,13 @@ def stepping_stone_pt(ds, theta0, seed, K=24, n_sweeps=2000, burn=500, thin=5, p
 
     n_procs > 1 (default: env MASSCOMP_PROCS) spreads the K+1 chains over persistent worker processes.
     A swap then exchanges the two chains' beta labels rather than their states, so only scalars cross
-    process boundaries; the sampled distribution is identical (each chain keeps its own RNG stream)."""
+    process boundaries; the sampled distribution is identical (each chain keeps its own RNG stream).
+
+    adapt=True re-spaces the interior betas during the first 80% of burn-in so that neighbouring swap
+    acceptance rates equalise (Vousden, Farr & Mandel 2016: S_j = log(T_j - T_{j-1}) moves by
+    kappa * (A_{j-1} - A_j)); beta_0 = 0 and beta_K = 1 stay fixed and the ladder is frozen before any
+    likelihood is recorded, so the estimator is unchanged. The grid of 3 Nov 2026 had acceptance 0.00 at
+    the top ten stones with the fixed (k/K)^2 ladder and replicate sd ~19 nats."""
     import os
     if n_procs is None:
         n_procs = int(os.environ.get("MASSCOMP_PROCS", "1"))
@@ -106,6 +112,36 @@ def stepping_stone_pt(ds, theta0, seed, K=24, n_sweeps=2000, burn=500, thin=5, p
                 acc[k] += 1
         return cur
 
+    win_acc = np.zeros(K); win_try = np.zeros(K)
+    adapt_until = int(0.8 * burn)
+
+    def maybe_adapt(i):
+        """Vousden et al. update on the interior temperatures, cold -> hot = stone K .. stone 1."""
+        if not adapt or i >= adapt_until or i == 0 or i % adapt_every:
+            return
+        A = win_acc / np.maximum(win_try, 1)          # A[k]: acceptance of pair (k, k+1)
+        win_acc[:] = 0; win_try[:] = 0
+        kappa = 0.6 / (1 + i / (0.3 * burn))
+        T = [1.0 / betas[K - j] for j in range(K)]     # T[0] = 1 (beta=1) ... T[K-1] = 1/beta_1
+        S = [math.log(T[j] - T[j - 1]) for j in range(1, K)]
+        for j in range(1, K):
+            a_cold = A[K - j]          # pair (stone K-j, stone K-j+1): between j-1 and j
+            a_hot = A[K - j - 1]       # pair (stone K-j-1, stone K-j): between j and j+1
+            S[j - 1] += kappa * (a_cold - a_hot)
+        for j in range(1, K):
+            T[j] = T[j - 1] + math.exp(S[j - 1])
+        for j in range(1, K):
+            betas[K - j] = max(1.0 / T[j], 1e-6)
+
+    _do_swaps = do_swaps
+
+    def do_swaps(i, cur_by_chain):
+        before = acc.copy(); bt = tries.copy()
+        cur = _do_swaps(i, cur_by_chain)
+        win_acc[:] += acc - before; win_try[:] += tries - bt
+        maybe_adapt(i)
+        return cur
+
     if n_procs > 1:
         import multiprocessing as mp
         ctx = mp.get_context("fork")
@@ -125,6 +161,8 @@ def stepping_stone_pt(ds, theta0, seed, K=24, n_sweeps=2000, burn=500, thin=5, p
                 for blk, conn in zip(blocks, conns):
                     for c, ll in zip(blk, conn.recv()):
                         cur_by_chain[c] = ll
+                if i == burn:
+                    acc[:] = 0; tries[:] = 0            # report acceptance on the frozen ladder
                 if i % swap_every == 0:
                     cur = do_swaps(i, cur_by_chain)
                 else:
@@ -145,6 +183,8 @@ def stepping_stone_pt(ds, theta0, seed, K=24, n_sweeps=2000, burn=500, thin=5, p
                 s.beta = betas[rank[c]]
                 s.sweep(**sweep_kw)
             cur_by_chain = [s.st.log_lik() for s in chains]
+            if i == burn:
+                acc[:] = 0; tries[:] = 0
             if i % swap_every == 0:
                 cur = do_swaps(i, cur_by_chain)
             else:
@@ -160,4 +200,4 @@ def stepping_stone_pt(ds, theta0, seed, K=24, n_sweeps=2000, burn=500, thin=5, p
         if verbose:
             print(f"  stone {k:2d} beta={betas[k]:.4f} mean ll={x.mean():.1f} sd={x.std():.1f} term={log_terms[-1]:.3f} "
                   f"ess={w.sum() ** 2 / (w ** 2).sum():.1f} swap_acc={acc[k] / max(tries[k], 1):.2f}", flush=True)
-    return float(sum(log_terms)), log_terms, acc / np.maximum(tries, 1)
+    return float(sum(log_terms)), log_terms, acc / np.maximum(tries, 1), list(betas)
