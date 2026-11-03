@@ -299,16 +299,34 @@ _Z0 = np.zeros(0, dtype=np.int64)
 _LS0 = np.zeros((N_SEG, N_OUT)); _LI0 = np.zeros((N_SEG + 1, N_SEG + 1))
 
 
-def draw(rng, in_mode, in_tables, x, outs, T=T_MAX):
-    """in_mode 0 (prior G) or 1 (transducer from x with in_tables = (log_sub, log_ins));
-    outs: list of up to two (log_sub, log_ins, z). Returns (form tuple, logZ)."""
+def _prep(in_mode, in_tables, x, outs, T):
     ls_in, li_in = in_tables if in_mode == 1 else (_LS0, _LI0)
     xa = _arr(x) if in_mode == 1 else _Z0
     K = len(outs)
     ls1, li1, z1 = outs[0] if K >= 1 else (_LS0, _LI0, ())
     ls2, li2, z2 = outs[1] if K >= 2 else (_LS0, _LI0, ())
     z1a, z2a = _arr(z1), _arr(z2)
-    alpha, term = forward(in_mode, ls_in, li_in, xa, len(xa), K, ls1, li1, z1a, len(z1a), ls2, li2, z2a, len(z2a), T)
-    unif = rng.random(2 * T + len(xa) + 4)
-    form, logZ = backward(alpha, term, in_mode, ls_in, li_in, xa, len(xa), K, ls1, li1, z1a, len(z1a), ls2, li2, z2a, len(z2a), T, unif)
+    args = (in_mode, ls_in, li_in, xa, len(xa), K, ls1, li1, z1a, len(z1a), ls2, li2, z2a, len(z2a), T)
+    alpha, term = forward(*args)
+    return args, alpha, term
+
+
+def log_Z(in_mode, in_tables, x, outs, T=T_MAX):
+    """log of the total mass sum_y P_in(y) * prod_k T_k(z_k | y) over the lattice (len(y) <= T)."""
+    args, alpha, term = _prep(in_mode, in_tables, x, outs, T)
+    n, m1, m2 = args[4], args[9], args[13]
+    v = alpha[n, :, m1, m2, 1:] + term[n, :, m1, m2, 1:]
+    v = v[v > NEG / 2]
+    if len(v) == 0:
+        return NEG
+    m = v.max()
+    return float(m + np.log(np.exp(v - m).sum()))
+
+
+def draw(rng, in_mode, in_tables, x, outs, T=T_MAX):
+    """in_mode 0 (prior G) or 1 (transducer from x with in_tables = (log_sub, log_ins));
+    outs: list of up to two (log_sub, log_ins, z). Returns (form tuple, logZ)."""
+    args, alpha, term = _prep(in_mode, in_tables, x, outs, T)
+    unif = rng.random(2 * T + args[4] + 4)
+    form, logZ = backward(alpha, term, *args, unif)
     return tuple(int(s) for s in form), float(logZ)

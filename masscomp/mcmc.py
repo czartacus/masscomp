@@ -48,7 +48,7 @@ class Sampler:
                 for e in f.edges:
                     event[(e, c)] = ev.INHERIT
         self.st = State(ds, theta, y, event, donor)
-        self.acc = {k: [0, 0] for k in ["y", "gibbs", "ffbs", "joint", "lam", "u", "rho", "omega", "troot"]}
+        self.acc = {k: [0, 0] for k in ["y", "gibbs", "ffbs", "jffbs", "joint", "lam", "u", "rho", "omega", "troot"]}
         self.inlattice = 1.0
         if init is None:
             self.move_events()   # remove impossible inherit terms from the initial state
@@ -286,6 +286,92 @@ class Sampler:
                     self.acc["ffbs"][0] += 1
                 else:
                     st.y[(v, c)] = old
+
+    def _ffbs_setup(self, v, c, kind=None, d=None):
+        """(in_mode, tables, x, lattice outs, all outs) for the FFBS lattice of (v, c) under the given
+        incoming event kind (default: the current one)."""
+        st, f = self.st, self.st.f
+        if kind is None:
+            kind = st.event[(v, c)] if f.parent[v] >= 0 else ev.REPLACE
+            d = st.donor.get((v, c))
+        if kind == ev.INHERIT:
+            in_mode, tab, x = 1, st.ep[v], st.y[(f.parent[v], c)]
+        elif kind == ev.REPLACE:
+            in_mode, tab, x = 0, None, None
+        else:
+            in_mode, tab, x = 1, st.adapt, st.y[(d, c)]
+        outs = []
+        for ch in f.children[v]:
+            if st.event[(ch, c)] == ev.INHERIT:
+                outs.append((st.ep[ch], st.y[(ch, c)]))
+        for e in f.edges:
+            if st.event.get((e, c)) == ev.BORROW and st.donor.get((e, c)) == v:
+                outs.append((st.adapt, st.y[(e, c)]))
+        return in_mode, tab, x, outs[:2]
+
+    @staticmethod
+    def _ffbs_score(in_mode, tab, x, lat, y):
+        sc = ev.log_G(y) if in_mode == 0 else tab.logprob(x, y)
+        for ep, z in lat:
+            sc += ep.logprob(y, z)
+        return sc
+
+    def move_joint_ffbs(self, p_select=0.25):
+        """Metropolised Gibbs over the incoming event of (v, c) — inherit / replace / borrow from each
+        candidate donor — with the form integrated out over the lattice and then drawn exactly:
+        propose a kind uniformly, compute the lattice mass Z_kind (ffbs.log_Z) for it and for the
+        current kind, draw y' from the proposed lattice, and accept with
+            [target(kind', y') / target(kind, y)] / [q(kind', y') / q(kind, y)],
+        q(kind, y) = (1/n_opt) * score_kind(y) / Z_kind. At beta = 1 with at most two out-edges the
+        ratio reduces to evp[kind'] Z_kind' / (evp[kind] Z_kind): the exact collapsed conditional.
+        This is what lets borrow/inherit labels move when the form they imply differs from the
+        current one (move_joint proposes forms from the generative side only, blind to the children)."""
+        from .ffbs import draw as ffbs_draw, log_Z as ffbs_logZ
+        st, f, rng = self.st, self.st.f, self.rng
+
+        def tables(tab):
+            return (tab.log_sub_np, tab.log_ins_np) if tab is not None else None
+
+        for v in f.internal:
+            if f.parent[v] < 0:
+                continue
+            cands = st.cands[v]
+            n_opt = 2 + len(cands)
+            for c in range(st.M):
+                if rng.random() >= p_select:
+                    continue
+                cur, cur_kind, cur_d = st.y[(v, c)], st.event[(v, c)], st.donor.get((v, c))
+                i = int(rng.integers(n_opt))
+                kind, d = (i, None) if i < 2 else (ev.BORROW, cands[i - 2])
+                if kind == cur_kind and d == cur_d:
+                    continue
+                m_new, tab_new, x_new, lat = self._ffbs_setup(v, c, kind, d)
+                m_cur, tab_cur, x_cur, _ = self._ffbs_setup(v, c)
+                lat_t = [(ep.log_sub_np, ep.log_ins_np, z) for ep, z in lat]
+                prop, logZ_new = ffbs_draw(rng, m_new, tables(tab_new), x_new, lat_t)
+                if not prop or len(prop) > MAX_FORM_LEN:
+                    continue
+                logZ_cur = ffbs_logZ(m_cur, tables(tab_cur), x_cur, lat_t)
+                logq_new = self._ffbs_score(m_new, tab_new, x_new, lat, prop) - logZ_new
+                logq_cur = self._ffbs_score(m_cur, tab_cur, x_cur, lat, cur) - logZ_cur
+                edges = st.affected_edges(v, c)
+                over = {(v, c): dict(y_child=prop, kind=kind, d=d)}
+                for e in edges:
+                    if e != v:
+                        over[(e, c)] = dict(y_parent=prop) if f.parent[e] == v else {}
+                st.y[(v, c)] = prop
+                dterm, new = self._delta_terms([(e, c) for e in edges], over)
+                self.acc["jffbs"][1] += 1
+                if self._accept(dterm + logq_cur - logq_new):
+                    self._commit(new)
+                    st.event[(v, c)] = kind
+                    if kind == ev.BORROW:
+                        st.donor[(v, c)] = d
+                    else:
+                        st.donor.pop((v, c), None)
+                    self.acc["jffbs"][0] += 1
+                else:
+                    st.y[(v, c)] = cur
 
     # ------------------------------------------------------------------ move 1b: joint (event, form)
     def _gen_logq(self, v, c, kind, d, form):
@@ -659,6 +745,7 @@ class Sampler:
             self.inlattice = self.move_forms_gibbs()
             if self.FFBS_P > 0:
                 self.move_forms_ffbs(self.FFBS_P)
+                self.move_joint_ffbs(self.FFBS_P)
             self.move_forms(n_prop=1); self.move_joint(); self.move_events()
         if clamp_params:
             return
