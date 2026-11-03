@@ -15,7 +15,7 @@ from studies.common import root_set_coverage, recoverable_roots, N_PROCS
 
 seed = int(sys.argv[1]); SW = int(sys.argv[2]) if len(sys.argv) > 2 else 1500; BURN = int(sys.argv[3]) if len(sys.argv) > 3 else 500
 modes = sys.argv[4].split(",") if len(sys.argv) > 4 else ["copy", "truth", "prior"]
-M, DEPTH = 25, 0.5
+M, DEPTH = 25, 1.5   # as studies/recovery.py
 ds = simulate_pair(related=True, depth=DEPTH, M=M, seed=seed)
 rec = recoverable_roots(ds)
 R = ds.forest.roots[0]
