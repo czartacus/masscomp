@@ -51,7 +51,7 @@ class Sampler:
                     event[(e, c)] = ev.INHERIT
         self.st = State(ds, theta, y, event, donor)
         self._cs = None      # concept restriction for the latent moves (move_tempered)
-        self.acc = {k: [0, 0] for k in ["y", "gibbs", "ffbs", "jffbs", "temper", "joint", "lam", "u", "rho", "omega", "troot"]}
+        self.acc = {k: [0, 0] for k in ["y", "gibbs", "ffbs", "jffbs", "regrow", "temper", "joint", "lam", "u", "rho", "omega", "troot"]}
         self.inlattice = 1.0
         if init is None:
             self.move_events()   # remove impossible inherit terms from the initial state
@@ -447,6 +447,92 @@ class Sampler:
             st.donor.pop((e, c), None)
         st.t_prior[(e, c)] = pr; st.t_lik[(e, c)] = lk
 
+    # ------------------------------------------------------------------ move 1c: subtree regrow
+    def move_regrow(self, p_select=0.05):
+        """Independence proposal for ALL internal forms of a subtree of concept c, grown bottom-up: each
+        node is drawn exactly from P_in(y) * prod T(child | y) with its (already proposed) inheriting
+        children as outputs and, for the subtree root with an INHERIT/BORROW incoming event, the parent
+        or donor form as input (the innovation prior otherwise). Nodes below the subtree root cannot see
+        their parent (it is proposed after them), so the proposal is leaf-anchored rather than
+        conditional; the MH ratio uses the full proposal density (per-node score minus the lattice
+        normaliser, both states). Motivation (basin_swap, 3 Nov 2026): under the chain's own theta,
+        splicing the truth's latents in concept by concept improves the posterior for 16 of 25 concepts
+        by 8-52 nats, yet the single-node and tempered moves never get there - the modes are separated
+        by paths through bad intermediate states. A whole-subtree draw can land in the other mode."""
+        rng = self.rng
+        for w in self.st.f.internal:
+            for c in self._concepts():
+                if rng.random() < p_select:
+                    self._regrow_site(w, c)
+
+    def _regrow_site(self, w, c):
+        from .ffbs import draw as ffbs_draw, log_Z as ffbs_logZ
+        st, f, rng = self.st, self.st.f, self.rng
+        leaf = st.is_leaf
+        sub = [v for v in f.topo if not leaf[v] and (v == w or self._below(v, w))]
+        subset = set(sub)
+        cur = {v: st.y[(v, c)] for v in sub}
+
+        def inputs(v):
+            if v == w and f.parent[v] >= 0:
+                k = st.event[(v, c)]
+                if k == ev.INHERIT:
+                    return 1, st.ep[v], st.y[(f.parent[v], c)]
+                if k == ev.BORROW and st.donor[(v, c)] not in subset:
+                    return 1, st.adapt, st.y[(st.donor[(v, c)], c)]
+            return 0, None, None
+
+        def outs(v, forms):
+            return [(st.ep[ch], forms[ch] if ch in forms else st.y[(ch, c)]) for ch in f.children[v] if st.event[(ch, c)] == ev.INHERIT][:2]
+
+        def logq(forms):
+            q = 0.0
+            for v in reversed(sub):
+                in_mode, tab, x = inputs(v)
+                lat = outs(v, forms)
+                tabs = (tab.log_sub_np, tab.log_ins_np) if tab is not None else None
+                q += self._ffbs_score(in_mode, tab, x, lat, forms[v]) - ffbs_logZ(in_mode, tabs, x, [(ep.log_sub_np, ep.log_ins_np, z) for ep, z in lat])
+            return q
+
+        prop = {}
+        for v in reversed(sub):
+            in_mode, tab, x = inputs(v)
+            lat = outs(v, prop)
+            y, _ = ffbs_draw(rng, in_mode, (tab.log_sub_np, tab.log_ins_np) if tab is not None else None, x,
+                             [(ep.log_sub_np, ep.log_ins_np, z) for ep, z in lat])
+            if not y or len(y) > MAX_FORM_LEN:
+                return
+            prop[v] = y
+        if all(prop[v] == cur[v] for v in sub):
+            return
+        lq = logq(cur) - logq(prop)
+        edges = set()
+        for v in sub:
+            edges.update(st.affected_edges(v, c))
+        for v in sub:
+            st.y[(v, c)] = prop[v]
+        dterm, new = self._delta_terms([(e, c) for e in edges], {(e, c): {} for e in edges})
+        droot = 0.0
+        if f.parent[w] < 0:
+            droot = self.bp * (ev.log_G(prop[w]) - st.t_prior[("root", w, c)])
+        self.acc["regrow"][1] += 1
+        if self._accept(dterm + droot + lq):
+            self._commit(new)
+            if f.parent[w] < 0:
+                st.t_prior[("root", w, c)] = ev.log_G(prop[w])
+            self.acc["regrow"][0] += 1
+        else:
+            for v in sub:
+                st.y[(v, c)] = cur[v]
+
+    def _below(self, v, w):
+        p = self.st.f.parent[v]
+        while p >= 0:
+            if p == w:
+                return True
+            p = self.st.f.parent[p]
+        return False
+
     # ------------------------------------------------------------------ move 1d: tempered transitions
     def move_tempered(self, concepts, betas=(0.6, 0.35, 0.2, 0.1, 0.05), sweeps_per=1):
         """Neal's (1996) tempered transitions, one concept at a time. Concepts are independent given
@@ -807,6 +893,7 @@ class Sampler:
 
     # ------------------------------------------------------------------ sweep
     FFBS_P = 0.25      # fraction of (node, concept) visited by the lattice FFBS move per sweep (0 = off)
+    REGROW_P = float(__import__("os").environ.get("MASSCOMP_REGROW_P", "0"))   # fraction of (subtree root, concept) regrown per sweep
     TEMPER_P = float(__import__("os").environ.get("MASSCOMP_TEMPER_P", "0"))   # fraction of concepts given a tempered excursion per sweep
 
     def sweep(self, clamp_latents=False, clamp_u=False, clamp_params=False):
@@ -815,6 +902,8 @@ class Sampler:
             if self.FFBS_P > 0:
                 self.move_forms_ffbs(self.FFBS_P)
                 self.move_joint_ffbs(self.FFBS_P)
+            if self.REGROW_P > 0:
+                self.move_regrow(self.REGROW_P)
             if self.TEMPER_P > 0:
                 cs = [c for c in range(self.st.M) if self.rng.random() < self.TEMPER_P]
                 if cs:
