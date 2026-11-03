@@ -60,7 +60,7 @@ def resample_others(th, keep, rng):
     """Exact draw of the theta components other than `keep` from their prior conditional given it
     (lam, rho, omega are independent; u_e | t_root on the root edges; t_root | u on the root edges)."""
     f = f0
-    new = sample_theta(f, M, rng)
+    new = prior_theta(rng)
     R = f.roots[0]
     if keep == "u":
         new.u = {e: dict(d) for e, d in th.u.items()}
@@ -78,6 +78,14 @@ def resample_others(th, keep, rng):
     return new
 
 
+def prior_theta(rng):
+    """theta ~ prior with u on the root edges drawn at t_root (sample_theta uses the forest's lengths)."""
+    th = sample_theta(f0, M, rng)
+    th2 = sample_theta(with_root_length(f0, th.t_root), M, rng)
+    th2.t_root = th.t_root
+    return th2
+
+
 def ess(x):
     x = np.asarray(x, float); n = len(x)
     b = max(10, int(np.sqrt(n))); k = n // b
@@ -93,18 +101,18 @@ if __name__ == "__main__":
     f0 = benchmark_a(related=True, t_root=1.0)
     # marginal-conditional
     mc = []
-    th_fix = sample_theta(f0, M, rng) if MODE == "latents" else None
+    th_fix = prior_theta(rng) if MODE == "latents" else None
     if th_fix is not None:
         th_fix.lam[3] = 7.0; th_fix.t_root = 1.0     # keep forms short: the sampler truncates at MAX_FORM_LEN
     for i in range(N):
-        th = th_fix if th_fix is not None else sample_theta(f0, M, rng)
+        th = th_fix if th_fix is not None else prior_theta(rng)
         ds = simulate(with_root_length(f0, th.t_root), th, M, rng)
         t = ds.truth
         mc.append(stats(ds.forest, th, t["y"], t["event"], t["donor"], ds.leaf_forms))
     mc = np.array(mc)
     print(f"marginal-conditional done ({time.time() - t0:.0f}s)", flush=True)
     # successive-conditional
-    th = th_fix if th_fix is not None else sample_theta(f0, M, rng)
+    th = th_fix if th_fix is not None else prior_theta(rng)
     ds = simulate(with_root_length(f0, th.t_root), th, M, rng)
     t = ds.truth
     leaves = set(f0.leaves)
