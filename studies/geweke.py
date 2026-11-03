@@ -21,7 +21,8 @@ N = int(sys.argv[1]) if len(sys.argv) > 1 else 1000
 M = int(sys.argv[2]) if len(sys.argv) > 2 else 6
 seed = int(sys.argv[3]) if len(sys.argv) > 3 else 1
 MODE = sys.argv[4] if len(sys.argv) > 4 else "full"
-ONLY = sys.argv[5] if len(sys.argv) > 5 else None    # params mode: test one move (lam|u|rates|troot); the other theta
+ONLY = sys.argv[5] if len(sys.argv) > 5 else None
+SWEEPS = int(__import__("os").environ.get("MASSCOMP_GEWEKE_SWEEPS", "1"))    # params mode: test one move (lam|u|rates|troot); the other theta
                                                       # components are redrawn exactly from their prior conditional   # full | params (theta moves only; latents+data resimulated
                                                       # exactly given theta) | latents (theta fixed at one prior draw;
                                                       # latent moves only; data redrawn given theta, latents)
@@ -87,12 +88,22 @@ def prior_theta(rng):
 
 
 def ess(x):
+    """Geyer's initial positive sequence estimator (batch means with b = sqrt(n) badly overstated the ESS
+    of the successive-conditional chain, whose autocorrelation time for form lengths is in the thousands)."""
     x = np.asarray(x, float); n = len(x)
-    b = max(10, int(np.sqrt(n))); k = n // b
-    if k < 2 or x.var() == 0:
+    x = x - x.mean()
+    v = x.var()
+    if v == 0 or n < 20:
         return float(n)
-    bm = x[:k * b].reshape(k, b).mean(1)
-    return float(min(n, n * x.var() / (b * bm.var(ddof=1) + 1e-300)))
+    f = np.fft.rfft(x, 2 * n)
+    acf = np.fft.irfft(f * np.conj(f))[:n] / (v * n)
+    tau = -1.0
+    for k in range(0, n - 1, 2):
+        pair = acf[k] + acf[k + 1]
+        if pair <= 0:
+            break
+        tau += 2 * pair
+    return float(min(n, n / max(tau, 1.0)))
 
 
 if __name__ == "__main__":
@@ -122,7 +133,8 @@ if __name__ == "__main__":
         s = Sampler(Dataset(f0, M, ds.leaf_forms), th, rng, init=(y, event, donor))
         if ONLY:
             s.PARAM_MOVES = {ONLY}
-        s.sweep(clamp_latents=(MODE == "params"), clamp_params=(MODE == "latents"))
+        for _ in range(SWEEPS):
+            s.sweep(clamp_latents=(MODE == "params"), clamp_params=(MODE == "latents"))
         st = s.st
         lp, ll = st.log_prior(), st.log_lik()
         y = {k: v for k, v in st.y.items() if k[0] not in leaves}; event, donor = dict(st.event), dict(st.donor); th = st.theta.copy()
@@ -139,6 +151,7 @@ if __name__ == "__main__":
             leaf_forms = redraw_data(s, rng)
             ds = Dataset(f0, M, leaf_forms)
     sc = np.array(sc)
+    np.save(__import__("os").environ.get("MASSCOMP_GEWEKE_OUT", "/tmp/geweke_last.npy"), dict(mc=mc, sc=sc, names=NAMES), allow_pickle=True)
     print(f"successive-conditional done ({time.time() - t0:.0f}s)   moves: " + " ".join(f"{k}={a}/{b}" for k, (a, b) in acc.items() if b), flush=True)
     print(f"{'stat':10s} {'mc mean':>10s} {'sc mean':>10s} {'z':>7s} {'ess_sc':>7s}")
     for j, nm in enumerate(NAMES):
