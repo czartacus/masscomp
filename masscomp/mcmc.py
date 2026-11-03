@@ -48,7 +48,7 @@ class Sampler:
                 for e in f.edges:
                     event[(e, c)] = ev.INHERIT
         self.st = State(ds, theta, y, event, donor)
-        self.acc = {k: [0, 0] for k in ["y", "gibbs", "joint", "lam", "u", "rho", "omega", "troot"]}
+        self.acc = {k: [0, 0] for k in ["y", "gibbs", "ffbs", "joint", "lam", "u", "rho", "omega", "troot"]}
         self.inlattice = 1.0
         if init is None:
             self.move_events()   # remove impossible inherit terms from the initial state
@@ -218,6 +218,74 @@ class Sampler:
                     st.t_prior[("root", v, c)] = ev.log_G(cands[i])
                 self.acc["gibbs"][0] += cands[i] != cur; self.acc["gibbs"][1] += 1
         return inlat / tot if tot else 1.0
+
+    # ------------------------------------------------------------------ move 1c: lattice FFBS
+    def move_forms_ffbs(self, p_select=0.25):
+        """Independence proposal for y[v,c] drawn EXACTLY from P_in(y) * prod_k T_k(z_k | y) over the
+        alignment lattice (ffbs.py): the incoming edge's conditional (transducer from the parent or
+        donor form, or the innovation prior) times up to two outgoing transducers (children inheriting
+        from v, edges borrowing from v). At beta = 1 with at most two out-edges this is the exact
+        conditional, so the move is a Gibbs step; otherwise the MH ratio corrects for the tempering
+        of leaf-edge terms and for out-edges beyond the two in the lattice. Each (v, c) is visited with
+        probability p_select per sweep (a draw costs a few ms). Floored (impossible) transducer values
+        make q slightly inexact for states the lattice cannot reach; such states are left with
+        probability ~e^-40 and never proposed, so the stationary distribution is unaffected in practice."""
+        from .ffbs import draw as ffbs_draw
+        st, f, rng = self.st, self.st.f, self.rng
+        for v in f.internal:
+            is_root = f.parent[v] < 0
+            for c in range(st.M):
+                if rng.random() >= p_select:
+                    continue
+                cur = st.y[(v, c)]
+                # incoming factor
+                if is_root or st.event[(v, c)] == ev.REPLACE:
+                    in_mode, tab, x = 0, None, None
+                elif st.event[(v, c)] == ev.INHERIT:
+                    in_mode, tab, x = 1, st.ep[v], st.y[(f.parent[v], c)]
+                else:
+                    in_mode, tab, x = 1, st.adapt, st.y[(st.donor[(v, c)], c)]
+                # outgoing factors
+                outs = []
+                for ch in f.children[v]:
+                    if st.event[(ch, c)] == ev.INHERIT:
+                        outs.append((st.ep[ch], st.y[(ch, c)]))
+                for e in f.edges:
+                    if st.event.get((e, c)) == ev.BORROW and st.donor.get((e, c)) == v:
+                        outs.append((st.adapt, st.y[(e, c)]))
+                lat = outs[:2]
+                prop, _ = ffbs_draw(rng, in_mode, (tab.log_sub_np, tab.log_ins_np) if tab is not None else None, x,
+                                    [(ep.log_sub_np, ep.log_ins_np, z) for ep, z in lat])
+                if not prop or len(prop) > MAX_FORM_LEN or prop == cur:
+                    continue
+
+                def score(y):
+                    sc = ev.log_G(y) if in_mode == 0 else tab.logprob(x, y)
+                    for ep, z in lat:
+                        sc += ep.logprob(y, z)
+                    return sc
+                logq = score(cur) - score(prop)          # log q(cur) - log q(prop); logZ cancels
+                edges = st.affected_edges(v, c)
+                over = {}
+                for e in edges:
+                    if e == v:
+                        over[(e, c)] = dict(y_child=prop)
+                    elif f.parent[e] == v:
+                        over[(e, c)] = dict(y_parent=prop)
+                    else:
+                        over[(e, c)] = {}
+                old = st.y[(v, c)]
+                st.y[(v, c)] = prop
+                dterm, new = self._delta_terms([(e, c) for e in edges], over)
+                droot = (ev.log_G(prop) - st.t_prior[("root", v, c)]) if is_root else 0.0
+                self.acc["ffbs"][1] += 1
+                if self._accept(dterm + droot + logq):
+                    self._commit(new)
+                    if is_root:
+                        st.t_prior[("root", v, c)] = ev.log_G(prop)
+                    self.acc["ffbs"][0] += 1
+                else:
+                    st.y[(v, c)] = old
 
     # ------------------------------------------------------------------ move 1b: joint (event, form)
     def _gen_logq(self, v, c, kind, d, form):
@@ -584,9 +652,13 @@ class Sampler:
                 st.evp[e] = old_evp[e]
 
     # ------------------------------------------------------------------ sweep
+    FFBS_P = 0.25      # fraction of (node, concept) visited by the lattice FFBS move per sweep (0 = off)
+
     def sweep(self, clamp_latents=False, clamp_u=False, clamp_params=False):
         if not clamp_latents:
             self.inlattice = self.move_forms_gibbs()
+            if self.FFBS_P > 0:
+                self.move_forms_ffbs(self.FFBS_P)
             self.move_forms(n_prop=1); self.move_joint(); self.move_events()
         if clamp_params:
             return
