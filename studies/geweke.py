@@ -7,7 +7,7 @@ Two ways to draw from the joint p(theta, latents, data):
                            that borrow from it (the FFBS lattice, <= 2 borrowers)
 If every move leaves the posterior invariant the two chains have the same marginal for any statistic
 of (theta, latents, data). A move with a wrong MH ratio shows up as a z-score far from 0.
-Usage: PYTHONPATH=. python studies/geweke.py [N] [M] [seed]      (env MASSCOMP_REGROW_P etc. select the moves)"""
+Usage: PYTHONPATH=. python studies/geweke.py [N] [M] [seed] [full|params|latents]      (env MASSCOMP_REGROW_P etc. select the moves)"""
 import sys, time
 from dataclasses import replace
 import numpy as np
@@ -20,6 +20,9 @@ from masscomp.ffbs import draw as ffbs_draw
 N = int(sys.argv[1]) if len(sys.argv) > 1 else 1000
 M = int(sys.argv[2]) if len(sys.argv) > 2 else 6
 seed = int(sys.argv[3]) if len(sys.argv) > 3 else 1
+MODE = sys.argv[4] if len(sys.argv) > 4 else "full"   # full | params (theta moves only; latents+data resimulated
+                                                      # exactly given theta) | latents (theta fixed at one prior draw;
+                                                      # latent moves only; data redrawn given theta, latents)
 NAMES = ["omega", "rho_mean", "lam0", "lam1", "lam2", "lam3", "t_root", "n_u", "sum_u2", "int_len", "leaf_len",
          "f_inherit", "f_replace", "f_borrow", "log_prior", "log_lik"]
 
@@ -63,15 +66,16 @@ if __name__ == "__main__":
     f0 = benchmark_a(related=True, t_root=1.0)
     # marginal-conditional
     mc = []
+    th_fix = sample_theta(f0, M, rng) if MODE == "latents" else None
     for i in range(N):
-        th = sample_theta(f0, M, rng)
+        th = th_fix if th_fix is not None else sample_theta(f0, M, rng)
         ds = simulate(with_root_length(f0, th.t_root), th, M, rng)
         t = ds.truth
         mc.append(stats(ds.forest, th, t["y"], t["event"], t["donor"], ds.leaf_forms))
     mc = np.array(mc)
     print(f"marginal-conditional done ({time.time() - t0:.0f}s)", flush=True)
     # successive-conditional
-    th = sample_theta(f0, M, rng)
+    th = th_fix if th_fix is not None else sample_theta(f0, M, rng)
     ds = simulate(with_root_length(f0, th.t_root), th, M, rng)
     t = ds.truth
     leaves = set(f0.leaves)
@@ -79,15 +83,20 @@ if __name__ == "__main__":
     sc = []; acc = {}
     for i in range(N):
         s = Sampler(Dataset(f0, M, ds.leaf_forms), th, rng, init=(y, event, donor))
-        s.sweep()
+        s.sweep(clamp_latents=(MODE == "params"), clamp_params=(MODE == "latents"))
         st = s.st
         lp, ll = st.log_prior(), st.log_lik()
         y = {k: v for k, v in st.y.items() if k[0] not in leaves}; event, donor = dict(st.event), dict(st.donor); th = st.theta.copy()
         sc.append(stats(st.f, th, st.y, event, donor, {k: v for k, v in st.y.items() if k[0] in leaves}, lp, ll))
         for k, (a, b) in s.acc.items():
             acc[k] = [acc.get(k, [0, 0])[0] + a, acc.get(k, [0, 0])[1] + b]
-        leaf_forms = redraw_data(s, rng)
-        ds = Dataset(f0, M, leaf_forms)
+        if MODE == "params":
+            ds = simulate(with_root_length(f0, th.t_root), th, M, rng)
+            t = ds.truth
+            y = {k: v for k, v in t["y"].items() if k[0] not in leaves}; event, donor = dict(t["event"]), dict(t["donor"])
+        else:
+            leaf_forms = redraw_data(s, rng)
+            ds = Dataset(f0, M, leaf_forms)
     sc = np.array(sc)
     print(f"successive-conditional done ({time.time() - t0:.0f}s)   moves: " + " ".join(f"{k}={a}/{b}" for k, (a, b) in acc.items() if b), flush=True)
     print(f"{'stat':10s} {'mc mean':>10s} {'sc mean':>10s} {'z':>7s} {'ess_sc':>7s}")
