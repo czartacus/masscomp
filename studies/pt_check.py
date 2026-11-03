@@ -28,10 +28,10 @@ def one(r):
         dsh = Dataset(f, ds.M, ds.leaf_forms)
         th = sample_theta(f, ds.M, np.random.default_rng(seed))
         t0 = time.time()
-        val, terms, swaps, betas = stepping_stone_pt(dsh, th, seed + 100000 * (r + 1) + (0 if hyp == "h1" else 7),
+        val, terms, swaps, betas, info = stepping_stone_pt(dsh, th, seed + 100000 * (r + 1) + (0 if hyp == "h1" else 7),
                                                      K=K, n_sweeps=SWEEPS, burn=BURN, warmup=WARMUP)
         out[hyp] = dict(logp=val, terms=[float(t) for t in terms], swap_acc=[float(s) for s in swaps],
-                        betas=[float(b) for b in betas], secs=time.time() - t0)
+                        betas=[float(b) for b in betas], secs=time.time() - t0, **info)
         print(f"rep {r} {hyp}: logp={val:.1f} swap_acc min/mean={min(swaps):.2f}/{np.mean(swaps):.2f} {out[hyp]['secs']:.0f}s", flush=True)
     if "h1" in out and "h0" in out:
         out["lbf"] = out["h1"]["logp"] - out["h0"]["logp"]

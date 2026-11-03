@@ -212,11 +212,14 @@ def stepping_stone_pt(ds, theta0, seed, K=24, n_sweeps=2000, burn=500, thin=5, p
                 for k in range(K + 1):
                     lls[k].append(cur[k])
     log_terms = []
+    info = dict(mean_ll=[float(np.mean(lls[k])) for k in range(K + 1)], sd_ll=[float(np.std(lls[k])) for k in range(K + 1)],
+                ess=[], warmup=warmup)
     for k in range(K):
         x = np.array(lls[k]); d = betas[k + 1] - betas[k]; m = x.max()
         w = np.exp(d * (x - m))
         log_terms.append(d * m + math.log(w.mean()))
+        info["ess"].append(float(w.sum() ** 2 / (w ** 2).sum()))
         if verbose:
             print(f"  stone {k:2d} beta={betas[k]:.4f} mean ll={x.mean():.1f} sd={x.std():.1f} term={log_terms[-1]:.3f} "
-                  f"ess={w.sum() ** 2 / (w ** 2).sum():.1f} swap_acc={acc[k] / max(tries[k], 1):.2f}", flush=True)
-    return float(sum(log_terms)), log_terms, acc / np.maximum(tries, 1), list(betas)
+                  f"ess={info['ess'][-1]:.1f} swap_acc={acc[k] / max(tries[k], 1):.2f}", flush=True)
+    return float(sum(log_terms)), log_terms, acc / np.maximum(tries, 1), list(betas), info
