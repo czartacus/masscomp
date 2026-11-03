@@ -6,14 +6,17 @@ from masscomp import events as ev
 
 
 def _ess(x):
+    """Geyer's initial positive sequence estimator (truncating the ACF at 0.05 overstated the ESS of the
+    slowly mixing prior chain on lam by several times)."""
     x = np.asarray(x, float) - np.mean(x); n = len(x)
     acf = np.correlate(x, x, "full")[n - 1:] / (x.var() * n)
-    s = 0.0
-    for k in range(1, n):
-        if acf[k] < 0.05:
+    tau = -1.0
+    for k in range(0, n - 1, 2):
+        pair = acf[k] + acf[k + 1]
+        if pair <= 0:
             break
-        s += acf[k]
-    return n / (1 + 2 * s)
+        tau += 2 * pair
+    return n / max(tau, 1.0)
 
 
 def test_mcmc_prior_only():
