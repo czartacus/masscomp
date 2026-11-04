@@ -1,0 +1,92 @@
+name: diag
+permissions:
+  contents: write
+on:
+  workflow_dispatch:
+    inputs:
+      cells:
+        description: semicolon-separated cell specs for studies/diag.py (one runner each), e.g. "kind=basin,seed=7,depth=0.25,modes=copy+truth,regrow_p=0.1;kind=geweke,n=10000,m=2,seed=1,mode=latents,sweeps=2"
+        required: true
+      label:
+        description: free-text label recorded with the merged results
+        required: false
+        default: ""
+
+jobs:
+  plan:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.m.outputs.matrix }}
+    steps:
+      - id: m
+        shell: python
+        env:
+          CELLS: ${{ inputs.cells }}
+        run: |
+          import json, os
+          cells = [c.strip() for c in os.environ["CELLS"].split(";") if c.strip()]
+          inc = [{"idx": i, "spec": c} for i, c in enumerate(cells)]
+          with open(os.environ["GITHUB_OUTPUT"], "a") as fh:
+              fh.write("matrix=" + json.dumps({"include": inc}) + "\n")
+
+  run:
+    needs: plan
+    runs-on: ubuntu-latest
+    timeout-minutes: 355
+    strategy:
+      fail-fast: false
+      max-parallel: 20
+      matrix: ${{ fromJson(needs.plan.outputs.matrix) }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: pip install -r requirements.txt
+      - name: run cell
+        env:
+          PYTHONPATH: .
+          NUMBA_NUM_THREADS: "1"
+          MASSCOMP_PROCS: "4"
+          SPEC: ${{ matrix.spec }}
+        run: |
+          mkdir -p results
+          python studies/diag.py "$SPEC" results/diag_${{ matrix.idx }}.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: diagcell-${{ github.run_id }}-${{ matrix.idx }}
+          path: results/diag_${{ matrix.idx }}.json
+
+  collect:
+    needs: run
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install numpy
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: diagcell-${{ github.run_id }}-*
+          path: cells
+      - name: merge
+        env:
+          LABEL: ${{ inputs.label }}
+        run: |
+          mkdir -p merged
+          python studies/merge.py diag merged/diag_${{ github.run_id }}.json $(find cells -name '*.json')
+          python - <<'PY'
+          import json, os
+          p = "merged/diag_${{ github.run_id }}.json"; d = json.load(open(p)); d["label"] = os.environ.get("LABEL", ""); d["run_id"] = "${{ github.run_id }}"
+          json.dump(d, open(p, "w"), indent=1)
+          PY
+      - name: commit merged results
+        run: |
+          mkdir -p results/cloud && cp merged/*.json results/cloud/
+          git config user.name "masscomp-actions"; git config user.email "actions@users.noreply.github.com"
+          git add results/cloud
+          git commit -m "results: diag run ${{ github.run_id }}" || echo "nothing to commit"
+          git pull --rebase origin main && git push origin HEAD:main

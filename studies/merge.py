@@ -4,6 +4,22 @@ import sys, json
 import numpy as np
 
 study, out, ins = sys.argv[1], sys.argv[2], sys.argv[3:]
+if study == "diag":
+    # diagnostic cells (studies/diag.py): no study-level summary, just the cells in spec order with a one-line digest each
+    cells = [json.load(open(p)) for p in ins]
+    cells = [c for c in cells if c.get("study") == "diag"]
+    cells.sort(key=lambda c: c.get("spec", ""))
+    digest = []
+    for c in cells:
+        if c["kind"] == "basin":
+            for m, r in c["result"].items():
+                digest.append(dict(spec=c["spec"], mode=m, root_cov_R=r["root_cov_R"], root_cov_fam=r["root_cov_fam"], mean_ll=r["mean_ll"],
+                                   omega_ratio=r["omega_ratio"], t_root=r["t_root"], log_prior=r["log_prior"], secs=r["secs"]))
+        else:
+            digest.append(dict(spec=c["spec"], max_abs_z=c["result"].get("max_abs_z"), moves=c["result"].get("moves"), secs=c["secs"]))
+    json.dump({"study": "diag", "digest": digest, "cells": cells}, open(out, "w"), indent=1)
+    print("DIGEST", json.dumps(digest, indent=1))
+    raise SystemExit(0)
 FIELD = {"recovery": "root_set_cov", "confound": "frac_both", "lbf": "lbf", "pt": "lbf"}[study]
 rows, partial, meta, pt_cells = [], {}, {}, {}
 for p in ins:
