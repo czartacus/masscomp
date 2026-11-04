@@ -9,7 +9,7 @@ spec's **Prototype plan** tab.
 
 ```
 pip install numpy scipy pytest
-python -m pytest tests -q                       # ~4 min; the two MCMC tests dominate
+python -m pytest tests -q                       # ~2 min; the prior-only MCMC test dominates
 PYTHONPATH=. python studies/profiling.py        # seconds per sweep at benchmark A and B
 PYTHONPATH=. python studies/recovery.py 50 0    # §8.1  (args: n_reps seed0 [sweeps burn])
 PYTHONPATH=. python studies/confound.py 20 0    # §8.2
@@ -58,14 +58,58 @@ Each study writes `results/<study>_<seed0>.json`; nothing in `results/` is edite
 
 ## Timings (profiling.py, one core)
 
-| Config | s / sweep | 3 chains × 5,000 sweeps |
-| --- | --- | --- |
-| A: 10 languages × 25 concepts | 0.33 | 1.4 h |
-| B: 20 languages × 50 concepts | 1.9 | 7.9 h |
+| Config | s / sweep (2026-11-04) | before | 3 chains × 5,000 sweeps |
+| --- | --- | --- | --- |
+| A: 10 languages × 25 concepts | 0.16 | 0.33 (v2), ~0.75 (v4 with the lattice moves) | 0.7 h |
+| B: 20 languages × 50 concepts | 0.79 | 1.9 (v2) | 3.3 h |
 
-A full §8.3 at plan settings (K=32, 2,000 sweeps, 40 datasets × 2 hypotheses) is ~1,000 CPU-hours
-in this implementation. The DP is memoised and already pure Python; the next step the plan names
-(vectorised NumPy DP) is the right one if the studies are to run at plan scale.
+On the recovery dataset used for the basin checks (seed 7, depth 0.25, M=25, regrow at 0.1) a
+sweep went from 1.58 s to 0.18 s on 2026-11-04 (8.8×; `results/basin/` runs before that date are
+at the old speed). Where it came from, in order of size:
+
+- **Lattice forward in linear space** (`ffbs.forward_lin`): the alignment-lattice forward pass was
+  62% of the sweep and did ~1.6 million log-add-exps per call. It now runs in linear space with
+  one scale factor per layer, with the out-edge step written as a (symbol × 16 out-edge options)
+  matrix product so the inner loops vectorise: 6.6 → 0.29 ms per call at two out-edges, identical
+  to the log-space loops to 1e-13 (`forward` is kept as the reference; `ffbs.USE_LIN = False`).
+- **Rule move** (`move_u`, 57 → 10 ms): a proposal on a substitution/deletion slot (s, o) changes
+  row s of one table (`EdgeParams.derive`), so only the concepts whose parent form contains s have
+  their inherit term recomputed; the replace/borrow options come from per-sweep tables shared with
+  the rate move.
+- **Rate move** (32 → 9 ms): the per-(edge, concept) option tables are built once per sweep as
+  padded (concept × edge × option) tensors and the normalisers are one vectorised log-sum-exp.
+- **Gibbs form move** (52 → 33 ms): the per-edge term evaluators are built once per site instead of
+  going through `edge_terms` for every candidate; the favoured parent segments per child segment
+  are tabulated once per transducer.
+- Lazy transducer tables, O(present) rule-slot proposals, `fastmath` on the lattice.
+
+Tried and not kept (no measurable gain): batching the edit-DP calls for the Gibbs weights (the
+cost was the surrounding Python, not the compiled DP) and skipping dead lattice cells (most cells
+are live). What remains (0.18 s): lattice forward ≈ 30%, compiled edit DP ≈ 10%, the rest Python
+bookkeeping spread over the latent moves (Gibbs 34 ms, joint-FFBS 20, joint 19, FFBS 16, events 11,
+forms 7; regrow at 0.1 adds ~80). An array-state rewrite of the latent moves would buy ~2× more,
+not the 5× first estimated, because the compiled parts do not shrink; the move-mix tuning
+(`kind=essrate` diag cells) is the cheaper lever.
+
+## Diagnostics in the cloud (`.github/workflows/diag.yml`)
+
+Any diagnostic that used to run serially on the development machine — a basin check, a Geweke run,
+a mixing-rate measurement — is one cell of `studies/diag.py`, run one per runner (4 cores) through
+the `diag` workflow and merged into `results/cloud/diag_<run_id>.json` with the exact spec of
+every cell. Dispatch (REST; `gh workflow run` is not available from these sessions):
+
+```
+gh api -X POST repos/czartacus/masscomp/actions/workflows/diag.yml/dispatches -f ref=main \
+  -f "inputs[label]=..." \
+  -f "inputs[cells]=kind=basin,seed=7,depth=0.25,modes=copy+lattice+truth,regrow_p=0.1;kind=geweke,n=10000,m=2,seed=1,mode=latents,sweeps=2,regrow_p=0.3,latent_moves=regrow;kind=essrate,seed=7,depth=0.25,start=truth,sweeps=3000,burn=500,latent_moves=ffbs+jffbs+events"
+```
+
+Cell kinds: `basin` (`root_diag.basin`: copy / lattice / truth / prior / ptK starts on one recovery
+dataset), `geweke` (`studies/geweke.py`), `essrate` (one chain; Geyer ESS per CPU-second of the
+log-likelihood, ω, λ, t_root, |u| and the root forms' change rate, for comparing move mixes).
+Sampler knobs (`regrow_p`, `regrow_events`, `regrow_borrow`, `ffbs_p`, `latent_moves`, `init`, …)
+go in the spec and become the `MASSCOMP_*` environment variables. The account allows 20 concurrent
+jobs (public repository: minutes are not metered), shared with the `study` workflow.
 
 ## Study results
 
