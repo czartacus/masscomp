@@ -15,6 +15,10 @@ if study == "diag":
             for m, r in c["result"].items():
                 digest.append(dict(spec=c["spec"], mode=m, root_cov_R=r["root_cov_R"], root_cov_fam=r["root_cov_fam"], mean_ll=r["mean_ll"],
                                    omega_ratio=r["omega_ratio"], t_root=r["t_root"], log_prior=r["log_prior"], secs=r["secs"]))
+        elif c["kind"] == "essrate":
+            r = c["result"]
+            digest.append(dict(spec=c["spec"], ms_per_sweep=1000 * r["secs_per_sweep"], root_change_rate=r["root_change_rate"],
+                               **{"ess_per_sec_" + k: v for k, v in r["ess_per_sec"].items()}))
         else:
             digest.append(dict(spec=c["spec"], max_abs_z=c["result"].get("max_abs_z"), moves=c["result"].get("moves"), secs=c["secs"]))
     json.dump({"study": "diag", "digest": digest, "cells": cells}, open(out, "w"), indent=1)

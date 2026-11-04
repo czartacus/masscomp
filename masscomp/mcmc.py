@@ -19,6 +19,7 @@ MAX_FORM_LEN = 8
 
 class Sampler:
     def __init__(self, ds, theta, rng, beta=1.0, init=None, init_from_prior=False):
+        self._fixed = None                     # per-sweep option tables, see _fixed_options
         self.rng = rng
         self.beta = beta
         self.bp = 1.0        # temperature on the prior-side terms (edge priors, events, root forms); 1 for
@@ -82,6 +83,7 @@ class Sampler:
 
     # ------------------------------------------------------------------ move 1: forms
     def move_forms(self, n_prop=5):
+        self._fixed = None                     # the forms may change: drop the per-sweep option tables
         st, f, rng = self.st, self.st.f, self.rng
         for v in f.internal:
             for c in self._concepts():
@@ -170,14 +172,11 @@ class Sampler:
             if not x:
                 continue
             S.add(x)
-            ls = st.ep[ch].log_sub_np if ch in st.ep else st.adapt.log_sub_np
+            top, s_del = (st.ep[ch] if ch in st.ep else st.adapt).top_parents
             scored = []
             for i, o in enumerate(x):
-                col = ls[:, o]                       # log P(o | s) for every parent segment s
-                for s_ in np.argsort(-col)[:3]:
-                    s_ = int(s_)
-                    if s_ != o:
-                        scored.append((col[s_], x[:i] + (s_,) + x[i + 1:]))
+                for s_, lp in top[o]:                # the parent segments the edge most favours for o
+                    scored.append((lp, x[:i] + (s_,) + x[i + 1:]))
             scored.sort(key=lambda t: -t[0])
             for _, cand in scored[:max_per_child]:
                 S.add(cand)
@@ -185,16 +184,15 @@ class Sampler:
                 for i in range(len(x)):               # child inserted a segment: parent lacks it
                     S.add(x[:i] + x[i + 1:])
             if len(x) < MAX_FORM_LEN:                 # child deleted a segment: parent had one more
-                ldel = ls[:, EPS]
-                s_ = int(np.argmax(ldel))
                 for i in range(len(x) + 1):
-                    S.add(x[:i] + (s_,) + x[i:])
+                    S.add(x[:i] + (s_del,) + x[i:])
         S = {s for s in S if 0 < len(s) <= MAX_FORM_LEN}
         return S
 
     def move_forms_gibbs(self):
         """Exact Gibbs draw of y[v,c] over candidates(v,c) when the current form is in that set;
         otherwise no-op (the MH moves handle it). Returns fraction of (v,c) that were in-lattice."""
+        self._fixed = None                     # the forms may change: drop the per-sweep option tables
         st, f, rng = self.st, self.st.f, self.rng
         inlat = 0; tot = 0
         for v in f.internal:
@@ -208,17 +206,45 @@ class Sampler:
                 inlat += 1
                 cands = list(S)
                 edges = st.affected_edges(v, c)
+                # per-edge evaluators of (prior_part, lik_part) as a function of the candidate form; the
+                # same arithmetic as edge_terms, with the state lookups hoisted out of the candidate loop
+                evals = []
+                for e in edges:
+                    k = st.event[(e, c)]; lp_ev = st.evp[e][c][k]; leaf = st.is_leaf[e]
+                    if e == v:                                     # incoming edge: cand is the child form
+                        if k == ev.INHERIT:
+                            yp = st.y[(f.parent[v], c)]; lpf = st.ep[v].logprob
+                            evals.append((e, lambda cand, lpf=lpf, yp=yp, a=lp_ev: (a + lpf(yp, cand), 0.0)))
+                        elif k == ev.REPLACE:
+                            evals.append((e, lambda cand, a=lp_ev: (a + ev.log_G(cand), 0.0)))
+                        else:
+                            yd = st.y[(st.donor[(v, c)], c)]; a = lp_ev - math.log(len(st.cands[v])); lpf = st.adapt.logprob
+                            evals.append((e, lambda cand, lpf=lpf, yd=yd, a=a: (a + lpf(yd, cand), 0.0)))
+                    else:                                          # outgoing: cand is the parent (or donor) form
+                        z = st.y[(e, c)]
+                        if k == ev.INHERIT and f.parent[e] == v:
+                            lpf = st.ep[e].logprob
+                        elif k == ev.BORROW and st.donor.get((e, c)) == v:
+                            lpf = st.adapt.logprob; lp_ev = lp_ev - math.log(len(st.cands[e]))
+                        else:                                      # does not depend on cand
+                            pr, lk = st.edge_terms(e, c)
+                            evals.append((e, lambda cand, pr=pr, lk=lk: (pr, lk)))
+                            continue
+                        if leaf:
+                            evals.append((e, lambda cand, lpf=lpf, z=z, a=lp_ev: (a, lpf(cand, z))))
+                        else:
+                            evals.append((e, lambda cand, lpf=lpf, z=z, a=lp_ev: (a + lpf(cand, z), 0.0)))
+                bp, beta = self.bp, self.beta
                 logw = np.empty(len(cands)); terms = []
                 for i, cand in enumerate(cands):
-                    st.y[(v, c)] = cand
-                    w = self.bp * ev.log_G(cand) if is_root else 0.0
+                    w = bp * ev.log_G(cand) if is_root else 0.0
                     tt = {}
-                    for e in edges:
-                        pr, lk = st.edge_terms(e, c)
-                        tt[(e, c)] = (pr, lk); w += self.bp * pr + self.beta * lk
+                    for e, fn in evals:
+                        pr, lk = fn(cand)
+                        tt[(e, c)] = (pr, lk); w += bp * pr + beta * lk
                     logw[i] = w; terms.append(tt)
-                p = np.exp(logw - logw.max()); p /= p.sum()
-                i = int(rng.choice(len(cands), p=p))
+                p = np.exp(logw - logw.max()); cum = np.cumsum(p)
+                i = min(int(np.searchsorted(cum, rng.random() * cum[-1])), len(cands) - 1)
                 st.y[(v, c)] = cands[i]
                 self._commit(terms[i])
                 if is_root:
@@ -237,6 +263,7 @@ class Sampler:
         probability p_select per sweep (a draw costs a few ms). Floored (impossible) transducer values
         make q slightly inexact for states the lattice cannot reach; such states are left with
         probability ~e^-40 and never proposed, so the stationary distribution is unaffected in practice."""
+        self._fixed = None                     # the forms may change: drop the per-sweep option tables
         rng = self.rng
         for v in self.st.f.internal:
             for c in self._concepts():
@@ -314,6 +341,7 @@ class Sampler:
         ratio reduces to evp[kind'] Z_kind' / (evp[kind] Z_kind): the exact collapsed conditional.
         This is what lets borrow/inherit labels move when the form they imply differs from the
         current one (move_joint proposes forms from the generative side only, blind to the children)."""
+        self._fixed = None                     # the forms may change: drop the per-sweep option tables
         rng = self.rng
         for v in self.st.f.internal:
             if self.st.f.parent[v] < 0:
@@ -378,6 +406,7 @@ class Sampler:
         """For internal non-root v: propose a new event on its incoming edge together with a new
         form drawn from that event's generative distribution. Escapes the mode where sibling
         forms are pinned together by borrowing."""
+        self._fixed = None                     # the forms may change: drop the per-sweep option tables
         st, f, rng = self.st, self.st.f, self.rng
         for v in f.internal:
             if f.parent[v] < 0:
@@ -425,6 +454,7 @@ class Sampler:
 
     # ------------------------------------------------------------------ move 2: events
     def move_events(self):
+        self._fixed = None                     # the forms may change: drop the per-sweep option tables
         for e in self.st.f.edges:
             for c in self._concepts():
                 self._event_site(e, c)
@@ -460,6 +490,7 @@ class Sampler:
         splicing the truth's latents in concept by concept improves the posterior for 16 of 25 concepts
         by 8-52 nats, yet the single-node and tempered moves never get there - the modes are separated
         by paths through bad intermediate states. A whole-subtree draw can land in the other mode."""
+        self._fixed = None                     # the forms may change: drop the per-sweep option tables
         rng = self.rng
         for w in self.st.f.internal:
             for c in self._concepts():
@@ -608,6 +639,7 @@ class Sampler:
         where ll is c's leaf log-likelihood. Lets a whole path of ancestral forms reorganise under a
         weak likelihood, which single-site moves cannot do (root_diag, 3 Nov 2026: three starts, three
         basins, 100-170 nats apart in posterior, none left in 800-1500 sweeps)."""
+        self._fixed = None                     # the forms may change: drop the per-sweep option tables
         st, f = self.st, self.st.f
         beta0 = self.beta
         ladder = [beta0] + [beta0 * b for b in betas]
@@ -768,22 +800,28 @@ class Sampler:
 
         Birth proposes the slot from a mixture of uniform and the mismatch counts on the edge, and
         the value from a mixture of the prior slab and N(U_DATA_MU, U_DATA_SD^2); death uses the
-        same densities in reverse."""
+        same densities in reverse.
+
+        Cost: the replace/borrow options do not depend on u_e and are taken from the per-sweep option
+        tables; a proposal on a substitution/deletion slot (s, o) changes the inherit term only for
+        concepts whose parent form contains s (EdgeParams.derive changes row s alone), so only those
+        are recomputed."""
         st, f, rng = self.st, self.st.f, self.rng
-        for e in f.edges:
+        M = st.M
+        fx = self._fixed_options()                           # replace + borrow options, (M, E, nf) and kinds
+        for j, e in enumerate(f.edges):
             t = f.length[e]
             counts = self._u_counts(e)
-            # event options that do not depend on u_e: (kind, donor, prior_part, lik_part), once per concept
-            fixed = []
-            for c in range(st.M):
-                opts = []
-                pr, lk = st.edge_terms(e, c, kind=ev.REPLACE); opts.append((ev.REPLACE, None, pr, lk))
-                for d in st.cands[e]:
-                    pr, lk = st.edge_terms(e, c, kind=ev.BORROW, d=d); opts.append((ev.BORROW, d, pr, lk))
-                fixed.append(opts)
-            # inherit terms under the current u_e, and the current per-concept log Z
-            inh = [st.edge_terms(e, c, kind=ev.INHERIT) for c in range(st.M)]
-            logZ = [_lse([self.bp * pr + self.beta * lk for (_, _, pr, lk) in fixed[c]] + [self.bp * inh[c][0] + self.beta * inh[c][1]]) for c in range(st.M)]
+            nf = 1 + len(st.cands[e])
+            Rf, Lf, Kf, donors_f = fx["R"][:, j, :nf], fx["L"][:, j, :nf], fx["K"][j, :nf], fx["donors"][j][:nf]
+            evp_e = np.array(st.evp[e])                          # (M, 3)
+            wf = self.bp * (Rf + evp_e[:, Kf]) + self.beta * Lf  # fixed option weights, (M, nf)
+            mf = wf.max(axis=1); fixed_lse = mf + np.log(np.exp(wf - mf[:, None]).sum(axis=1))
+            inh = np.array([st.edge_terms(e, c, kind=ev.INHERIT) for c in range(M)])    # (M, 2): pr, lk
+            inh_w = self.bp * inh[:, 0] + self.beta * inh[:, 1]
+            logZ = np.logaddexp(fixed_lse, inh_w)
+            yp = [st.y[(f.parent[e], c)] for c in range(M)]
+            contains = {}
             for _ in range(n_prop):
                 u = st.theta.u.setdefault(e, {})
                 present = list(u.keys())
@@ -807,81 +845,146 @@ class Sampler:
                         w = float(rng.normal(self.U_DATA_MU, self.U_DATA_SD))
                     else:
                         w = float(rng.normal(0, math.sqrt(t * ev.SIGMA2_U)))
-                    prop[slot] = w
+                    prop[slot] = w; delta = w
                     logq = -math.log(len(present) + 1) - (self._u_slot_logq(slot, u, counts) + self._u_w_logq(w, t))
                 elif kind == 1:                                # death
                     if not present:
                         continue
                     slot = present[int(rng.integers(len(present)))]
-                    w = prop.pop(slot)
+                    w = prop.pop(slot); delta = -w
                     logq = (self._u_slot_logq(slot, prop, counts) + self._u_w_logq(w, t)) - (-math.log(len(present)))
                 else:                                          # perturb
                     if not present:
                         continue
                     slot = present[int(rng.integers(len(present)))]
-                    prop[slot] = u[slot] + float(rng.normal(0, perturb_sd))
+                    delta = float(rng.normal(0, perturb_sd))
+                    prop[slot] = u[slot] + delta
                 dprior = ev.log_prior_u(prop, t) - ev.log_prior_u(u, t)
                 old_ep = st.ep[e]
-                st.ep[e] = EdgeParams(st.theta.lam, prop)
-                inh_new = [st.edge_terms(e, c, kind=ev.INHERIT) for c in range(st.M)]
-                logZ_new = [_lse([self.bp * pr + self.beta * lk for (_, _, pr, lk) in fixed[c]] + [self.bp * inh_new[c][0] + self.beta * inh_new[c][1]]) for c in range(st.M)]
-                d = dprior + logq + sum(logZ_new) - sum(logZ)
+                st.ep[e] = old_ep.derive(slot, delta)
+                if slot[0] == "ins":
+                    affected = range(M)
+                else:
+                    s_ = slot[0]
+                    if s_ not in contains:
+                        contains[s_] = [c for c in range(M) if s_ in yp[c]]
+                    affected = contains[s_]
+                inh_new = inh.copy()
+                for c in affected:
+                    inh_new[c] = st.edge_terms(e, c, kind=ev.INHERIT)
+                inh_w_new = self.bp * inh_new[:, 0] + self.beta * inh_new[:, 1]
+                logZ_new = np.logaddexp(fixed_lse, inh_w_new)
+                d = dprior + logq + float((logZ_new - logZ).sum())
                 self.acc["u"][1] += 1
                 if self._accept(d):
                     st.theta.u[e] = prop
                     st.t_param += dprior
                     self.acc["u"][0] += 1
-                    inh, logZ = inh_new, logZ_new
+                    inh, inh_w, logZ = inh_new, inh_w_new, logZ_new
                     # events on edge e from their conditional under the new u_e
-                    for c in range(st.M):
-                        opts = fixed[c] + [(ev.INHERIT, None, inh[c][0], inh[c][1])]
-                        w = np.array([self.bp * pr + self.beta * lk for (_, _, pr, lk) in opts]); w = np.exp(w - w.max()); w /= w.sum()
-                        k, dn, pr, lk = opts[int(rng.choice(len(opts), p=w))]
+                    wall = np.concatenate([wf, inh_w[:, None]], axis=1)          # options: fixed..., inherit
+                    wall = np.exp(wall - wall.max(axis=1, keepdims=True)); cum = np.cumsum(wall, axis=1)
+                    uu = rng.random(M) * cum[:, -1]
+                    pick = (cum < uu[:, None]).sum(axis=1)
+                    for c in range(M):
+                        q = min(int(pick[c]), nf)
+                        if q == nf:
+                            k, dn, pr, lk = ev.INHERIT, None, inh[c, 0], inh[c, 1]
+                        else:
+                            k, dn = int(Kf[q]), donors_f[q]; pr, lk = Rf[c, q] + evp_e[c, k], Lf[c, q]
                         st.event[(e, c)] = k
                         if k == ev.BORROW:
                             st.donor[(e, c)] = dn
                         else:
                             st.donor.pop((e, c), None)
-                        st.t_prior[(e, c)] = pr; st.t_lik[(e, c)] = lk
+                        st.t_prior[(e, c)] = float(pr); st.t_lik[(e, c)] = float(lk)
                 else:
                     st.ep[e] = old_ep
 
     # ------------------------------------------------------------------ move 5/6: rates
+    def _fixed_options(self):
+        """Per-sweep tables of the event options that do not depend on u_e or the rates: replace and
+        borrow-from-each-donor, as (R (M, E, nf) = prior part minus evp, L (M, E, nf) = lik part,
+        K (E, nf) kinds, donors). Padded with -inf. Built on first use after the latent moves of a
+        sweep (they change the forms) and shared by move_u and move_rates."""
+        if self._fixed is not None:
+            return self._fixed
+        st, f = self.st, self.st.f
+        M, E = st.M, len(f.edges)
+        nf = max(1 + len(st.cands[e]) for e in f.edges)
+        R = np.full((M, E, nf), -np.inf); L = np.zeros((M, E, nf)); K = np.zeros((E, nf), dtype=np.int64); donors = []
+        for j, e in enumerate(f.edges):
+            kinds = [ev.REPLACE] + [ev.BORROW] * len(st.cands[e]); dn = [None] + list(st.cands[e]); donors.append(dn)
+            K[j, :len(kinds)] = kinds
+            for c in range(M):
+                evp = st.evp[e][c]
+                for q, (k, d) in enumerate(zip(kinds, dn)):
+                    pr, lk = st.edge_terms(e, c, kind=k, d=d)
+                    R[c, j, q] = pr - evp[k]; L[c, j, q] = lk
+        self._fixed = dict(R=R, L=L, K=K, donors=donors)
+        return self._fixed
+
     def _event_remainders(self, cs):
-        """For each (e, c) with c in cs: the event options (kind, donor, pr_minus_evp, lk), i.e. the
+        """For each edge e and concept c in cs: the event options (kind, donor, pr_minus_evp, lk), i.e. the
         edge terms with the rate-dependent event log-probability removed. These depend on the forms
         and u_e only, so a rate proposal changes just the evp part and the per-(e, c) sum over
-        options can be recomputed cheaply."""
+        options can be recomputed cheaply. Options are in the same order for every concept (inherit,
+        then replace and one borrow per candidate donor from the per-sweep fixed tables) and padded
+        to the widest edge with -inf, so the normaliser is one vectorised log-sum-exp over
+        (concept, edge, option)."""
         st, f = self.st, self.st.f
-        rem = {}
-        for c in cs:
-            for e in f.edges:
-                opts = []
-                for k in (ev.INHERIT, ev.REPLACE):
-                    pr, lk = st.edge_terms(e, c, kind=k)
-                    opts.append((k, None, pr - st.evp[e][c][k], lk))
-                for d in st.cands[e]:
-                    pr, lk = st.edge_terms(e, c, kind=ev.BORROW, d=d)
-                    opts.append((ev.BORROW, d, pr - st.evp[e][c][ev.BORROW], lk))
-                rem[(e, c)] = opts
-        return rem
+        cs = list(cs); E = len(f.edges)
+        fx = self._fixed_options()
+        nopt = 1 + fx["R"].shape[2]
+        R = np.full((len(cs), E, nopt), -np.inf); L = np.zeros((len(cs), E, nopt))
+        K = np.zeros((E, nopt), dtype=np.int64); donors = []
+        R[:, :, 1:] = fx["R"][cs]; L[:, :, 1:] = fx["L"][cs]; K[:, 1:] = fx["K"]; K[:, 0] = ev.INHERIT
+        for j, e in enumerate(f.edges):
+            donors.append([None] + fx["donors"][j])
+            for i, c in enumerate(cs):
+                pr, lk = st.edge_terms(e, c, kind=ev.INHERIT)
+                R[i, j, 0] = pr - st.evp[e][c][ev.INHERIT]; L[i, j, 0] = lk
+        return dict(cs=cs, R=R, L=L, K=K, donors=donors)
 
-    def _logZ(self, rem):
-        st = self.st
-        return {ec: _lse([self.bp * (r + st.evp[ec[0]][ec[1]][k]) + self.beta * lk for (k, _, r, lk) in opts]) for ec, opts in rem.items()}
+    def _evp_tensor(self, cs):
+        """(|cs|, n_edges, 3) array of the current event log-probabilities."""
+        st, f = self.st, self.st.f
+        return np.array([[st.evp[e][c] for e in f.edges] for c in cs])
+
+    def _rem_weights(self, rem):
+        R, L, K = rem["R"], rem["L"], rem["K"]
+        evp = self._evp_tensor(rem["cs"])                                    # (|cs|, E, 3)
+        evk = np.take_along_axis(evp, np.broadcast_to(K[None], (len(rem["cs"]),) + K.shape), axis=2)
+        return self.bp * (R + evk) + self.beta * L                             # -inf at the padding
+
+    def _logZ_sum(self, rem):
+        """Sum over (e, c) of log sum over event options of exp(bp * (r + evp) + beta * lk) under the current evp."""
+        w = self._rem_weights(rem)
+        m = w.max(axis=2)
+        return float(np.sum(m + np.log(np.exp(w - m[..., None]).sum(axis=2))))
 
     def _resample_events(self, rem):
         """Gibbs draw of the events in rem from their conditional under the current evp."""
-        st, rng = self.st, self.rng
-        for (e, c), opts in rem.items():
-            w = np.array([self.bp * (r + st.evp[e][c][k]) + self.beta * lk for (k, _, r, lk) in opts]); w = np.exp(w - w.max()); w /= w.sum()
-            k, dn, r, lk = opts[int(rng.choice(len(opts), p=w))]
-            st.event[(e, c)] = k
-            if k == ev.BORROW:
-                st.donor[(e, c)] = dn
-            else:
-                st.donor.pop((e, c), None)
-            st.t_prior[(e, c)] = r + st.evp[e][c][k]; st.t_lik[(e, c)] = lk
+        st, f, rng = self.st, self.st.f, self.rng
+        w = self._rem_weights(rem)
+        w = np.exp(w - w.max(axis=2, keepdims=True)); cum = np.cumsum(w, axis=2)
+        u = rng.random(cum.shape[:2]) * cum[:, :, -1]
+        pick = (cum < u[..., None]).sum(axis=2)
+        K, R, L = rem["K"], rem["R"], rem["L"]
+        for i, c in enumerate(rem["cs"]):
+            for j, e in enumerate(f.edges):
+                q = min(int(pick[i, j]), K.shape[1] - 1)
+                k = int(K[j, q])
+                st.event[(e, c)] = k
+                if k == ev.BORROW:
+                    st.donor[(e, c)] = rem["donors"][j][q]
+                else:
+                    st.donor.pop((e, c), None)
+                st.t_prior[(e, c)] = R[i, j, q] + st.evp[e][c][k]; st.t_lik[(e, c)] = L[i, j, q]
+
+    def _rem_sub(self, rem, i):
+        """The remainder tables restricted to the i-th concept of rem."""
+        return dict(cs=[rem["cs"][i]], R=rem["R"][i:i + 1], L=rem["L"][i:i + 1], K=rem["K"], donors=rem["donors"])
 
     def move_rates(self, step=0.3):
         """Log random walks on rho_c and omega, collapsed over the events they govern.
@@ -890,20 +993,24 @@ class Sampler:
         omega makes 'borrow' cheap; with the events held fixed a rate proposal can only ever move
         within that loop (seen as omega 10-20x over truth with the planted rule unfound). The
         proposal is (rate', events') with events' from their exact conditional under rate', so the
-        acceptance ratio is the product over (e, c) of Z_ec(rate') / Z_ec(rate)."""
+        acceptance ratio is the product over (e, c) of Z_ec(rate') / Z_ec(rate).
+
+        The option tables depend on the forms and u only, so they are built once per sweep and
+        reused for every rho_c proposal and the omega proposal."""
         st, f, rng = self.st, self.st.f, self.rng
+        rem_all = self._event_remainders(range(st.M))
         for c in range(st.M):
             old = st.theta.rho[c]
             prop = old * math.exp(rng.normal(0, step))
             dprior = ev.log_prior_rho(np.array([prop])) - ev.log_prior_rho(np.array([old]))
-            rem = self._event_remainders([c])
-            logZ_old = self._logZ(rem)
+            rem = self._rem_sub(rem_all, c)
+            logZ_old = self._logZ_sum(rem)
             old_evp = {e: st.evp[e][c] for e in f.edges}
             st.theta.rho[c] = prop
             for e in f.edges:
                 st.evp[e][c] = ev.event_logprobs(prop, st.theta.omega if st.cands[e] else 0.0, f.length[e])
-            logZ_new = self._logZ(rem)
-            d = dprior + math.log(prop / old) + sum(logZ_new.values()) - sum(logZ_old.values())
+            logZ_new = self._logZ_sum(rem)
+            d = dprior + math.log(prop / old) + logZ_new - logZ_old
             self.acc["rho"][1] += 1
             if self._accept(d):
                 st.t_param += dprior; self.acc["rho"][0] += 1
@@ -916,17 +1023,16 @@ class Sampler:
         old = st.theta.omega
         prop = old * math.exp(rng.normal(0, step))
         dprior = ev.log_prior_omega(prop) - ev.log_prior_omega(old)
-        rem = self._event_remainders(range(st.M))
-        logZ_old = self._logZ(rem)
+        logZ_old = self._logZ_sum(rem_all)
         old_evp = {e: list(st.evp[e]) for e in f.edges}
         st.theta.omega = prop
         st.rebuild_event_probs()
-        logZ_new = self._logZ(rem)
-        d = dprior + math.log(prop / old) + sum(logZ_new.values()) - sum(logZ_old.values())
+        logZ_new = self._logZ_sum(rem_all)
+        d = dprior + math.log(prop / old) + logZ_new - logZ_old
         self.acc["omega"][1] += 1
         if self._accept(d):
             st.t_param += dprior; self.acc["omega"][0] += 1
-            self._resample_events(rem)
+            self._resample_events(rem_all)
         else:
             st.theta.omega = old; st.evp = old_evp
 
@@ -960,7 +1066,7 @@ class Sampler:
                 st.evp[e] = old_evp[e]
 
     # ------------------------------------------------------------------ sweep
-    FFBS_P = 0.25      # fraction of (node, concept) visited by the lattice FFBS move per sweep (0 = off)
+    FFBS_P = float(__import__("os").environ.get("MASSCOMP_FFBS_P", "0.25"))      # fraction of (node, concept) visited by the lattice FFBS move per sweep (0 = off)
     REGROW_P = float(__import__("os").environ.get("MASSCOMP_REGROW_P", "0"))   # fraction of (subtree root, concept) regrown per sweep
     TEMPER_P = float(__import__("os").environ.get("MASSCOMP_TEMPER_P", "0"))
     REGROW_EVENTS = __import__("os").environ.get("MASSCOMP_REGROW_EVENTS", "1") == "1"
@@ -969,6 +1075,7 @@ class Sampler:
     PARAM_MOVES = set(__import__("os").environ.get("MASSCOMP_PARAM_MOVES", "lam,u,rates,troot").split(","))   # diagnostics only   # fraction of concepts given a tempered excursion per sweep
 
     def sweep(self, clamp_latents=False, clamp_u=False, clamp_params=False):
+        self._fixed = None                     # per-sweep option tables (see _fixed_options)
         if not clamp_latents:
             lm = self.LATENT_MOVES
             if "gibbs" in lm:

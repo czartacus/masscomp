@@ -107,9 +107,48 @@ class EdgeParams:
                 ins[:, key[1]] += w
             else:
                 psi[key[0], key[1]] += w
+        self._psi, self._ins = psi, ins                  # unnormalised, kept for derive()
         self.log_sub_np = psi - _lse_rows(psi)
         self.log_ins_np = ins - _lse_rows(ins)
         self._cache = {}
+
+    @property
+    def top_parents(self):
+        """For each child segment o: the parent segments s != o among the 3 with the largest log P(o | s),
+        as (s, logp) pairs, and the parent segment most likely to be deleted; used by the candidate
+        sets of the Gibbs form move. Computed once per table."""
+        tp = getattr(self, "_top_parents", None)
+        if tp is None:
+            ls = self.log_sub_np
+            order = np.argsort(-ls[:, :N_SEG], axis=0)          # (N_SEG parents, N_SEG children)
+            per_o = []
+            for o in range(N_SEG):
+                per_o.append([(int(s_), float(ls[s_, o])) for s_ in order[:3, o] if int(s_) != o])
+            tp = self._top_parents = (per_o, int(np.argmax(ls[:, EPS])))
+        return tp
+
+    def derive(self, slot, delta):
+        """The EdgeParams with `delta` added to one rule slot: for a substitution/deletion slot (s, o)
+        only row s of the substitution table changes; for an insertion slot ("ins", o) the insertion
+        table is renormalised. Tables that do not change are shared with self (they are never
+        mutated), so the derived object costs one row or one small table, not a rebuild."""
+        new = EdgeParams.__new__(EdgeParams)
+        new._cache = {}
+        if slot[0] == "ins":
+            ins = self._ins.copy(); ins[:, slot[1]] += delta
+            new._psi, new._ins = self._psi, ins
+            new.log_sub_np = self.log_sub_np
+            new.log_ins_np = ins - _lse_rows(ins)
+        else:
+            s_, o = slot
+            psi = self._psi.copy(); psi[s_, o] += delta
+            ls = self.log_sub_np.copy()
+            row = psi[s_]; m = row.max()
+            ls[s_] = row - (m + np.log(np.exp(row - m).sum()))
+            new._psi, new._ins = psi, self._ins
+            new.log_sub_np = ls
+            new.log_ins_np = self.log_ins_np
+        return new
 
     # the list and cumulative tables are only needed by the pure-Python reference DP and the simulator
     @property
