@@ -45,6 +45,10 @@ on:
         description: lbf only, comma-separated replicate ids (0 = primary; >0 re-estimates the same data with fresh stepping-stone seeds)
         required: false
         default: "0"
+      knobs:
+        description: sampler knobs as in studies/diag.py specs, e.g. "regrow_p=0.1,init=lattice" (become MASSCOMP_* variables)
+        required: false
+        default: ""
 
 jobs:
   plan:
@@ -101,8 +105,11 @@ jobs:
           PYTHONPATH: .
           NUMBA_NUM_THREADS: "1"
           MASSCOMP_PROCS: "4"
+          KNOBS: ${{ inputs.knobs }}
         run: |
           mkdir -p results
+          eval "$(python studies/knobs.py "$KNOBS")"
+          env | grep MASSCOMP_ || true
           case "${{ inputs.study }}" in
             recovery) python studies/recovery.py 1 ${{ matrix.seed }} ${{ inputs.sweeps }} ${{ inputs.burn }} ${{ inputs.concepts }} ;;
             confound) python studies/confound.py 1 ${{ matrix.seed }} ${{ inputs.sweeps }} ${{ inputs.burn }} ;;
