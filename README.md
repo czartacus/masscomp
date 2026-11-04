@@ -433,8 +433,36 @@ relationships, attested proto-language, used to find what the prototype gets wro
   held-out proto-language, with the usual caveat that Romance continues the spoken accusative
   (flos → flor), so exact matches are not the right score.
 
-A first reconstruction probe (6 Romance languages, Latin held out, 50 concepts, two chains) is
-recorded below when in.
+**First reconstruction probe (`results/realdata/`): the prototype model degenerates on real Romance
+data.** Six Romance languages on a fixed two-family tree (Ibero-Romance spa/por/cat; ita/fra/ron),
+50 random concepts, Latin held out, 1,500 sweeps × 2 chains, extended inventory.
+
+- *λ free (the plan's N(6, 1) prior on the insertion cost λ₃):* the posterior drags λ₃ to **−1.6**,
+  7.5 prior sd from its mean — insertion becomes the *favoured* event at nearly every slot — and
+  reconstructs consonant skeletons: lupus → `lp`, wena → `vn`, pinus → `pn`, klarus → `lr`, sapor →
+  `ut`. The Latin form is never the modal root and never within one edit of it; its log posterior
+  probability is −25 against −2.6 for the mode. Pinning λ harder (prior sd 0.25) only moves λ₃ to
+  1.1 (19 prior sd): the data prefer the degenerate solution by hundreds of nats.
+- *λ fixed at the plan's prior mean (sd 0.02):* the model instead calls **99% of the root edges
+  replaced** (t_root 5–6) — no inheritance across the join at all — while the *family* roots come out
+  recognisably Latin: Ibero `lovu` (lobo), `vena`, `erva`, `pinju`, `aʕila` (aquila), `klaru`,
+  `dente`, `siŋku`; the other family `lup`, `ven`, `erb`, `pin`, `tʃinkwe`. Within a shallow family
+  the machinery reconstructs; across the join it would report LBF ≈ 0 for families that are
+  obviously related.
+
+Why, in the model's own cost terms (prototype λ = 4.5 / 3 / 2 / 6, 40 segments): a root segment
+costs 3.7 nats under the flat innovation prior G; inheriting a segment unchanged costs 0.2; any
+substitution 4.8–6 and a deletion 6.7; an insertion 3.8 at λ₃ = 6 and less as λ₃ falls. Romance
+daughters share consonant skeletons and differ systematically in their vowels (Latin u → Spanish o,
+French loss of final vowels, …), and the context-free transducer has no cheap way to say "the
+vowels changed regularly": a per-edge rule could, but the spike-and-slab prior expects three rules
+per edge where a real edge carries dozens. So the cheapest explanations are "short root, each
+daughter inserts its own vowels" (λ free) or "replaced" (λ fixed). Three things in the roadmap
+address exactly this, now with a measured cost of their absence: a phonotactic innovation prior in
+place of flat G; per-edge rule budgets that scale with what real edges carry, with the rules
+conditioned on context; and λ fitted on reference families under a constraint that keeps the
+insertion rate per slot linguistic. None of the §8 results depend on it — the simulator never
+generates data of this kind — but no real-data claim is possible before it.
 
 ### Pre-v3 notes (kept for the record)
 
