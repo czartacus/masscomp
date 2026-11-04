@@ -10,7 +10,7 @@ LOG_G_LEN = -math.log(MAX_LEN - MIN_LEN + 1)
 
 # ---- priors -----------------------------------------------------------------------
 LAM_MU = np.array([4.5, 3.0, 2.0, 6.0])   # identity bonus, feature distance, deletion, insertion
-LAM_SD = 1.0
+LAM_SD = float(__import__("os").environ.get("MASSCOMP_LAM_SD", "1.0"))   # real-data probes: a tight prior pins lambda (see README, 4 Nov)
 SIGMA2_U = 16.0                           # u_e[s,s'] ~ N(0, t_e * SIGMA2_U); slab sd 4*sqrt(t).
 # With sd 1 (the plan's value) a prior-drawn rule almost never changes a substitution probability
 # by more than a few percent (identity sits at logit ~6, a one-feature neighbour at ~ -0.3), so

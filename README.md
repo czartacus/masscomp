@@ -370,8 +370,26 @@ cloud (`lbfj_41833085610.json`, depth 0.25, K = 16, 600 sweeps per stone):
 
 Replicate sd 1–13 nats on related pairs and 1–3 on unrelated (the likelihood path: 40–70), every
 unrelated pair at or below +3, the 99th-percentile null τ = 2.8 nats and 14 of 15 related estimates
-above it (power 0.93 at depth 0.25). The first separation the study has shown. The full grid —
-depths 0.25 / 0.5 / 1.0, 20 pairs each, 2 replicates — is run 41847561276.
+above it (power 0.93 at depth 0.25). The first separation the study has shown.
+
+**§8.3 grid on the join path (`lbfj_41847561276.json`: depths 0.25 / 0.5 / 1.0, 20 matched pairs each,
+2 replicates, K = 16, 600 sweeps per stone, M = 25).**
+
+| depth | related LBF, mean (per-pair min … max) | unrelated LBF, mean (max) | τ = null 99th pct | power |
+| --- | --- | --- | --- | --- |
+| 0.25 | +19.5 (1.3 … 65.2) | −3.7 (+4.3) | 4.3 | **0.90** |
+| 0.5 | +9.9 (1.6 … 38.0) | −4.2 (−0.3) | −0.3 | **1.00** |
+| 1.0 | +7.5 (−3.7 … 29.6) | −4.4 (−0.7) | −0.7 | **0.90** |
+
+Per-pair values are the mean of the two replicates; τ is the 99th percentile of the unrelated
+per-pair values and power the fraction of related pairs above it. On single replicates the
+estimator's occasional 10–20 nat miss (replicate sd median 2–3, max 13 / 22 / 11 by depth; one
+unrelated replicate at +11 whose twin was −2) lowers power to 0.57 / 0.82 / 0.65, so two replicates
+per pair, or a longer ladder, are part of the protocol. Against the plan's criteria: power ≥ 0.9 at
+every depth, unrelated 99th percentile ≤ 4.3 nats (criterion < 5), unrelated mean negative at every
+depth. **§8.3 passes on the join-path estimator**, at the depths the simulator's horizon allows
+(12.3), with the caveat that the related signal fades fast: a fifth of the related pairs at depth
+1.0 sit below +2 nats.
 
 **Geweke restart battery (`diag_41818729390.json`, `diag_41827548303.json`).** Sixteen cells, 12,000–
 20,000 fresh exact draws each, three sweeps per draw: latent moves on four θ draws with ω from the
