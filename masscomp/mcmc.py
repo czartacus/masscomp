@@ -711,15 +711,17 @@ class Sampler:
                         counts[("ins", y[j])] = counts.get(("ins", y[j]), 0) + 1
         return counts
 
-    def _u_slot_logq(self, slot, absent, counts):
-        """log q(slot) for a birth over the given absent set: mixture of uniform and count-weighted."""
-        tot = sum(counts.get(a, 0) for a in absent)
+    def _u_slot_logq(self, slot, present, counts):
+        """log q(slot) for a birth over the slots absent from `present`: mixture of uniform and
+        count-weighted."""
+        n_abs = ev.N_U_SLOTS - len(present)
+        tot = sum(counts.values()) - sum(counts.get(sl, 0) for sl in present)
         if tot == 0:
             # the data-informed branch falls back to a uniform draw when there are no mismatches,
             # so the whole mixture is uniform (the old (1 - FRAC)/n understated q by log 2 and
             # accepted births too often; Geweke test, 3 Nov 2026)
-            return -math.log(len(absent))
-        q = (1 - self.U_DATA_FRAC) / len(absent) + self.U_DATA_FRAC * counts.get(slot, 0) / tot
+            return -math.log(n_abs)
+        q = (1 - self.U_DATA_FRAC) / n_abs + self.U_DATA_FRAC * counts.get(slot, 0) / tot
         return math.log(q)
 
     def _u_w_logq(self, w, t):
@@ -765,31 +767,30 @@ class Sampler:
                 prop = dict(u)
                 logq = 0.0
                 if kind == 0:                                  # birth
-                    absent = [sl for sl in ev.U_SLOTS if sl not in u]
-                    if not absent:
+                    if len(u) >= ev.N_U_SLOTS:
                         continue
                     if rng.random() < self.U_DATA_FRAC:
-                        tot = sum(counts.get(a, 0) for a in absent)
+                        tot = sum(counts.values()) - sum(counts.get(sl, 0) for sl in u)
                         if tot > 0:
-                            wts = np.array([counts.get(a, 0) for a in absent], dtype=float) / tot
+                            absent = [sl for sl in counts if sl not in u]
+                            wts = np.array([counts[a] for a in absent], dtype=float) / tot
                             slot = absent[int(rng.choice(len(absent), p=wts))]
                         else:
-                            slot = absent[int(rng.integers(len(absent)))]
+                            slot = _draw_absent(rng, u)
                     else:
-                        slot = absent[int(rng.integers(len(absent)))]
+                        slot = _draw_absent(rng, u)
                     if rng.random() < self.U_DATA_FRAC:
                         w = float(rng.normal(self.U_DATA_MU, self.U_DATA_SD))
                     else:
                         w = float(rng.normal(0, math.sqrt(t * ev.SIGMA2_U)))
                     prop[slot] = w
-                    logq = -math.log(len(present) + 1) - (self._u_slot_logq(slot, absent, counts) + self._u_w_logq(w, t))
+                    logq = -math.log(len(present) + 1) - (self._u_slot_logq(slot, u, counts) + self._u_w_logq(w, t))
                 elif kind == 1:                                # death
                     if not present:
                         continue
                     slot = present[int(rng.integers(len(present)))]
                     w = prop.pop(slot)
-                    absent = [sl for sl in ev.U_SLOTS if sl not in prop]       # includes the removed slot
-                    logq = (self._u_slot_logq(slot, absent, counts) + self._u_w_logq(w, t)) - (-math.log(len(present)))
+                    logq = (self._u_slot_logq(slot, prop, counts) + self._u_w_logq(w, t)) - (-math.log(len(present)))
                 else:                                          # perturb
                     if not present:
                         continue
@@ -989,6 +990,14 @@ def _lse(xs):
     if m <= -1e29:
         return m
     return m + math.log(sum(math.exp(x - m) for x in xs))
+
+
+def _draw_absent(rng, present):
+    """A uniform draw over the u slots not in `present` (rejection; present is a few slots of ~870)."""
+    while True:
+        sl = ev.U_SLOTS[int(rng.integers(ev.N_U_SLOTS))]
+        if sl not in present:
+            return sl
 
 
 def _lognorm(w, var):

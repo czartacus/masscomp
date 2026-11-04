@@ -176,6 +176,212 @@ def forward(in_mode, ls_in, li_in, x, n, K, ls1, li1, z1, m1, ls2, li2, z2, m2, 
 
 
 @njit(cache=True)
+def forward_lin(in_mode, ps_in, pi_in, x, n, K, ps1, pi1, z1, m1, ps2, pi2, z2, m2, T):
+    """Same recursion as `forward`, in linear space with one scale factor per layer t, and with the
+    out-edge step written as a small matrix product over (symbol s) x (16 out-edge options), so the
+    inner loops vectorise. Tables are probabilities (exp of the log tables). Returns alpha and term in
+    LOG space, identical to `forward` up to rounding, so `backward` is unchanged."""
+    NC = 16                                    # out-edge options: (dsub1, dins1, dsub2, dins2)
+    alpha = np.zeros((n + 1, 2, m1 + 1, m2 + 1, T + 1))
+    scale = np.zeros(T + 1)
+    # per-edge option weights w_k[j, c, s] (0 = impossible) and targets jj_k[j, c]
+    w1 = np.zeros((m1 + 1, 4, N_SEG)); jj1 = np.zeros((m1 + 1, 4), dtype=np.int64)
+    w2 = np.zeros((m2 + 1, 4, N_SEG)); jj2 = np.zeros((m2 + 1, 4), dtype=np.int64)
+    for j in range(m1 + 1):
+        for dsub in range(2):
+            for dins in range(2):
+                c = 2 * dsub + dins
+                jj1[j, c] = j + dsub + dins
+                if K < 1:
+                    if c == 0:
+                        w1[j, c, :] = 1.0
+                    continue
+                if jj1[j, c] > m1:
+                    continue
+                for s in range(N_SEG):
+                    jx = j
+                    if dsub == 1:
+                        w = ps1[s, z1[jx]]; jx += 1
+                    else:
+                        w = ps1[s, EPS]
+                    if dins == 1:
+                        w *= pi1[s, z1[jx]]
+                    else:
+                        w *= pi1[s, NOINS]
+                    w1[j, c, s] = w
+    for j in range(m2 + 1):
+        for dsub in range(2):
+            for dins in range(2):
+                c = 2 * dsub + dins
+                jj2[j, c] = j + dsub + dins
+                if K < 2:
+                    if c == 0:
+                        w2[j, c, :] = 1.0
+                    continue
+                if jj2[j, c] > m2:
+                    continue
+                for s in range(N_SEG):
+                    jx = j
+                    if dsub == 1:
+                        w = ps2[s, z2[jx]]; jx += 1
+                    else:
+                        w = ps2[s, EPS]
+                    if dins == 1:
+                        w *= pi2[s, z2[jx]]
+                    else:
+                        w *= pi2[s, NOINS]
+                    w2[j, c, s] = w
+    # combined option matrix per (j1, j2): W[j1, j2, s, c], c = 4*c1 + c2
+    W = np.zeros((m1 + 1, m2 + 1, N_SEG, NC))
+    for j1 in range(m1 + 1):
+        for j2 in range(m2 + 1):
+            for c1 in range(4):
+                for c2 in range(4):
+                    for s in range(N_SEG):
+                        W[j1, j2, s, 4 * c1 + c2] = w1[j1, c1, s] * w2[j2, c2, s]
+    # initial slots of the out-edges (conditioned on DUMMY)
+    for a1 in range(2):
+        if K < 1 and a1 == 1:
+            continue
+        v1 = 1.0
+        if K >= 1:
+            if a1 == 1:
+                if m1 < 1:
+                    continue
+                v1 = pi1[DUMMY, z1[0]]
+            else:
+                v1 = pi1[DUMMY, NOINS]
+        for a2 in range(2):
+            if K < 2 and a2 == 1:
+                continue
+            v2 = 1.0
+            if K >= 2:
+                if a2 == 1:
+                    if m2 < 1:
+                        continue
+                    v2 = pi2[DUMMY, z2[0]]
+                else:
+                    v2 = pi2[DUMMY, NOINS]
+            alpha[0, 0, a1, a2, 0] = v1 * v2
+    tmp = np.zeros((n + 1, 2, N_SEG))
+    out = np.zeros((n + 1, 2, NC))
+    inv_nseg = 1.0 / N_SEG
+    for t in range(T + 1):
+        # epsilon moves (deletions of x[i]) within layer t, increasing i
+        if in_mode == 1:
+            for i in range(n):
+                for u in range(2):
+                    w = ps_in[x[i], EPS]
+                    if u == 0:
+                        w *= pi_in[_prev_x(x, i), NOINS]
+                    for j1 in range(m1 + 1):
+                        for j2 in range(m2 + 1):
+                            a = alpha[i, u, j1, j2, t]
+                            if a > 0.0:
+                                alpha[i + 1, 0, j1, j2, t] += a * w
+        # scale layer t
+        mx = 0.0
+        for i in range(n + 1):
+            for u in range(2):
+                for j1 in range(m1 + 1):
+                    for j2 in range(m2 + 1):
+                        if alpha[i, u, j1, j2, t] > mx:
+                            mx = alpha[i, u, j1, j2, t]
+        if mx > 0.0:
+            inv = 1.0 / mx
+            for i in range(n + 1):
+                for u in range(2):
+                    for j1 in range(m1 + 1):
+                        for j2 in range(m2 + 1):
+                            alpha[i, u, j1, j2, t] *= inv
+            scale[t] = (scale[t - 1] if t > 0 else 0.0) + math.log(mx)
+        else:
+            scale[t] = scale[t - 1] if t > 0 else 0.0
+        if t == T:
+            break
+        # emissions to layer t + 1
+        for j1 in range(m1 + 1):
+            for j2 in range(m2 + 1):
+                any_ = False
+                for i in range(n + 1):
+                    for u in range(2):
+                        for s in range(N_SEG):
+                            tmp[i, u, s] = 0.0
+                for i in range(n + 1):
+                    for u in range(2):
+                        a = alpha[i, u, j1, j2, t]
+                        if a <= 0.0:
+                            continue
+                        any_ = True
+                        if in_mode == 0:
+                            for s in range(N_SEG):
+                                tmp[0, 0, s] += a * inv_nseg
+                            continue
+                        px = _prev_x(x, i)
+                        if u == 0:
+                            for s in range(N_SEG):
+                                tmp[i, 1, s] += a * pi_in[px, s]
+                            if i < n:
+                                b = a * pi_in[px, NOINS]
+                                for s in range(N_SEG):
+                                    tmp[i + 1, 0, s] += b * ps_in[x[i], s]
+                        else:
+                            if i < n:
+                                for s in range(N_SEG):
+                                    tmp[i + 1, 0, s] += a * ps_in[x[i], s]
+                if not any_:
+                    continue
+                # out-edge step: out[i, u, c] = sum_s tmp[i, u, s] * W[j1, j2, s, c]
+                for i in range(n + 1):
+                    for u in range(2):
+                        for c in range(NC):
+                            out[i, u, c] = 0.0
+                        for s in range(N_SEG):
+                            v = tmp[i, u, s]
+                            if v == 0.0:
+                                continue
+                            for c in range(NC):
+                                out[i, u, c] += v * W[j1, j2, s, c]
+                for c1 in range(4):
+                    t1 = jj1[j1, c1]
+                    if t1 > m1:
+                        continue
+                    for c2 in range(4):
+                        t2 = jj2[j2, c2]
+                        if t2 > m2:
+                            continue
+                        c = 4 * c1 + c2
+                        for i in range(n + 1):
+                            for u in range(2):
+                                alpha[i, u, t1, t2, t + 1] += out[i, u, c]
+    # back to log space
+    alog = np.full((n + 1, 2, m1 + 1, m2 + 1, T + 1), NEG)
+    for t in range(T + 1):
+        for i in range(n + 1):
+            for u in range(2):
+                for j1 in range(m1 + 1):
+                    for j2 in range(m2 + 1):
+                        a = alpha[i, u, j1, j2, t]
+                        if a > 0.0:
+                            alog[i, u, j1, j2, t] = math.log(a) + scale[t]
+    term = np.full((n + 1, 2, m1 + 1, m2 + 1, T + 1), NEG)
+    for u in range(2):
+        for t in range(1, T + 1):
+            if in_mode == 0:
+                if u == 1:
+                    continue
+                w = _log_G_t(t) + t * math.log(N_SEG)
+            else:
+                if u == 0:
+                    pv = pi_in[_prev_x(x, n), NOINS]
+                    w = math.log(pv) if pv > 0.0 else NEG
+                else:
+                    w = 0.0
+            term[n, u, m1, m2, t] = w
+    return alog, term
+
+
+@njit(cache=True)
 def backward(alpha, term, in_mode, ls_in, li_in, x, n, K, ls1, li1, z1, m1, ls2, li2, z2, m2, T, unif):
     """Draw one path backwards. unif: array of uniforms (one per decision, >= 2*T+n+2). Returns the
     form (array, length) and the log of the total forward mass (logZ)."""
@@ -299,10 +505,44 @@ _Z0 = np.zeros(0, dtype=np.int64)
 _LS0 = np.zeros((N_SEG, N_OUT)); _LI0 = np.zeros((N_SEG + 1, N_SEG + 1))
 
 
+_EXP = {}            # id(log table) -> (log table, exp table); the reference keeps the id valid
+_EXP_MAX = 8192
+_P0 = np.ones((N_SEG, N_OUT)); _PI0 = np.ones((N_SEG + 1, N_SEG + 1))
+USE_LIN = True       # linear-space forward (forward_lin); False restores the log-space loops (slow, reference)
+
+
+def _exp_table(a):
+    e = _EXP.get(id(a))
+    if e is None or e[0] is not a:
+        if len(_EXP) >= _EXP_MAX:
+            _EXP.clear()
+        e = _EXP[id(a)] = (a, np.exp(a))
+    return e[1]
+
+
 def _prep(in_mode, in_tables, x, outs, T):
+    K = len(outs)
+    if USE_LIN:
+        ps_in, pi_in = (_exp_table(in_tables[0]), _exp_table(in_tables[1])) if in_mode == 1 else (_P0, _PI0)
+        xa = _arr(x) if in_mode == 1 else _Z0
+        if K >= 1:
+            ls1, li1, z1 = outs[0]; ps1, pi1 = _exp_table(ls1), _exp_table(li1)
+        else:
+            ps1, pi1, z1 = _P0, _PI0, ()
+        if K >= 2:
+            ls2, li2, z2 = outs[1]; ps2, pi2 = _exp_table(ls2), _exp_table(li2)
+        else:
+            ps2, pi2, z2 = _P0, _PI0, ()
+        z1a, z2a = _arr(z1), _arr(z2)
+        args = (in_mode, ps_in, pi_in, xa, len(xa), K, ps1, pi1, z1a, len(z1a), ps2, pi2, z2a, len(z2a), T)
+        alpha, term = forward_lin(*args)
+        # backward() takes log tables
+        largs = (in_mode, in_tables[0] if in_mode == 1 else _LS0, in_tables[1] if in_mode == 1 else _LI0, xa, len(xa), K,
+                 outs[0][0] if K >= 1 else _LS0, outs[0][1] if K >= 1 else _LI0, z1a, len(z1a),
+                 outs[1][0] if K >= 2 else _LS0, outs[1][1] if K >= 2 else _LI0, z2a, len(z2a), T)
+        return largs, alpha, term
     ls_in, li_in = in_tables if in_mode == 1 else (_LS0, _LI0)
     xa = _arr(x) if in_mode == 1 else _Z0
-    K = len(outs)
     ls1, li1, z1 = outs[0] if K >= 1 else (_LS0, _LI0, ())
     ls2, li2, z2 = outs[1] if K >= 2 else (_LS0, _LI0, ())
     z1a, z2a = _arr(z1), _arr(z2)

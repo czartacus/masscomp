@@ -71,6 +71,11 @@ def _dp(ls, li, y1, y2):
     return out
 
 
+def _lse_rows(a):
+    m = a.max(axis=1, keepdims=True)
+    return m + np.log(np.exp(a - m).sum(axis=1, keepdims=True))
+
+
 _ARR = {}
 
 
@@ -102,24 +107,46 @@ class EdgeParams:
                 ins[:, key[1]] += w
             else:
                 psi[key[0], key[1]] += w
-        self.log_sub_np = psi - np.logaddexp.reduce(psi, axis=1, keepdims=True)
-        self.log_ins_np = ins - np.logaddexp.reduce(ins, axis=1, keepdims=True)
-        self.log_sub = self.log_sub_np.tolist()
-        self.log_ins = self.log_ins_np.tolist()
-        self._p_sub = np.exp(self.log_sub_np)
-        self._p_ins = np.exp(self.log_ins_np)
-        self._c_sub = np.cumsum(self._p_sub, axis=1)
-        self._c_ins = np.cumsum(self._p_ins, axis=1)
+        self.log_sub_np = psi - _lse_rows(psi)
+        self.log_ins_np = ins - _lse_rows(ins)
         self._cache = {}
+
+    # the list and cumulative tables are only needed by the pure-Python reference DP and the simulator
+    @property
+    def log_sub(self):
+        return self.log_sub_np.tolist()
+
+    @property
+    def log_ins(self):
+        return self.log_ins_np.tolist()
+
+    @property
+    def _p_sub(self):
+        return np.exp(self.log_sub_np)
+
+    @property
+    def _p_ins(self):
+        return np.exp(self.log_ins_np)
+
+    @property
+    def _c_sub(self):
+        c = getattr(self, "_c_sub_", None)
+        if c is None:
+            c = self._c_sub_ = np.cumsum(self._p_sub, axis=1)
+        return c
+
+    @property
+    def _c_ins(self):
+        c = getattr(self, "_c_ins_", None)
+        if c is None:
+            c = self._c_ins_ = np.cumsum(self._p_ins, axis=1)
+        return c
 
     @classmethod
     def from_tables(cls, log_sub, log_ins):
         """An EdgeParams over given (already normalised) log tables; used for proposal transducers."""
         self = cls.__new__(cls)
         self.log_sub_np = np.asarray(log_sub, dtype=float); self.log_ins_np = np.asarray(log_ins, dtype=float)
-        self.log_sub = self.log_sub_np.tolist(); self.log_ins = self.log_ins_np.tolist()
-        self._p_sub = np.exp(self.log_sub_np); self._p_ins = np.exp(self.log_ins_np)
-        self._c_sub = np.cumsum(self._p_sub, axis=1); self._c_ins = np.cumsum(self._p_ins, axis=1)
         self._cache = {}
         return self
 

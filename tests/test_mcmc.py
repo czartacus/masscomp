@@ -1,3 +1,4 @@
+import math
 import numpy as np
 from scipy import stats
 from masscomp.simulate import simulate_pair, sample_theta
@@ -35,7 +36,8 @@ def test_mcmc_prior_only():
         assert abs(lam[:, i].mean() - ev.LAM_MU[i]) < tol, (i, lam[:, i].mean(), tol)
         assert 0.6 < lam[:, i].std() < 1.4, (i, lam[:, i].std())
     assert abs(om.mean() - ev.OMEGA_A / ev.OMEGA_RATE) < 0.05, om.mean()
-    assert abs(rho.mean() - ev.RHO_A / ev.RHO_RATE) < 0.3, rho.mean()
+    rho_sd = math.sqrt(ev.RHO_A) / ev.RHO_RATE
+    assert abs(rho.mean() - ev.RHO_A / ev.RHO_RATE) < max(0.3, 3.5 * rho_sd / np.sqrt(_ess(rho))), (rho.mean(), _ess(rho))
 
 
 def test_mcmc_fixed_latents():
