@@ -14,8 +14,9 @@ Usage: python studies/diag.py "<spec>" <out.json>
                root's forms change between sweeps. Compare across latent_moves / ffbs_p / regrow_p.
 
 Sampler knobs go in the same spec and become MASSCOMP_* environment variables before the sampler is
-imported: regrow_p, regrow_events, regrow_borrow, temper_p, latent_moves, param_moves, procs, or any
-key written env_<name> (-> MASSCOMP_<NAME>). Everything in the spec is recorded in the output file.
+imported: regrow_p, regrow_events, regrow_borrow, temper_p, ffbs_p, latent_moves, param_moves, procs,
+or any key written env_<name> (-> MASSCOMP_<NAME>). List values are joined with '+' (latent_moves=
+gibbs+ffbs+events). Everything in the spec is recorded in the output file.
 
 Examples:
   kind=basin,seed=7,depth=0.25,modes=copy+truth,sweeps=1500,burn=500,regrow_p=0.1,regrow_events=1,regrow_borrow=1
@@ -44,7 +45,7 @@ def set_env(params):
     env = {}
     for k, v in params.items():
         if k in KNOBS:
-            env[KNOBS[k]] = v
+            env[KNOBS[k]] = v.replace("+", ",")        # list-valued knobs are written a+b+c in a spec
         elif k.startswith("env_"):
             env["MASSCOMP_" + k[4:].upper()] = v
     os.environ.update(env)
