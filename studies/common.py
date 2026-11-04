@@ -115,6 +115,8 @@ def root_set_coverage(chains, truth_roots, q=0.9, key_field="roots"):
 def save(name, obj):
     os.makedirs("results", exist_ok=True)
     path = f"results/{name}.json"
+    if isinstance(obj, dict) and "env" not in obj:        # record the sampler switches the job ran with
+        obj["env"] = {k: v for k, v in os.environ.items() if k.startswith("MASSCOMP_")}
     with open(path, "w") as fh:
         json.dump(obj, fh, indent=1, default=_default)
     return path
