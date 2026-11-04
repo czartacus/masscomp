@@ -531,7 +531,30 @@ def _exp_table(a):
     return e[1]
 
 
+_MEMO = {}            # lattice memo: ~60% of the forward passes in a sweep repeat one computed earlier in it
+_MEMO_MAX = 4000
+
+
+def clear_memo():
+    _MEMO.clear()
+
+
 def _prep(in_mode, in_tables, x, outs, T):
+    key = (in_mode, id(in_tables[0]) if in_mode == 1 else 0, id(in_tables[1]) if in_mode == 1 else 0, x,
+           tuple((id(ls), id(li), z) for ls, li, z in outs), T)
+    hit = _MEMO.get(key)
+    if hit is not None:
+        held, largs, alpha, term = hit
+        if all(a is b for a, b in zip(held, (in_tables if in_mode == 1 else ()) + tuple(t for ls, li, _ in outs for t in (ls, li)))):
+            return largs, alpha, term
+    largs, alpha, term = _prep_compute(in_mode, in_tables, x, outs, T)
+    if len(_MEMO) >= _MEMO_MAX:
+        _MEMO.clear()
+    _MEMO[key] = ((in_tables if in_mode == 1 else ()) + tuple(t for ls, li, _ in outs for t in (ls, li)), largs, alpha, term)
+    return largs, alpha, term
+
+
+def _prep_compute(in_mode, in_tables, x, outs, T):
     K = len(outs)
     if USE_LIN:
         ps_in, pi_in = (_exp_table(in_tables[0]), _exp_table(in_tables[1])) if in_mode == 1 else (_P0, _PI0)

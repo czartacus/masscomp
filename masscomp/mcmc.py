@@ -1097,6 +1097,8 @@ class Sampler:
 
     def sweep(self, clamp_latents=False, clamp_u=False, clamp_params=False):
         self._fixed = None                     # per-sweep option tables (see _fixed_options)
+        from .ffbs import clear_memo
+        clear_memo()                           # lattice results are reused within a sweep only
         if not clamp_latents:
             lm = self.LATENT_MOVES
             if "gibbs" in lm:
