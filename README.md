@@ -394,6 +394,30 @@ default move set including root regrow passes (max |z| 1.5 over 3,000 draws, eve
 15-cell restart battery (latent moves on 4 seeds × 2 ω, each parameter move, full mode, regrow 0.3)
 is the authoritative check from now on; its results are recorded below when in.
 
+### Real-data groundwork (2026-11-04)
+
+Not a study — groundwork for the tier-1-style probe the spec allows before any claim: known
+relationships, attested proto-language, used to find what the prototype gets wrong on real words.
+
+- `masscomp/data.py` reads a Lexibank / CLDF wordlist (`forms.csv` with CLTS segmentation) and maps
+  every segment onto the inventory: already-present symbols as they are; length, nasalisation,
+  velarisation, gemination and similar marks stripped; IPA variants folded (ɛ→e, ɪ→i, ʊ→u, ɔ→o,
+  ɑ ɒ ɐ æ ʌ→a, ə ɯ→ɨ, ɾ ʁ ɹ→r, ʋ β→v, ɣ→ʕ, ɕ→ʃ, …); diphthongs split; multi-word forms and synonyms
+  dropped (the prototype has no lexeme sets). Unmapped segments are reported, not guessed.
+- `MASSCOMP_INVENTORY=extended` adds 11 segments the plan's 29 lack and Romance / Germanic need
+  (ʒ ɲ ʎ ts dz tʃ dʒ ç y ø ɨ; affricates set both the stop and fricative manner bits, the front
+  rounded and central vowels take the three free cells of the vowel cube). The plan inventory is
+  unchanged by default, so every simulation result above stands.
+- NorthEuraLex (`lexibank/northeuralex`, 107 languages × 1,016 concepts, CLTS-segmented) has Latin
+  and six Romance languages plus Germanic, Uralic, Basque and Turkish controls. After mapping, 789
+  concepts have a single-word form in all 15 of those languages; form length averages 5.1 segments
+  with 4% over 8 and none over 12 (the new cap fits; the plan's 2–6 does not). Classical Latin is the
+  held-out proto-language, with the usual caveat that Romance continues the spoken accusative
+  (flos → flor), so exact matches are not the right score.
+
+A first reconstruction probe (6 Romance languages, Latin held out, 50 concepts, two chains) is
+recorded below when in.
+
 ### Pre-v3 notes (kept for the record)
 
 #### §8.3 LBF separation — blocked on estimator noise
