@@ -342,7 +342,15 @@ events and borrowing re-decided closes it (`diag_41844468490.json`): at p = 0.15
 and 423 the copy and truth starts agree on ω (1.39 vs 1.21× and 1.69 vs 1.79× at 0.15; 1.27 vs 1.23×
 and 1.73 vs 1.75× at 0.3) and the copy-start posterior is within ±50 nats of the truth-start one,
 on either side. It is on by default at p = 0.15 (`MASSCOMP_REGROW_P`), ~0.19 s per sweep on the
-depth-1.5 datasets; §8.1 is being rerun with it (run dispatched 15:3x).
+depth-1.5 datasets.
+
+**§8.1 with the subtree regrow (`recovery_41853059272.json`, 48 datasets).** ω coverage **0.94**
+(from 0.79), posterior-mean ratio median 1.19 (from 1.36); the three remaining ω misses are datasets
+whose true ω is ~0.005, below what 25 concepts can resolve. ρ 0.92, t_root 1.00, λ₀–λ₃ 0.83 / 0.81
+/ 0.85 / 0.85, root forms (RB) 0.95 (joined root 0.98, family roots 0.95), chains agreeing 0.94,
+detectable rules 0.69. Everything is at the plan's criteria except λ₀ and λ₁ at 0.81–0.83 against
+the 0.85 floor — one to two standard errors (0.043) under it. A further 96 datasets (seeds 448–543,
+same settings) are running to tell noise from a residual.
 
 **§8.3 noise check with root regrow (`pt_41823009928.json`).** The H1 marginal now replicates: related
 −4021 / −4019 / −4025 (sd 2.9), unrelated sd 9.2. The H0 marginal does not: −4087 / −4101 / −4024
