@@ -68,6 +68,12 @@ if study == "recovery":
     summary["u_detectable_coverage"] = float(np.mean(det)) if det else None
     summary["n_u_detectable"] = int(sum(r.get("n_u_detectable", 0) for r in rows))
     summary["omega_ratio_median"] = float(np.median([r["post_mean"]["omega"] / r["truth"]["omega"] for r in rows]))
+    for key in ("root_hpd_rb", "root_hpd_rb_R", "root_hpd_rb_fam"):          # Rao-Blackwellised HPD membership of the true root forms
+        vals = [r[key] for r in rows if r.get(key) is not None and r[key] == r[key]]
+        summary[key + "_mean"] = float(np.mean(vals)) if vals else None
+    summary["root_set_cov_R_mean"] = float(np.mean([r["root_set_cov_R"] for r in rows]))
+    ma = [v for r in rows for v in r.get("root_rb_mass_above", {}).values()]
+    summary["root_rb_mass_above_quantiles"] = [float(np.quantile(ma, q)) for q in (0.1, 0.25, 0.5, 0.75, 0.9)] if ma else None   # ~[0.1, 0.25, 0.5, 0.75, 0.9] if calibrated
     summary["pass"] = all(0.85 <= v <= 0.95 for k, v in summary["coverage"].items() if k not in ("u_big_entries", "u_detectable") and v is not None) and summary["root_set_cov_mean"] >= 0.8
 elif study == "confound":
     summary = dict(n=len(rows), frac_reps_with_warning=float(np.mean([(r["frac_both"] >= 0.5) or (r["frac_flagged"] >= 0.5) for r in rows])),

@@ -1157,12 +1157,15 @@ class Sampler:
         if "troot" in pm:
             self.move_troot()
 
-    def snapshot(self):
+    def snapshot(self, latents=False):
         st = self.st
-        return dict(lam=st.theta.lam.copy(), rho=st.theta.rho.copy(), omega=st.theta.omega, t_root=st.theta.t_root,
-                    u={e: dict(d) for e, d in st.theta.u.items()},
-                    roots={(v, c): st.y[(v, c)] for v in st.f.internal if st.f.parent[v] < 0 or st.f.parent[v] in st.f.roots for c in range(st.M)},
-                    log_lik=st.log_lik(), log_prior=st.log_prior())
+        out = dict(lam=st.theta.lam.copy(), rho=st.theta.rho.copy(), omega=st.theta.omega, t_root=st.theta.t_root,
+                   u={e: dict(d) for e, d in st.theta.u.items()},
+                   roots={(v, c): st.y[(v, c)] for v in st.f.internal if st.f.parent[v] < 0 or st.f.parent[v] in st.f.roots for c in range(st.M)},
+                   log_lik=st.log_lik(), log_prior=st.log_prior())
+        if latents:          # the full latent state, for Rao-Blackwellised root-form probabilities (studies/common.py)
+            out["latents"] = ({k: v for k, v in st.y.items() if not st.is_leaf[k[0]]}, dict(st.event), dict(st.donor))
+        return out
 
 
 def _lse(xs):
@@ -1184,7 +1187,8 @@ def _lognorm(w, var):
     return -0.5 * w * w / var - 0.5 * math.log(2 * math.pi * var)
 
 
-def run_chain(ds, theta0, seed, n_sweeps, burn, thin=10, beta=1.0, init=None, record=True, init_from_prior=False, anneal=0, **sweep_kw):
+def run_chain(ds, theta0, seed, n_sweeps, burn, thin=10, beta=1.0, init=None, record=True, init_from_prior=False, anneal=0,
+              record_latents=False, **sweep_kw):
     """anneal > 0: the first `anneal` sweeps run at beta_i = beta * (i / anneal)^2, i.e. from the prior up
     to the target. A chain started cold from a prior draw at beta = 1 settles into whichever mode the
     first few sweeps happen to find (seen: omega 20x over truth with the planted rule half found,
@@ -1198,5 +1202,5 @@ def run_chain(ds, theta0, seed, n_sweeps, burn, thin=10, beta=1.0, init=None, re
             s.beta = beta * min(1.0, i / anneal) ** 2
         s.sweep(**sweep_kw)
         if record and i >= burn and (i - burn) % thin == 0:
-            out.append(s.snapshot())
+            out.append(s.snapshot(latents=record_latents))
     return s, out

@@ -4,7 +4,7 @@ import numpy as np
 from masscomp.simulate import simulate_pair
 from masscomp import events as ev
 from masscomp.segments import EPS
-from studies.common import fit, rhat, ess, covered, pooled, per_chain, root_set_coverage, recoverable_roots, save
+from studies.common import fit, rhat, ess, covered, pooled, per_chain, root_set_coverage, recoverable_roots, root_hpd_rb, save
 
 N_REPS = int(sys.argv[1]) if len(sys.argv) > 1 else 50
 SEED0 = int(sys.argv[2]) if len(sys.argv) > 2 else 0
@@ -41,7 +41,7 @@ for r in range(N_REPS):
     ds = simulate_pair(related=True, depth=DEPTH, M=M, seed=seed)
     th = ds.truth["theta"]
     t0 = time.time()
-    chains = fit(ds, seed, n_sweeps=SWEEPS, burn=BURN)
+    chains = fit(ds, seed, n_sweeps=SWEEPS, burn=BURN, record_latents=True)
     row = dict(seed=seed, M=M, secs=time.time() - t0, cover={}, rhat={}, ess={}, truth={}, post_mean={})
     scalars = {"omega": (th.omega, "omega", None), "t_root": (th.t_root, "t_root", None)}
     for i in range(4):
@@ -83,9 +83,19 @@ for r in range(N_REPS):
     row["root_set_cov_R"] = root_set_coverage(chains, {k: v for k, v in rec.items() if k[0] == R})
     row["root_set_cov_fam"] = root_set_coverage(chains, {k: v for k, v in rec.items() if k[0] != R})
     row["n_recoverable"] = dict(R=sum(1 for k in rec if k[0] == R), fam=sum(1 for k in rec if k[0] != R))
+    t1 = time.time()
+    row["root_hpd_rb"], per = root_hpd_rb(ds, chains, rec)                                 # Rao-Blackwellised HPD membership, all recoverable roots
+    hR = [v[2] for k, v in per.items() if k[0] == R]; hF = [v[2] for k, v in per.items() if k[0] != R]
+    row["root_hpd_rb_R"] = float(np.mean(hR)) if hR else None
+    row["root_hpd_rb_fam"] = float(np.mean(hF)) if hF else None
+    row["root_rb_mass_above"] = {f"{k[0]}:{k[1]}": v[1] for k, v in per.items()}            # ~Uniform(0,1) if calibrated
+    row["secs_rb"] = time.time() - t1
+    for ch in chains:                                                                       # the full states are not written out
+        for o in ch:
+            o.pop("latents", None)
     rows.append(row)
     save(f"recovery_{SEED0}", {"rows": rows, "partial": True, "M": M})   # incremental, in case the run is cut short
-    print(f"rep {r} seed {seed} {row['secs']:.0f}s cover={ {k: (round(v,2) if isinstance(v,float) else v) for k,v in row['cover'].items()} } roots={row['root_set_cov']:.2f} (R {row['root_set_cov_R']:.2f}, fam {row['root_set_cov_fam']:.2f}) rhat_max={max(row['rhat'].values()):.2f}", flush=True)
+    print(f"rep {r} seed {seed} {row['secs']:.0f}s cover={ {k: (round(v,2) if isinstance(v,float) else v) for k,v in row['cover'].items()} } roots={row['root_set_cov']:.2f} (R {row['root_set_cov_R']:.2f}, fam {row['root_set_cov_fam']:.2f}, rb {row['root_hpd_rb']:.2f} in {row['secs_rb']:.0f}s) rhat_max={max(row['rhat'].values()):.2f}", flush=True)
 
 summary = {"n": N_REPS, "sweeps": SWEEPS, "burn": BURN, "coverage": {}, "root_set_cov_mean": float(np.mean([r["root_set_cov"] for r in rows]))}
 for name in rows[0]["cover"]:
