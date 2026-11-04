@@ -34,17 +34,17 @@ def _estimate(args):
     th = sample_theta(f1, ds.M, np.random.default_rng(seed + 7919 * rep))
     t0 = time.time()
     val, terms, s = join_path(dsh, th, seed * 10 + rep, K=K, n_sweeps=SWEEPS, burn=BURN, thin=4, warmup=WARMUP, power=POWER)
-    return f"{seed}:{label}:r{rep}", dict(lbf=float(val), terms=[float(t) for t in terms], secs=time.time() - t0,
+    return f"{seed}:{label}:r{rep}", dict(total=float(val), terms=[float(t) for t in terms], secs=time.time() - t0,
                                         t_root_end=float(s.st.theta.t_root))
 
 
 _prev = f"results/{TAG}.json"
 _old = _json.load(open(_prev)) if os.path.exists(_prev) else {}
-rows = _old.get("rows", []); partial = _old.get("partial", {})
+rows = _old.get("rows", []); partial = _old.get("estimates", {})
 
 
 def _save():
-    save(TAG, {"study": "lbfj", "rows": rows, "partial": partial, "K": K, "sweeps": SWEEPS, "burn": BURN, "warmup": WARMUP,
+    save(TAG, {"study": "lbfj", "rows": rows, "estimates": partial, "K": K, "sweeps": SWEEPS, "burn": BURN, "warmup": WARMUP,
                "power": POWER, "estimator": "join_path"})
 
 
@@ -66,6 +66,6 @@ for depth in DEPTHS:
             for rep in REPS:
                 v = partial[f"{seed}:{label}:r{rep}"]
                 if not any(r["seed"] == seed and r["kind"] == label and r["rep"] == rep for r in rows):
-                    rows.append(dict(depth=depth, seed=seed, kind=label, rep=rep, lbf=v["lbf"], secs=v["secs"], t_root_end=v["t_root_end"]))
-                    print(f"depth {depth} {label} seed {seed} rep {rep}: LBF={v['lbf']:+.2f} ({v['secs']:.0f}s)", flush=True)
+                    rows.append(dict(depth=depth, seed=seed, kind=label, rep=rep, lbf=v["total"], secs=v["secs"], t_root_end=v["t_root_end"]))
+                    print(f"depth {depth} {label} seed {seed} rep {rep}: LBF={v['total']:+.2f} ({v['secs']:.0f}s)", flush=True)
         _save()

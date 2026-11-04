@@ -91,7 +91,7 @@ elif study in ("lbf", "pt", "lbfj"):
         return (mx + np.log(np.exp(a - mx).sum(axis=axis, keepdims=True))).squeeze(axis)
     terms = {}   # (seed, kind, depth, hyp) -> list of per-chain term arrays
     for key, v in partial.items():
-        if not isinstance(v, dict) or "terms" not in v:
+        if not isinstance(v, dict) or "terms" not in v or "total" not in v:
             continue
         parts = key.split(":")
         if len(parts) >= 5:
