@@ -300,8 +300,29 @@ mass on forms more probable than it is below 0.9, estimated as the fraction of s
 is more probable than the truth. Seed 424: 0.90 (joined root 1.00, family roots 0.88) against 0.00
 / 0.10 by the sample set; the truth's mass-above quantiles [0.21, 0.29, 0.48, 0.77, 0.86] against
 the [0.1, 0.25, 0.5, 0.75, 0.9] of a calibrated posterior. The full study with both metrics is run
-41824xxxxxx (filled in below when in). The family-root conditional is skipped in states where a
-cross-family edge borrows from that root (the lattice holds two out-edges), which is rare.
+41827115991 (below). The family-root conditional is skipped in states where a cross-family edge
+borrows from that root (the lattice holds two out-edges), which is rare.
+
+**§8.1 with the Rao-Blackwellised root metric (`recovery_41827115991.json`, 47 datasets — seed 442
+crashed on an empty form before the fix, 3,000 sweeps, root regrow on).**
+
+| quantity | value | plan criterion |
+| --- | --- | --- |
+| root forms in the 90% HPD set, RB estimate | **0.94** (joined root 0.98, family roots 0.93) | ≥ 0.80 |
+| same by the sample-set estimate | 0.64 (joined root 0.55) | — |
+| truth's mass-above quantiles (10/25/50/75/90%) | 0.00 / 0.00 / 0.27 / 0.62 / 0.83 | 0.1 / 0.25 / 0.5 / 0.75 / 0.9 if calibrated |
+| λ₀ … λ₃ coverage | 0.85 / 0.81 / 0.83 / 0.87 | 0.85–0.95 |
+| ρ (mean) / t_root coverage | 0.89 / 0.98 | 0.85–0.95 |
+| ω coverage, posterior-mean ratio | 0.79, median 1.36× | 0.85–0.95 |
+| detectable rules covered | 0.54 (n = 15) | — |
+| chains agreeing (R̂ ≤ 1.25) | 0.87 | — |
+
+The root-form criterion passes; the posterior is if anything conservative (the truth sits higher in
+the posterior than a calibrated model would put it: 0.94 instead of 0.90, quantiles below nominal).
+The continuous parameters sit at or just under the 0.85 floor (s.e. ≈ 0.045 at n = 47): λ₁, λ₂ at
+0.81–0.83 and ω at 0.79, with ω still 1.4× over in posterior mean — the one remaining systematic
+shortfall, and it is small enough that the next question is whether 3,000 sweeps give the ω
+posterior its full width. The `pass` flag in the file is false because of these three.
 
 **§8.3 noise check under the new cap (`pt_41815813221.json`, K=24, 3 replicates, root regrow still
 off in this run).** Not improved: per-estimate sd of a log-marginal 40–66 nats (related LBF
