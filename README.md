@@ -331,6 +331,15 @@ every run. The cold-end stone terms differ by 50–100 nats between replicates o
 the stones do not equilibrate across the latent modes in 1,500 sweeps. The same check with the root
 regrow move on is run 41823009928.
 
+**Where the ω over-estimation comes from (`diag_41833705645.json`).** On the four §8.1 datasets with
+substantial ω that the posterior over-shot (404, 422, 423, 446; depth 1.5, root regrow on), chains
+started from the truth put ω at 1.14–1.70× the truth and chains started from child copies at
+1.5–2.5×, with the truth-started posterior 44–150 nats higher — all of it on the prior side (internal
+edges and events), the leaf likelihood equal. At the study's depth of 1.5 the root edges are mostly
+replaced, so the root step cannot reach the basin, which lies inside the families. The remaining
+§8.1 shortfall (ω coverage 0.79, λ₁–λ₂ 0.81–0.83) is therefore still mixing; the subtree regrow
+with events and borrowing re-decided (p = 0.15 and 0.3) is under test on the two worst datasets.
+
 **§8.3 noise check with root regrow (`pt_41823009928.json`).** The H1 marginal now replicates: related
 −4021 / −4019 / −4025 (sd 2.9), unrelated sd 9.2. The H0 marginal does not: −4087 / −4101 / −4024
 (sd 41) and 44 for the unrelated pair, so the LBF still scatters by 40–50 nats and the cold-end
