@@ -1106,7 +1106,8 @@ class Sampler:
     # ------------------------------------------------------------------ sweep
     FFBS_P = float(__import__("os").environ.get("MASSCOMP_FFBS_P", "0.25"))      # fraction of (node, concept) visited by the lattice FFBS move per sweep (0 = off)
     REGROW_P = float(__import__("os").environ.get("MASSCOMP_REGROW_P", "0"))
-    ROOT_REGROW_P = float(__import__("os").environ.get("MASSCOMP_ROOT_REGROW_P", "0"))   # per-concept rate of the root-only regrow   # fraction of (subtree root, concept) regrown per sweep
+    ROOT_REGROW_P = float(__import__("os").environ.get("MASSCOMP_ROOT_REGROW_P", "1"))   # per-concept rate of the root-only regrow (an exact
+                                                                                        # Gibbs step; on by default since 2026-11-04, see README)   # fraction of (subtree root, concept) regrown per sweep
     TEMPER_P = float(__import__("os").environ.get("MASSCOMP_TEMPER_P", "0"))
     REGROW_EVENTS = __import__("os").environ.get("MASSCOMP_REGROW_EVENTS", "1") == "1"
     REGROW_BORROW = __import__("os").environ.get("MASSCOMP_REGROW_BORROW", "1") == "1"
