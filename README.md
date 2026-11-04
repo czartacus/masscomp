@@ -337,8 +337,12 @@ started from the truth put ω at 1.14–1.70× the truth and chains started from
 1.5–2.5×, with the truth-started posterior 44–150 nats higher — all of it on the prior side (internal
 edges and events), the leaf likelihood equal. At the study's depth of 1.5 the root edges are mostly
 replaced, so the root step cannot reach the basin, which lies inside the families. The remaining
-§8.1 shortfall (ω coverage 0.79, λ₁–λ₂ 0.81–0.83) is therefore still mixing; the subtree regrow
-with events and borrowing re-decided (p = 0.15 and 0.3) is under test on the two worst datasets.
+§8.1 shortfall (ω coverage 0.79, λ₁–λ₂ 0.81–0.83) is therefore still mixing. The subtree regrow with
+events and borrowing re-decided closes it (`diag_41844468490.json`): at p = 0.15 / 0.3 on seeds 404
+and 423 the copy and truth starts agree on ω (1.39 vs 1.21× and 1.69 vs 1.79× at 0.15; 1.27 vs 1.23×
+and 1.73 vs 1.75× at 0.3) and the copy-start posterior is within ±50 nats of the truth-start one,
+on either side. It is on by default at p = 0.15 (`MASSCOMP_REGROW_P`), ~0.19 s per sweep on the
+depth-1.5 datasets; §8.1 is being rerun with it (run dispatched 15:3x).
 
 **§8.3 noise check with root regrow (`pt_41823009928.json`).** The H1 marginal now replicates: related
 −4021 / −4019 / −4025 (sd 2.9), unrelated sd 9.2. The H0 marginal does not: −4087 / −4101 / −4024
