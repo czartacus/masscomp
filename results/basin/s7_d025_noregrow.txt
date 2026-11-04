@@ -1,0 +1,4 @@
+copy   root cov R=0.65 fam=0.77 exact(R)=0.15 mean ll=-1770.9 omega x7.33 (4083s)
+       lam=[4.35 3.83 2.31 5.01] (truth [4.5  3.3  1.73 5.11]) t_root=0.98 (truth 0.25) rho_mean=0.940 (truth 1.039) |u|=53.4 (truth 43) log_prior=-2808.9
+truth  root cov R=0.61 fam=0.79 exact(R)=0.17 mean ll=-1789.5 omega x2.62 (4083s)
+       lam=[4.34 3.8  2.43 5.06] (truth [4.5  3.3  1.73 5.11]) t_root=0.91 (truth 0.25) rho_mean=0.947 (truth 1.039) |u|=53.7 (truth 43) log_prior=-2778.6
