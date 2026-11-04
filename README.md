@@ -280,6 +280,13 @@ ancestor drawn bottom-up from G × its children's transducers) did not help — 
 worse t_root basin (1.9–2.4) — and stays optional. Seed 2 under the new cap: truth-start root
 coverage 0.67 and a 200-nat better posterior than before, copy start still 130 nats behind.
 
+**§8.3 noise check under the new cap (`pt_41815813221.json`, K=24, 3 replicates, root regrow still
+off in this run).** Not improved: per-estimate sd of a log-marginal 40–66 nats (related LBF
+replicates −23 / +118 / +87, unrelated +62 / −4 / +73), minimum adjacent-rung swap acceptance 0.00 in
+every run. The cold-end stone terms differ by 50–100 nats between replicates of the same marginal:
+the stones do not equilibrate across the latent modes in 1,500 sweeps. The same check with the root
+regrow move on is run 41823009928.
+
 **Geweke after the speedups, and a correction to the test.** With the chained successive-conditional
 design, a move-subset cell that leaves most forms frozen (root regrow + events only) produced
 z = −42 on the internal form length at an "effective sample size" of 20,000: the chain's time
