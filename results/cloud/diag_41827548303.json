@@ -1,0 +1,538 @@
+{
+ "study": "diag",
+ "digest": [
+  {
+   "spec": "kind=geweke,n=12000,m=2,seed=1,mode=full,sweeps=3,geweke_restart=1",
+   "max_abs_z": 1.21,
+   "moves": "successive-conditional done (878s)   moves: y=62846/610706 ffbs=75930/76872 jffbs=4251/104940 regrow=64123/64123 joint=102046/1150578 lam=28337/36000 u=2400483/3758198 rho=56372/72000 omega=31860/36000 troot=27573/36000",
+   "secs": 879.9281497001648
+  },
+  {
+   "spec": "kind=geweke,n=12000,m=2,seed=2,mode=full,sweeps=3,geweke_restart=1",
+   "max_abs_z": 2.45,
+   "moves": "successive-conditional done (1320s)   moves: y=62205/610193 ffbs=75369/76300 jffbs=4133/103821 regrow=63981/63981 joint=102092/1150455 lam=28389/36000 u=2402866/3759534 rho=56500/72000 omega=31944/36000 troot=27718/36000",
+   "secs": 1321.6788156032562
+  },
+  {
+   "spec": "kind=geweke,n=20000,m=2,seed=4,mode=latents,sweeps=3,geweke_restart=1",
+   "max_abs_z": 0.58,
+   "moves": "successive-conditional done (750s)   moves: y=136859/1057982 ffbs=188143/189332 jffbs=10338/173784 regrow=115860/115860 joint=151284/1919983",
+   "secs": 751.5835180282593
+  },
+  {
+   "spec": "kind=geweke,n=20000,m=6,seed=2,mode=params,only=troot,sweeps=6,geweke_restart=1",
+   "max_abs_z": 2.28,
+   "moves": "successive-conditional done (1051s)   moves: troot=86546/120000",
+   "secs": 1051.9789023399353
+  }
+ ],
+ "cells": [
+  {
+   "study": "diag",
+   "kind": "geweke",
+   "spec": "kind=geweke,n=12000,m=2,seed=1,mode=full,sweeps=3,geweke_restart=1",
+   "params": {
+    "kind": "geweke",
+    "n": "12000",
+    "m": "2",
+    "seed": "1",
+    "mode": "full",
+    "sweeps": "3",
+    "geweke_restart": "1"
+   },
+   "env": {
+    "MASSCOMP_GEWEKE_RESTART": "1"
+   },
+   "git": "6e7dd23",
+   "secs": 879.9281497001648,
+   "result": {
+    "stats": [
+     {
+      "stat": "omega",
+      "mc": 0.1,
+      "sc": 0.1,
+      "z": 0.42,
+      "ess": 12000
+     },
+     {
+      "stat": "rho_mean",
+      "mc": 1.0,
+      "sc": 0.999,
+      "z": 0.16,
+      "ess": 12000
+     },
+     {
+      "stat": "lam0",
+      "mc": 4.5,
+      "sc": 4.484,
+      "z": 1.21,
+      "ess": 12000
+     },
+     {
+      "stat": "lam1",
+      "mc": 3.001,
+      "sc": 2.998,
+      "z": 0.25,
+      "ess": 12000
+     },
+     {
+      "stat": "lam2",
+      "mc": 2.004,
+      "sc": 1.992,
+      "z": 0.87,
+      "ess": 12000
+     },
+     {
+      "stat": "lam3",
+      "mc": 5.993,
+      "sc": 5.996,
+      "z": -0.18,
+      "ess": 12000
+     },
+     {
+      "stat": "t_root",
+      "mc": 2.026,
+      "sc": 2.017,
+      "z": 0.46,
+      "ess": 12000
+     },
+     {
+      "stat": "n_u",
+      "mc": 53.983,
+      "sc": 53.947,
+      "z": 0.38,
+      "ess": 12000
+     },
+     {
+      "stat": "sum_u2",
+      "mc": 414.942,
+      "sc": 414.016,
+      "z": 0.32,
+      "ess": 12000
+     },
+     {
+      "stat": "int_len",
+      "mc": 4.239,
+      "sc": 4.243,
+      "z": -0.32,
+      "ess": 12000
+     },
+     {
+      "stat": "leaf_len",
+      "mc": 4.505,
+      "sc": 4.512,
+      "z": -0.53,
+      "ess": 12000
+     },
+     {
+      "stat": "f_inherit",
+      "mc": 0.698,
+      "sc": 0.698,
+      "z": 0.22,
+      "ess": 12000
+     },
+     {
+      "stat": "f_replace",
+      "mc": 0.276,
+      "sc": 0.276,
+      "z": -0.1,
+      "ess": 12000
+     },
+     {
+      "stat": "f_borrow",
+      "mc": 0.026,
+      "sc": 0.026,
+      "z": -0.42,
+      "ess": 12000
+     }
+    ],
+    "moves": "successive-conditional done (878s)   moves: y=62846/610706 ffbs=75930/76872 jffbs=4251/104940 regrow=64123/64123 joint=102046/1150578 lam=28337/36000 u=2400483/3758198 rho=56372/72000 omega=31860/36000 troot=27573/36000",
+    "max_abs_z": 1.21,
+    "returncode": 0,
+    "stdout": "marginal-conditional done (176s)\nsuccessive-conditional done (878s)   moves: y=62846/610706 ffbs=75930/76872 jffbs=4251/104940 regrow=64123/64123 joint=102046/1150578 lam=28337/36000 u=2400483/3758198 rho=56372/72000 omega=31860/36000 troot=27573/36000\nstat          mc mean    sc mean       z  ess_sc\nomega           0.100      0.100    0.42   12000\nrho_mean        1.000      0.999    0.16   12000\nlam0            4.500      4.484    1.21   12000\nlam1            3.001      2.998    0.25   12000\nlam2            2.004      1.992    0.87   12000\nlam3            5.993      5.996   -0.18   12000\nt_root          2.026      2.017    0.46   12000\nn_u            53.983     53.947    0.38   12000\nsum_u2        414.942    414.016    0.32   12000\nint_len         4.239      4.243   -0.32   12000\nleaf_len        4.505      4.512   -0.53   12000\nf_inherit       0.698      0.698    0.22   12000\nf_replace       0.276      0.276   -0.10   12000\nf_borrow        0.026      0.026   -0.42   12000\n(878s)\n",
+    "stderr": ""
+   }
+  },
+  {
+   "study": "diag",
+   "kind": "geweke",
+   "spec": "kind=geweke,n=12000,m=2,seed=2,mode=full,sweeps=3,geweke_restart=1",
+   "params": {
+    "kind": "geweke",
+    "n": "12000",
+    "m": "2",
+    "seed": "2",
+    "mode": "full",
+    "sweeps": "3",
+    "geweke_restart": "1"
+   },
+   "env": {
+    "MASSCOMP_GEWEKE_RESTART": "1"
+   },
+   "git": "6e7dd23",
+   "secs": 1321.6788156032562,
+   "result": {
+    "stats": [
+     {
+      "stat": "omega",
+      "mc": 0.099,
+      "sc": 0.098,
+      "z": 0.73,
+      "ess": 12000
+     },
+     {
+      "stat": "rho_mean",
+      "mc": 1.004,
+      "sc": 0.993,
+      "z": 1.74,
+      "ess": 12000
+     },
+     {
+      "stat": "lam0",
+      "mc": 4.511,
+      "sc": 4.501,
+      "z": 0.78,
+      "ess": 12000
+     },
+     {
+      "stat": "lam1",
+      "mc": 2.994,
+      "sc": 3.011,
+      "z": -1.31,
+      "ess": 12000
+     },
+     {
+      "stat": "lam2",
+      "mc": 1.986,
+      "sc": 1.998,
+      "z": -0.88,
+      "ess": 12000
+     },
+     {
+      "stat": "lam3",
+      "mc": 5.997,
+      "sc": 6.0,
+      "z": -0.18,
+      "ess": 12000
+     },
+     {
+      "stat": "t_root",
+      "mc": 1.984,
+      "sc": 2.005,
+      "z": -1.14,
+      "ess": 12000
+     },
+     {
+      "stat": "n_u",
+      "mc": 53.814,
+      "sc": 54.046,
+      "z": -2.45,
+      "ess": 12000
+     },
+     {
+      "stat": "sum_u2",
+      "mc": 411.871,
+      "sc": 416.388,
+      "z": -1.56,
+      "ess": 12000
+     },
+     {
+      "stat": "int_len",
+      "mc": 4.228,
+      "sc": 4.239,
+      "z": -1.09,
+      "ess": 12000
+     },
+     {
+      "stat": "leaf_len",
+      "mc": 4.495,
+      "sc": 4.505,
+      "z": -0.73,
+      "ess": 12000
+     },
+     {
+      "stat": "f_inherit",
+      "mc": 0.698,
+      "sc": 0.699,
+      "z": -0.78,
+      "ess": 12000
+     },
+     {
+      "stat": "f_replace",
+      "mc": 0.276,
+      "sc": 0.275,
+      "z": 0.85,
+      "ess": 12000
+     },
+     {
+      "stat": "f_borrow",
+      "mc": 0.025,
+      "sc": 0.025,
+      "z": -0.22,
+      "ess": 12000
+     }
+    ],
+    "moves": "successive-conditional done (1320s)   moves: y=62205/610193 ffbs=75369/76300 jffbs=4133/103821 regrow=63981/63981 joint=102092/1150455 lam=28389/36000 u=2402866/3759534 rho=56500/72000 omega=31944/36000 troot=27718/36000",
+    "max_abs_z": 2.45,
+    "returncode": 0,
+    "stdout": "marginal-conditional done (245s)\nsuccessive-conditional done (1320s)   moves: y=62205/610193 ffbs=75369/76300 jffbs=4133/103821 regrow=63981/63981 joint=102092/1150455 lam=28389/36000 u=2402866/3759534 rho=56500/72000 omega=31944/36000 troot=27718/36000\nstat          mc mean    sc mean       z  ess_sc\nomega           0.099      0.098    0.73   12000\nrho_mean        1.004      0.993    1.74   12000\nlam0            4.511      4.501    0.78   12000\nlam1            2.994      3.011   -1.31   12000\nlam2            1.986      1.998   -0.88   12000\nlam3            5.997      6.000   -0.18   12000\nt_root          1.984      2.005   -1.14   12000\nn_u            53.814     54.046   -2.45   12000\nsum_u2        411.871    416.388   -1.56   12000\nint_len         4.228      4.239   -1.09   12000\nleaf_len        4.495      4.505   -0.73   12000\nf_inherit       0.698      0.699   -0.78   12000\nf_replace       0.276      0.275    0.85   12000\nf_borrow        0.025      0.025   -0.22   12000\n(1320s)\n",
+    "stderr": ""
+   }
+  },
+  {
+   "study": "diag",
+   "kind": "geweke",
+   "spec": "kind=geweke,n=20000,m=2,seed=4,mode=latents,sweeps=3,geweke_restart=1",
+   "params": {
+    "kind": "geweke",
+    "n": "20000",
+    "m": "2",
+    "seed": "4",
+    "mode": "latents",
+    "sweeps": "3",
+    "geweke_restart": "1"
+   },
+   "env": {
+    "MASSCOMP_GEWEKE_RESTART": "1"
+   },
+   "git": "6e7dd23",
+   "secs": 751.5835180282593,
+   "result": {
+    "stats": [
+     {
+      "stat": "omega",
+      "mc": 0.054,
+      "sc": 0.054,
+      "z": 0.0,
+      "ess": 20000
+     },
+     {
+      "stat": "rho_mean",
+      "mc": 1.292,
+      "sc": 1.292,
+      "z": 0.0,
+      "ess": 20000
+     },
+     {
+      "stat": "lam0",
+      "mc": 3.111,
+      "sc": 3.111,
+      "z": 0.0,
+      "ess": 20000
+     },
+     {
+      "stat": "lam1",
+      "mc": 3.718,
+      "sc": 3.718,
+      "z": 0.0,
+      "ess": 20000
+     },
+     {
+      "stat": "lam2",
+      "mc": 1.945,
+      "sc": 1.945,
+      "z": NaN,
+      "ess": 20000
+     },
+     {
+      "stat": "lam3",
+      "mc": 7.0,
+      "sc": 7.0,
+      "z": NaN,
+      "ess": 20000
+     },
+     {
+      "stat": "t_root",
+      "mc": 1.0,
+      "sc": 1.0,
+      "z": NaN,
+      "ess": 20000
+     },
+     {
+      "stat": "n_u",
+      "mc": 45.0,
+      "sc": 45.0,
+      "z": NaN,
+      "ess": 20000
+     },
+     {
+      "stat": "sum_u2",
+      "mc": 482.749,
+      "sc": 482.749,
+      "z": NaN,
+      "ess": 20000
+     },
+     {
+      "stat": "int_len",
+      "mc": 4.026,
+      "sc": 4.025,
+      "z": 0.23,
+      "ess": 20000
+     },
+     {
+      "stat": "leaf_len",
+      "mc": 4.054,
+      "sc": 4.054,
+      "z": -0.02,
+      "ess": 20000
+     },
+     {
+      "stat": "f_inherit",
+      "mc": 0.645,
+      "sc": 0.646,
+      "z": -0.44,
+      "ess": 20000
+     },
+     {
+      "stat": "f_replace",
+      "mc": 0.341,
+      "sc": 0.341,
+      "z": 0.58,
+      "ess": 20000
+     },
+     {
+      "stat": "f_borrow",
+      "mc": 0.013,
+      "sc": 0.013,
+      "z": -0.52,
+      "ess": 20000
+     }
+    ],
+    "moves": "successive-conditional done (750s)   moves: y=136859/1057982 ffbs=188143/189332 jffbs=10338/173784 regrow=115860/115860 joint=151284/1919983",
+    "max_abs_z": 0.58,
+    "returncode": 0,
+    "stdout": "marginal-conditional done (90s)\nsuccessive-conditional done (750s)   moves: y=136859/1057982 ffbs=188143/189332 jffbs=10338/173784 regrow=115860/115860 joint=151284/1919983\nstat          mc mean    sc mean       z  ess_sc\nomega           0.054      0.054    0.00   20000\nrho_mean        1.292      1.292    0.00   20000\nlam0            3.111      3.111    0.00   20000\nlam1            3.718      3.718    0.00   20000\nlam2            1.945      1.945     nan   20000\nlam3            7.000      7.000     nan   20000\nt_root          1.000      1.000     nan   20000\nn_u            45.000     45.000     nan   20000\nsum_u2        482.749    482.749     nan   20000\nint_len         4.026      4.025    0.23   20000\nleaf_len        4.054      4.054   -0.02   20000\nf_inherit       0.645      0.646   -0.44   20000\nf_replace       0.341      0.341    0.58   20000\nf_borrow        0.013      0.013   -0.52   20000\n(750s)\n",
+    "stderr": "/home/runner/work/masscomp/masscomp/studies/geweke.py:177: RuntimeWarning: invalid value encountered in scalar divide\n  z = (a.mean() - b.mean()) / np.sqrt(a.var() / len(a) + b.var() / e)\n"
+   }
+  },
+  {
+   "study": "diag",
+   "kind": "geweke",
+   "spec": "kind=geweke,n=20000,m=6,seed=2,mode=params,only=troot,sweeps=6,geweke_restart=1",
+   "params": {
+    "kind": "geweke",
+    "n": "20000",
+    "m": "6",
+    "seed": "2",
+    "mode": "params",
+    "only": "troot",
+    "sweeps": "6",
+    "geweke_restart": "1"
+   },
+   "env": {
+    "MASSCOMP_GEWEKE_RESTART": "1"
+   },
+   "git": "6e7dd23",
+   "secs": 1051.9789023399353,
+   "result": {
+    "stats": [
+     {
+      "stat": "omega",
+      "mc": 0.1,
+      "sc": 0.099,
+      "z": 0.98,
+      "ess": 20000
+     },
+     {
+      "stat": "rho_mean",
+      "mc": 0.998,
+      "sc": 1.0,
+      "z": -0.69,
+      "ess": 20000
+     },
+     {
+      "stat": "lam0",
+      "mc": 4.492,
+      "sc": 4.494,
+      "z": -0.21,
+      "ess": 20000
+     },
+     {
+      "stat": "lam1",
+      "mc": 3.003,
+      "sc": 3.003,
+      "z": 0.03,
+      "ess": 20000
+     },
+     {
+      "stat": "lam2",
+      "mc": 2.009,
+      "sc": 1.986,
+      "z": 2.28,
+      "ess": 20000
+     },
+     {
+      "stat": "lam3",
+      "mc": 5.993,
+      "sc": 6.003,
+      "z": -0.94,
+      "ess": 20000
+     },
+     {
+      "stat": "t_root",
+      "mc": 1.999,
+      "sc": 2.004,
+      "z": -0.39,
+      "ess": 20000
+     },
+     {
+      "stat": "n_u",
+      "mc": 53.926,
+      "sc": 53.986,
+      "z": -0.82,
+      "ess": 20000
+     },
+     {
+      "stat": "sum_u2",
+      "mc": 413.899,
+      "sc": 412.799,
+      "z": 0.49,
+      "ess": 20000
+     },
+     {
+      "stat": "int_len",
+      "mc": 4.236,
+      "sc": 4.228,
+      "z": 1.5,
+      "ess": 20000
+     },
+     {
+      "stat": "leaf_len",
+      "mc": 4.508,
+      "sc": 4.495,
+      "z": 1.73,
+      "ess": 20000
+     },
+     {
+      "stat": "f_inherit",
+      "mc": 0.699,
+      "sc": 0.699,
+      "z": -0.56,
+      "ess": 20000
+     },
+     {
+      "stat": "f_replace",
+      "mc": 0.276,
+      "sc": 0.275,
+      "z": 0.07,
+      "ess": 20000
+     },
+     {
+      "stat": "f_borrow",
+      "mc": 0.026,
+      "sc": 0.025,
+      "z": 1.29,
+      "ess": 20000
+     }
+    ],
+    "moves": "successive-conditional done (1051s)   moves: troot=86546/120000",
+    "max_abs_z": 2.28,
+    "returncode": 0,
+    "stdout": "marginal-conditional done (486s)\nsuccessive-conditional done (1051s)   moves: troot=86546/120000\nstat          mc mean    sc mean       z  ess_sc\nomega           0.100      0.099    0.98   20000\nrho_mean        0.998      1.000   -0.69   20000\nlam0            4.492      4.494   -0.21   20000\nlam1            3.003      3.003    0.03   20000\nlam2            2.009      1.986    2.28   20000\nlam3            5.993      6.003   -0.94   20000\nt_root          1.999      2.004   -0.39   20000\nn_u            53.926     53.986   -0.82   20000\nsum_u2        413.899    412.799    0.49   20000\nint_len         4.236      4.228    1.50   20000\nleaf_len        4.508      4.495    1.73   20000\nf_inherit       0.699      0.699   -0.56   20000\nf_replace       0.276      0.275    0.07   20000\nf_borrow        0.026      0.025    1.29   20000\n(1051s)\n",
+    "stderr": ""
+   }
+  }
+ ],
+ "label": "Geweke restart: the three cells that crashed on an empty form (full mode seeds 1-2, latents seed 4) and troot again (f_replace z 3.0)",
+ "run_id": "41827548303"
+}
