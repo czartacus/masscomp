@@ -310,6 +310,29 @@ every run. The cold-end stone terms differ by 50–100 nats between replicates o
 the stones do not equilibrate across the latent modes in 1,500 sweeps. The same check with the root
 regrow move on is run 41823009928.
 
+**§8.3 noise check with root regrow (`pt_41823009928.json`).** The H1 marginal now replicates: related
+−4021 / −4019 / −4025 (sd 2.9), unrelated sd 9.2. The H0 marginal does not: −4087 / −4101 / −4024
+(sd 41) and 44 for the unrelated pair, so the LBF still scatters by 40–50 nats and the cold-end
+rung pair still never swaps. The join-path estimator below avoids estimating H0 at all.
+
+**Join-path LBF (`marglik.join_path`, `studies/lbfj.py`).** One stepping stone per dataset along the
+root join: the inherit / borrow terms of the two root edges are raised to α and the family roots'
+innovation prior to 1 − α, so α = 1 is H1 and α = 0 is H0 with the joined root, t_root and the
+root-edge rules and events as decoupled dummies (`State.alpha`, `State.join_delta`). Exact against
+enumeration on a two-family toy (`tests/test_join_path.py`: 0.61 exact, estimates 0.69 / 0.67 /
+0.54; the likelihood path gives 0.59). On the seed-2100 related pair (depth 0.25, K = 16, 600 sweeps
+per stone, ladder (k/K)², ~28 min on one core) two replicates give +51.1 and +44.0 against the
+likelihood path's −23 / +118 / +87 on the same data. The ladder is now dense near α = 1, where the
+power variable grows (the top stone had an effective sample size of 3). A 5-dataset × 3-replicate
+run is in the cloud (study `lbfj`).
+
+**Geweke restart battery (`diag_41818729390.json`, `diag_41827548303.json`).** Sixteen cells, 12,000–
+20,000 fresh exact draws each, three sweeps per draw: latent moves on four θ draws with ω from the
+prior and at 0.5, each parameter move alone, the full sampler on two draws, the subtree regrow at
+0.3 — max |z| 2.45 over ~220 statistics (one 3.04 on the t_root move that came back 2.28 on a
+rerun). This is the correctness check from now on; the chained design's z-scores are not
+interpretable when a θ draw mixes slowly.
+
 **Geweke after the speedups, and a correction to the test.** With the chained successive-conditional
 design, a move-subset cell that leaves most forms frozen (root regrow + events only) produced
 z = −42 on the internal form length at an "effective sample size" of 20,000: the chain's time
