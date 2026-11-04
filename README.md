@@ -119,6 +119,18 @@ acceptance in the tens of percent — needs ~50 stones, and ~100 at M=100. Runs 
 and 41618402064 (K=48), 3 warm-started replicates per marginal on one related and one unrelated
 pair, measure the noise under the rebuilt estimator before the grid is rerun under v4.
 
+**Result of the noise check (read 2026-11-04; `results/cloud/pt_41618398207.json`, `pt_41618402064.json`).**
+Doubling the ladder does not reduce the noise. Per-estimate sd of a log-marginal is 21 nats at
+K=24 and 29 at K=48 (related LBF replicates 56/62/2 at K=24, 43/92/14 at K=48; unrelated −19/14/19
+and −16/−36/4). Mean swap acceptance rises from 0.15 to 0.40 with K=48, as the arithmetic
+predicted, but the *minimum* adjacent-pair acceptance stays at 0.00–0.01 in every run: one pair of
+neighbouring rungs near the cold end never exchanges, whatever the spacing. That is the signature of
+a first-order transition in β — the cold replica sits in one of the latent basins described under
+*Mixing* below and the warm replicas in another — so the estimator's noise is the sampler's basin
+problem seen from a different side, not a ladder-spacing problem. The §8.3 grid stays blocked until
+the cold-end mixing is fixed; the K=48 "pooled" rows in that file are from a stale merge and should
+be ignored (the per-replicate rows are correct).
+
 ### §8.1 recovery — v4 (wide slab, collapsed rate moves, reverse proposals)
 
 Model v4 (commits b8a659e, 3a39a13, 32505b5): the rule slab is widened from sd 1 to sd 4√t
