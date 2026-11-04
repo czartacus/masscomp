@@ -6,6 +6,7 @@ Deviations from the plan, recorded here:
   * t_root is updated by random-walk MH on the log scale, not slice sampling.
 """
 import math
+import itertools
 import numpy as np
 from .segments import N_SEG, EPS
 from .transducer import EdgeParams
@@ -482,11 +483,21 @@ class Sampler:
                     return 1, st.adapt, st.y[(st.donor[(v, c)], c)]
             return 0, None, None
 
-        # child edges whose event is re-decided (inherit vs replace) along with the parent form; borrowing
-        # edges keep their event and donor. At most two edges enter the lattice as outputs.
-        free = {v: [ch for ch in f.children[v] if st.event[(ch, c)] != ev.BORROW][:2] for v in sub} if self.REGROW_EVENTS \
+        # child edges whose event is re-decided along with the parent form: inherit, replace, or (with
+        # REGROW_BORROW) borrow from each candidate donor outside the subtree. Edges currently borrowing
+        # from a donor inside the subtree keep their event (its form is being proposed too). At most two
+        # edges enter the lattice as outputs.
+        def is_free(ch):
+            k = st.event[(ch, c)]
+            if k == ev.BORROW:
+                return self.REGROW_BORROW and st.donor[(ch, c)] not in subset
+            return True
+        free = {v: [ch for ch in f.children[v] if is_free(ch)][:2] for v in sub} if self.REGROW_EVENTS \
             else {v: [] for v in sub}
-        cur_ev = {ch: st.event[(ch, c)] for v in sub for ch in free[v]}
+        cur_ev = {ch: (st.event[(ch, c)], st.donor.get((ch, c))) for v in sub for ch in free[v]}
+        options = {ch: [(ev.INHERIT, None), (ev.REPLACE, None)] +
+                       ([(ev.BORROW, d) for d in st.cands[ch] if d not in subset] if self.REGROW_BORROW else [])
+                   for v in sub for ch in free[v]}
 
         def form_of(ch, forms):
             return forms[ch] if ch in forms else st.y[(ch, c)]
@@ -494,24 +505,34 @@ class Sampler:
         def outs(v, forms, events):
             """Lattice outputs of v: inheriting children (re-decided ones per `events`, fixed ones as they are)."""
             fr = free[v]
-            lat = [(st.ep[ch], form_of(ch, forms)) for ch in fr if events[ch] == ev.INHERIT]
+            lat = [(st.ep[ch], form_of(ch, forms)) for ch in fr if events[ch][0] == ev.INHERIT]
             lat += [(st.ep[ch], form_of(ch, forms)) for ch in f.children[v] if ch not in fr and st.event[(ch, c)] == ev.INHERIT]
             return lat[:2]
 
         def configs(v, forms):
-            """(events dict, log weight) for each inherit/replace assignment of v's free child edges: the event
-            prior, the innovation density of replaced children, and the lattice mass of the inheriting ones."""
+            """(events dict, log weight) for each assignment of v's free child edges: the event prior, the
+            innovation / adaptation density of replaced / borrowed children, and the lattice mass of the
+            inheriting ones."""
             in_mode, tab, x = inputs(v)
             tabs = (tab.log_sub_np, tab.log_ins_np) if tab is not None else None
             fr = free[v]
             out = []
-            for bits in range(1 << len(fr)):
-                events = {ch: (ev.INHERIT if bits >> i & 1 else ev.REPLACE) for i, ch in enumerate(fr)}
+            lz_cache = {}                     # the lattice mass depends only on which free children inherit
+            for combo in itertools.product(*[options[ch] for ch in fr]):
+                events = dict(zip(fr, combo))
                 lw = 0.0
                 for ch in fr:
-                    lw += st.evp[ch][c][events[ch]] + (ev.log_G(form_of(ch, forms)) if events[ch] == ev.REPLACE else 0.0)
-                lat = outs(v, forms, events)
-                lz = ffbs_logZ(in_mode, tabs, x, [(ep.log_sub_np, ep.log_ins_np, z) for ep, z in lat])
+                    k, d = events[ch]
+                    lw += st.evp[ch][c][k]
+                    if k == ev.REPLACE:
+                        lw += ev.log_G(form_of(ch, forms))
+                    elif k == ev.BORROW:
+                        lw += -math.log(len(st.cands[ch])) + st.adapt.logprob(st.y[(d, c)], form_of(ch, forms))
+                key = tuple(k == ev.INHERIT for k, _ in combo)
+                if key not in lz_cache:
+                    lat = outs(v, forms, events)
+                    lz_cache[key] = (ffbs_logZ(in_mode, tabs, x, [(ep.log_sub_np, ep.log_ins_np, z) for ep, z in lat]), lat)
+                lz, lat = lz_cache[key]
                 out.append((events, lw + lz, lz, lat))
             return in_mode, tab, x, out
 
@@ -547,7 +568,7 @@ class Sampler:
             edges.update(st.affected_edges(v, c))
         for v in sub:
             st.y[(v, c)] = prop[v]
-        over = {(e, c): (dict(kind=prop_ev[e]) if e in prop_ev else {}) for e in edges}
+        over = {(e, c): (dict(kind=prop_ev[e][0], d=prop_ev[e][1]) if e in prop_ev else {}) for e in edges}
         dterm, new = self._delta_terms([(e, c) for e in edges], over)
         droot = 0.0
         if f.parent[w] < 0:
@@ -555,9 +576,12 @@ class Sampler:
         self.acc["regrow"][1] += 1
         if self._accept(dterm + droot + lq):
             self._commit(new)
-            for ch, k in prop_ev.items():
+            for ch, (k, d) in prop_ev.items():
                 st.event[(ch, c)] = k
-                st.donor.pop((ch, c), None)
+                if k == ev.BORROW:
+                    st.donor[(ch, c)] = d
+                else:
+                    st.donor.pop((ch, c), None)
             if f.parent[w] < 0:
                 st.t_prior[("root", w, c)] = ev.log_G(prop[w])
             self.acc["regrow"][0] += 1
@@ -939,7 +963,8 @@ class Sampler:
     FFBS_P = 0.25      # fraction of (node, concept) visited by the lattice FFBS move per sweep (0 = off)
     REGROW_P = float(__import__("os").environ.get("MASSCOMP_REGROW_P", "0"))   # fraction of (subtree root, concept) regrown per sweep
     TEMPER_P = float(__import__("os").environ.get("MASSCOMP_TEMPER_P", "0"))
-    REGROW_EVENTS = __import__("os").environ.get("MASSCOMP_REGROW_EVENTS", "1") == "1"   # regrow re-decides inherit/replace on subtree edges
+    REGROW_EVENTS = __import__("os").environ.get("MASSCOMP_REGROW_EVENTS", "1") == "1"
+    REGROW_BORROW = __import__("os").environ.get("MASSCOMP_REGROW_BORROW", "1") == "1"   # regrow re-decides inherit/replace on subtree edges
     LATENT_MOVES = set(__import__("os").environ.get("MASSCOMP_LATENT_MOVES", "gibbs,ffbs,jffbs,forms,joint,events").split(","))
     PARAM_MOVES = set(__import__("os").environ.get("MASSCOMP_PARAM_MOVES", "lam,u,rates,troot").split(","))   # diagnostics only   # fraction of concepts given a tempered excursion per sweep
 
