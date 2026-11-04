@@ -24,7 +24,7 @@ if study == "diag":
     json.dump({"study": "diag", "digest": digest, "cells": cells}, open(out, "w"), indent=1)
     print("DIGEST", json.dumps(digest, indent=1))
     raise SystemExit(0)
-FIELD = {"recovery": "root_set_cov", "confound": "frac_both", "lbf": "lbf", "pt": "lbf"}[study]
+FIELD = {"recovery": "root_set_cov", "confound": "frac_both", "lbf": "lbf", "pt": "lbf", "lbfj": "lbf"}[study]
 rows, partial, meta, pt_cells = [], {}, {}, {}
 for p in ins:
     d = json.load(open(p))
@@ -81,7 +81,7 @@ elif study == "confound":
                    f_mass_mean=float(np.mean([r["f_mass_mean"] for r in rows if "f_mass_mean" in r])),
                    t_root_mean=float(np.mean([r["t_root_mean"] for r in rows])))
     summary["pass"] = summary["frac_reps_with_warning"] >= 0.8
-elif study in ("lbf", "pt"):
+elif study in ("lbf", "pt", "lbfj"):
     summary = {}
     # Pool replicate chains stone by stone: each chain's stone term is log mean exp(d*ll) over its samples, so with
     # equal sample counts the pooled term is logsumexp over chains minus log R. Pooled LBF rows are added as kind

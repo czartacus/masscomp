@@ -5,7 +5,7 @@ on:
   workflow_dispatch:
     inputs:
       study:
-        description: recovery | confound | lbf | pt (seeds as seed:kind, one replicate per rep)
+        description: recovery | confound | lbf | lbfj (join-path LBF; seeds = seed0 per job, lbf_reps = replicate ids) | pt (seeds as seed:kind, one replicate per rep)
         required: true
         default: recovery
       seeds:
@@ -75,11 +75,14 @@ jobs:
                           for h in hyps:
                               cells.append({"seed": seed, "kind": kind, "depth": d, "rep": r, "hyp": h,
                                             "suffix": "_" + kind + "_r" + r + ("" if "," in h else "_" + h)})
-          elif study == "lbf":
+          elif study in ("lbf", "lbfj"):
               depths = [d.strip() for d in "${{ inputs.depths }}".split(",") if d.strip()]
               reps = [r.strip() for r in "${{ inputs.lbf_reps }}".split(",") if r.strip()] or ["0"]
-              cells = [{"seed": s, "depth": d, "rep": r, "suffix": ("" if r == "0" else "_r" + r), "kind": "-", "hyp": "-"}
-                       for s in seeds for d in depths for r in reps]
+              if study == "lbfj":        # one job per (seed, depth) runs every replicate (they share the dataset)
+                  cells = [{"seed": s, "depth": d, "rep": ",".join(reps), "suffix": "", "kind": "-", "hyp": "-"} for s in seeds for d in depths]
+              else:
+                  cells = [{"seed": s, "depth": d, "rep": r, "suffix": ("" if r == "0" else "_r" + r), "kind": "-", "hyp": "-"}
+                           for s in seeds for d in depths for r in reps]
           else:
               cells = [{"seed": s, "depth": "-", "rep": "0", "suffix": "", "kind": "-", "hyp": "-"} for s in seeds]
           with open(os.environ["GITHUB_OUTPUT"], "a") as fh:
@@ -114,6 +117,7 @@ jobs:
             recovery) python studies/recovery.py 1 ${{ matrix.seed }} ${{ inputs.sweeps }} ${{ inputs.burn }} ${{ inputs.concepts }} ;;
             confound) python studies/confound.py 1 ${{ matrix.seed }} ${{ inputs.sweeps }} ${{ inputs.burn }} ;;
             lbf)      python studies/lbf.py 1 ${{ matrix.seed }} ${{ matrix.depth }} ${{ inputs.lbf_K }} ${{ inputs.sweeps }} ${{ inputs.burn }} ${{ inputs.lbf_warmup }} ${{ inputs.lbf_power }} ${{ matrix.rep }} ;;
+            lbfj)     python studies/lbfj.py 1 ${{ matrix.seed }} ${{ matrix.depth }} ${{ inputs.lbf_K }} ${{ inputs.sweeps }} ${{ inputs.burn }} ${{ inputs.lbf_warmup }} ${{ inputs.lbf_power }} "${{ matrix.rep }}" ;;
             pt)       python studies/pt_check.py ${{ matrix.seed }} ${{ matrix.depth }} ${{ matrix.kind }} 1 ${{ inputs.lbf_K }} ${{ inputs.sweeps }} ${{ inputs.burn }} ${{ matrix.rep }} ${{ matrix.hyp }} ${{ inputs.concepts }} ${{ inputs.lbf_warmup }} ;;
           esac
       - uses: actions/upload-artifact@v4

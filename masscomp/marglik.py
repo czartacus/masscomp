@@ -249,7 +249,7 @@ def stepping_stone_pt(ds, theta0, seed, K=24, n_sweeps=2000, burn=500, thin=5, p
 
 
 def join_path(ds, theta0, seed, K=16, n_sweeps=1000, burn=300, thin=5, power=2.0, warmup=None, verbose=False,
-              direction="down", init_from_prior=True, **sweep_kw):
+              direction="down", init_from_prior=True, spacing="top", **sweep_kw):
     """Log Bayes factor H1 : H0 by a stepping stone along the JOIN rather than along the likelihood.
 
     The target at join temperature alpha keeps the whole model except that the inherit / borrow terms of
@@ -264,7 +264,9 @@ def join_path(ds, theta0, seed, K=16, n_sweeps=1000, burn=300, thin=5, power=2.0
     full strength at every stone. One chain, cooled from alpha = 1 to 0 (direction "down") after a warm-up
     at alpha = 1, or heated from 0 ("up"). Returns (lbf, per-stone terms, sampler)."""
     rng = np.random.default_rng(seed)
-    alphas = [(k / K) ** power for k in range(K + 1)]
+    # Delta grows with alpha (the join terms matter most near alpha = 1), so the stones are dense at the
+    # top by default: alpha_k = 1 - (1 - k/K)^power; spacing="bottom" is the likelihood path's (k/K)^power
+    alphas = [1.0 - (1.0 - k / K) ** power for k in range(K + 1)] if spacing == "top" else [(k / K) ** power for k in range(K + 1)]
     s = Sampler(ds, theta0.copy(), rng, beta=1.0, init_from_prior=init_from_prior)
     assert s.st.joined, "join_path needs the joined (H1) forest"
     terms = [None] * K
