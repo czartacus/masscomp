@@ -115,6 +115,9 @@ if __name__ == "__main__":
     th_fix = prior_theta(rng) if MODE == "latents" else None
     if th_fix is not None:
         th_fix.lam[3] = 7.0; th_fix.t_root = 1.0     # keep forms short: the sampler truncates at MAX_FORM_LEN
+        om = __import__("os").environ.get("MASSCOMP_GEWEKE_OMEGA")
+        if om:                                        # make borrowing common so f_borrow mixes and is testable
+            th_fix.omega = float(om)
     for i in range(N):
         th = th_fix if th_fix is not None else prior_theta(rng)
         ds = simulate(with_root_length(f0, th.t_root), th, M, rng)
