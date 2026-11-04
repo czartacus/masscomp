@@ -175,7 +175,7 @@ def forward(in_mode, ls_in, li_in, x, n, K, ls1, li1, z1, m1, ls2, li2, z2, m2, 
     return alpha, term
 
 
-@njit(cache=True)
+@njit(cache=True, fastmath=True)
 def forward_lin(in_mode, ps_in, pi_in, x, n, K, ps1, pi1, z1, m1, ps2, pi2, z2, m2, T):
     """Same recursion as `forward`, in linear space with one scale factor per layer t, and with the
     out-edge step written as a small matrix product over (symbol s) x (16 out-edge options), so the
@@ -305,6 +305,12 @@ def forward_lin(in_mode, ps_in, pi_in, x, n, K, ps1, pi1, z1, m1, ps2, pi2, z2, 
                 any_ = False
                 for i in range(n + 1):
                     for u in range(2):
+                        if alpha[i, u, j1, j2, t] > 0.0:
+                            any_ = True
+                if not any_:
+                    continue
+                for i in range(n + 1):
+                    for u in range(2):
                         for s in range(N_SEG):
                             tmp[i, u, s] = 0.0
                 for i in range(n + 1):
@@ -312,7 +318,6 @@ def forward_lin(in_mode, ps_in, pi_in, x, n, K, ps1, pi1, z1, m1, ps2, pi2, z2, 
                         a = alpha[i, u, j1, j2, t]
                         if a <= 0.0:
                             continue
-                        any_ = True
                         if in_mode == 0:
                             for s in range(N_SEG):
                                 tmp[0, 0, s] += a * inv_nseg
@@ -329,13 +334,19 @@ def forward_lin(in_mode, ps_in, pi_in, x, n, K, ps1, pi1, z1, m1, ps2, pi2, z2, 
                             if i < n:
                                 for s in range(N_SEG):
                                     tmp[i + 1, 0, s] += a * ps_in[x[i], s]
-                if not any_:
-                    continue
-                # out-edge step: out[i, u, c] = sum_s tmp[i, u, s] * W[j1, j2, s, c]
+                # out-edge step: out[i, u, c] = sum_s tmp[i, u, s] * W[j1, j2, s, c]; rows of tmp that
+                # received nothing are skipped
                 for i in range(n + 1):
                     for u in range(2):
                         for c in range(NC):
                             out[i, u, c] = 0.0
+                        live = False
+                        for s in range(N_SEG):
+                            if tmp[i, u, s] != 0.0:
+                                live = True
+                                break
+                        if not live:
+                            continue
                         for s in range(N_SEG):
                             v = tmp[i, u, s]
                             if v == 0.0:
