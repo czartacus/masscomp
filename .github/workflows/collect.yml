@@ -6,7 +6,7 @@ on:
         description: study run id whose cell artifacts to merge
         required: true
       study:
-        description: recovery | confound | lbf
+        description: recovery | confound | lbf | pt | diag
         required: true
 
 permissions:
@@ -26,7 +26,7 @@ jobs:
       - run: pip install numpy
       - uses: actions/download-artifact@v4
         with:
-          pattern: cell-${{ inputs.study }}-*
+          pattern: ${{ inputs.study == 'diag' && format('diagcell-{0}-*', inputs.run_id) || format('cell-{0}-*', inputs.study) }}
           path: cells
           run-id: ${{ inputs.run_id }}
           github-token: ${{ github.token }}
@@ -37,4 +37,4 @@ jobs:
           git config user.name "masscomp-actions"; git config user.email "actions@users.noreply.github.com"
           git add results/cloud
           git commit -m "results: ${{ inputs.study }} run ${{ inputs.run_id }}" || echo "nothing to commit"
-          git pull --rebase origin main && git push origin HEAD:main
+          for i in 1 2 3 4 5; do git pull --rebase origin main && git push origin HEAD:main && break; echo "push failed, retry $i"; sleep 30; done
