@@ -25,7 +25,7 @@ from .transducer import DUMMY, NOINS, _lae_j
 from .events import MIN_LEN, MAX_LEN, LOG_G_LEN
 
 NEG = -1e30
-T_MAX = 8            # == mcmc.MAX_FORM_LEN; forms longer than this are outside the sampler's support
+T_MAX = int(__import__("os").environ.get("MASSCOMP_MAX_FORM_LEN", "12"))   # == mcmc.MAX_FORM_LEN; forms longer than this are outside the sampler's support
 
 
 @njit(cache=True)

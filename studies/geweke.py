@@ -13,7 +13,7 @@ from dataclasses import replace
 import numpy as np
 from masscomp.simulate import simulate, sample_theta, Dataset
 from masscomp.tree import benchmark_a, with_root_length
-from masscomp.mcmc import Sampler
+from masscomp.mcmc import Sampler, MAX_FORM_LEN
 from masscomp import events as ev
 from masscomp.ffbs import draw as ffbs_draw
 
@@ -49,7 +49,7 @@ def redraw_data(s, rng):
             in_mode, tab, x, lat = s._ffbs_setup(l, c)
             y, _ = ffbs_draw(rng, in_mode, (tab.log_sub_np, tab.log_ins_np) if tab is not None else None, x,
                              [(ep.log_sub_np, ep.log_ins_np, z) for ep, z in lat])
-            if y and len(y) <= 8:
+            if y and len(y) <= MAX_FORM_LEN:
                 st.y[(l, c)] = y
     return {(l, c): st.y[(l, c)] for l in f.leaves for c in range(st.M)}
 

@@ -14,7 +14,8 @@ from . import events as ev
 from .likelihood import State
 from .tree import with_root_length
 
-MAX_FORM_LEN = 8
+MAX_FORM_LEN = int(__import__("os").environ.get("MASSCOMP_MAX_FORM_LEN", "12"))   # sampler support for ancestral forms; 8 until 2026-11-04 (2% of
+                                                                                     # prior-simulated ancestors were longer, 24% on some datasets)
 
 
 class Sampler:
