@@ -55,8 +55,28 @@ class Sampler:
         self._cs = None      # concept restriction for the latent moves (move_tempered)
         self.acc = {k: [0, 0] for k in ["y", "gibbs", "ffbs", "jffbs", "regrow", "temper", "joint", "lam", "u", "rho", "omega", "troot"]}
         self.inlattice = 1.0
+        if init is None and not init_from_prior and self.INIT == "lattice":
+            self._init_lattice()
         if init is None:
             self.move_events()   # remove impossible inherit terms from the initial state
+
+    def _init_lattice(self):
+        """Leaf-anchored start: every internal form drawn bottom-up from the innovation prior times the
+        transducers of its (up to two) inheriting children, i.e. the regrow proposal applied to the
+        whole tree with all events INHERIT. Unlike the child-copy start it does not commit each
+        ancestor to one lineage, which is the basin the copy start then has to escape (omega 4-7x
+        the truth on seed 7 at depth 0.25, with the other children explained as borrowings)."""
+        from .ffbs import draw as ffbs_draw
+        st, f, rng = self.st, self.st.f, self.rng
+        for c in range(st.M):
+            for v in reversed(f.topo):
+                if st.is_leaf[v]:
+                    continue
+                lat = [(st.ep[ch], st.y[(ch, c)]) for ch in f.children[v]][:2]
+                y, _ = ffbs_draw(rng, 0, None, None, [(ep.log_sub_np, ep.log_ins_np, z) for ep, z in lat])
+                if y and len(y) <= MAX_FORM_LEN:
+                    st.y[(v, c)] = y
+        st.recompute_all()
 
     # ------------------------------------------------------------------ helpers
     def _accept(self, dlog):
@@ -1070,7 +1090,8 @@ class Sampler:
     REGROW_P = float(__import__("os").environ.get("MASSCOMP_REGROW_P", "0"))   # fraction of (subtree root, concept) regrown per sweep
     TEMPER_P = float(__import__("os").environ.get("MASSCOMP_TEMPER_P", "0"))
     REGROW_EVENTS = __import__("os").environ.get("MASSCOMP_REGROW_EVENTS", "1") == "1"
-    REGROW_BORROW = __import__("os").environ.get("MASSCOMP_REGROW_BORROW", "1") == "1"   # regrow re-decides inherit/replace on subtree edges
+    REGROW_BORROW = __import__("os").environ.get("MASSCOMP_REGROW_BORROW", "1") == "1"
+    INIT = __import__("os").environ.get("MASSCOMP_INIT", "copy")                        # copy | lattice (study start)   # regrow re-decides inherit/replace on subtree edges
     LATENT_MOVES = set(__import__("os").environ.get("MASSCOMP_LATENT_MOVES", "gibbs,ffbs,jffbs,forms,joint,events").split(","))
     PARAM_MOVES = set(__import__("os").environ.get("MASSCOMP_PARAM_MOVES", "lam,u,rates,troot").split(","))   # diagnostics only   # fraction of concepts given a tempered excursion per sweep
 

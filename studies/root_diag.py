@@ -1,6 +1,7 @@
 """Is the low root-set coverage (0.46 joined root, 0.64 family roots at M=25, v4) a sampler problem or a
 posterior-calibration problem? Fit one recovery dataset three ways and compare the 90% root-set coverage:
   copy  : the study protocol (child-copy init, theta from the prior)
+  lattice: leaf-anchored lattice init (Sampler.INIT = "lattice"), theta from the prior
   truth : latents and theta started at the simulated truth
   prior : latents and theta from a prior draw
   ptK   : parallel-tempered chain with K rungs (study start), recording the beta = 1 replica
@@ -40,8 +41,14 @@ def _one(args):
                                              n_procs=n_procs, record_cold=True, init_from_prior=False, full=full)
         out = info["cold"]
     else:
+        from masscomp.mcmc import Sampler
+        old_init = Sampler.INIT
+        Sampler.INIT = "lattice" if mode == "lattice" else "copy"
         th0 = sample_theta(ds.forest, ds.M, rng)
-        _, out = run_chain(ds, th0, seed=seed * 100 + 50 + k, n_sweeps=SW, burn=BURN, thin=5)
+        try:
+            _, out = run_chain(ds, th0, seed=seed * 100 + 50 + k, n_sweeps=SW, burn=BURN, thin=5)
+        finally:
+            Sampler.INIT = old_init
     return mode, out
 
 

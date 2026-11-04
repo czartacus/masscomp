@@ -27,7 +27,7 @@ import numpy as np
 
 KNOBS = {"regrow_p": "MASSCOMP_REGROW_P", "regrow_events": "MASSCOMP_REGROW_EVENTS", "regrow_borrow": "MASSCOMP_REGROW_BORROW",
          "temper_p": "MASSCOMP_TEMPER_P", "latent_moves": "MASSCOMP_LATENT_MOVES", "param_moves": "MASSCOMP_PARAM_MOVES",
-         "procs": "MASSCOMP_PROCS", "ffbs_p": "MASSCOMP_FFBS_P"}
+         "procs": "MASSCOMP_PROCS", "ffbs_p": "MASSCOMP_FFBS_P", "init": "MASSCOMP_INIT"}
 
 
 def parse(spec):
