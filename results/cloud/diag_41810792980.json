@@ -1,0 +1,921 @@
+{
+ "study": "diag",
+ "digest": [
+  {
+   "spec": "kind=geweke,n=20000,m=2,seed=2,mode=latents,sweeps=2,latent_moves=ffbs+events",
+   "max_abs_z": 6.72,
+   "moves": "successive-conditional done (264s)   moves: ffbs=26185/26206",
+   "secs": 265.2622666358948
+  },
+  {
+   "spec": "kind=geweke,n=20000,m=2,seed=2,mode=latents,sweeps=2,latent_moves=forms+joint+events",
+   "max_abs_z": 3.82,
+   "moves": "successive-conditional done (325s)   moves: y=41114/618143 joint=197424/1280000",
+   "secs": 326.95133209228516
+  },
+  {
+   "spec": "kind=geweke,n=20000,m=2,seed=2,mode=latents,sweeps=2,latent_moves=jffbs+events",
+   "max_abs_z": 2.16,
+   "moves": "successive-conditional done (272s)   moves: jffbs=2329/114916",
+   "secs": 273.6840605735779
+  },
+  {
+   "spec": "kind=geweke,n=20000,m=2,seed=3,mode=latents,sweeps=2",
+   "max_abs_z": 1.91,
+   "moves": "successive-conditional done (397s)   moves: y=101735/686006 ffbs=99045/99353 jffbs=6817/115318 joint=145552/1279993",
+   "secs": 398.97347950935364
+  },
+  {
+   "spec": "kind=geweke,n=20000,m=2,seed=4,mode=latents,sweeps=2",
+   "max_abs_z": 1.61,
+   "moves": "successive-conditional done (473s)   moves: y=91131/705172 ffbs=125216/126034 jffbs=7253/115853 joint=101029/1279987",
+   "secs": 474.75646233558655
+  },
+  {
+   "spec": "kind=geweke,n=20000,m=2,seed=5,mode=latents,sweeps=2",
+   "max_abs_z": 0.89,
+   "moves": "successive-conditional done (306s)   moves: y=30785/660140 ffbs=49772/51061 jffbs=4244/115654 joint=132188/1279992",
+   "secs": 307.203528881073
+  },
+  {
+   "spec": "kind=geweke,n=60000,m=2,seed=2,mode=latents,sweeps=2",
+   "max_abs_z": 2.74,
+   "moves": "successive-conditional done (851s)   moves: y=86862/1843912 ffbs=74598/74958 jffbs=7464/346989 joint=576703/3840000",
+   "secs": 852.6004285812378
+  }
+ ],
+ "cells": [
+  {
+   "study": "diag",
+   "kind": "geweke",
+   "spec": "kind=geweke,n=20000,m=2,seed=2,mode=latents,sweeps=2,latent_moves=ffbs+events",
+   "params": {
+    "kind": "geweke",
+    "n": "20000",
+    "m": "2",
+    "seed": "2",
+    "mode": "latents",
+    "sweeps": "2",
+    "latent_moves": "ffbs+events"
+   },
+   "env": {
+    "MASSCOMP_LATENT_MOVES": "ffbs,events"
+   },
+   "git": "14baee6",
+   "secs": 265.2622666358948,
+   "result": {
+    "stats": [
+     {
+      "stat": "omega",
+      "mc": 0.085,
+      "sc": 0.085,
+      "z": NaN,
+      "ess": 20000
+     },
+     {
+      "stat": "rho_mean",
+      "mc": 0.759,
+      "sc": 0.759,
+      "z": 0.0,
+      "ess": 20000
+     },
+     {
+      "stat": "lam0",
+      "mc": 6.489,
+      "sc": 6.489,
+      "z": NaN,
+      "ess": 20000
+     },
+     {
+      "stat": "lam1",
+      "mc": 2.381,
+      "sc": 2.381,
+      "z": 0.0,
+      "ess": 20000
+     },
+     {
+      "stat": "lam2",
+      "mc": 2.443,
+      "sc": 2.443,
+      "z": 0.0,
+      "ess": 20000
+     },
+     {
+      "stat": "lam3",
+      "mc": 7.0,
+      "sc": 7.0,
+      "z": NaN,
+      "ess": 20000
+     },
+     {
+      "stat": "t_root",
+      "mc": 1.0,
+      "sc": 1.0,
+      "z": NaN,
+      "ess": 20000
+     },
+     {
+      "stat": "n_u",
+      "mc": 56.0,
+      "sc": 56.0,
+      "z": NaN,
+      "ess": 20000
+     },
+     {
+      "stat": "sum_u2",
+      "mc": 501.53,
+      "sc": 501.53,
+      "z": 0.0,
+      "ess": 20000
+     },
+     {
+      "stat": "int_len",
+      "mc": 4.07,
+      "sc": 3.912,
+      "z": 0.88,
+      "ess": 7
+     },
+     {
+      "stat": "leaf_len",
+      "mc": 4.143,
+      "sc": 4.017,
+      "z": 0.67,
+      "ess": 6
+     },
+     {
+      "stat": "f_inherit",
+      "mc": 0.752,
+      "sc": 0.734,
+      "z": 1.32,
+      "ess": 15
+     },
+     {
+      "stat": "f_replace",
+      "mc": 0.225,
+      "sc": 0.256,
+      "z": -2.1,
+      "ess": 14
+     },
+     {
+      "stat": "f_borrow",
+      "mc": 0.023,
+      "sc": 0.01,
+      "z": 6.72,
+      "ess": 79
+     }
+    ],
+    "moves": "successive-conditional done (264s)   moves: ffbs=26185/26206",
+    "max_abs_z": 6.72,
+    "returncode": 0,
+    "stdout": "marginal-conditional done (90s)\nsuccessive-conditional done (264s)   moves: ffbs=26185/26206\nstat          mc mean    sc mean       z  ess_sc\nomega           0.085      0.085     nan   20000\nrho_mean        0.759      0.759    0.00   20000\nlam0            6.489      6.489     nan   20000\nlam1            2.381      2.381    0.00   20000\nlam2            2.443      2.443    0.00   20000\nlam3            7.000      7.000     nan   20000\nt_root          1.000      1.000     nan   20000\nn_u            56.000     56.000     nan   20000\nsum_u2        501.530    501.530    0.00   20000\nint_len         4.070      3.912    0.88       7\nleaf_len        4.143      4.017    0.67       6\nf_inherit       0.752      0.734    1.32      15\nf_replace       0.225      0.256   -2.10      14\nf_borrow        0.023      0.010    6.72      79\n(264s)\n",
+    "stderr": "/home/runner/work/masscomp/masscomp/studies/geweke.py:162: RuntimeWarning: invalid value encountered in scalar divide\n  z = (a.mean() - b.mean()) / np.sqrt(a.var() / len(a) + b.var() / e)\n"
+   }
+  },
+  {
+   "study": "diag",
+   "kind": "geweke",
+   "spec": "kind=geweke,n=20000,m=2,seed=2,mode=latents,sweeps=2,latent_moves=forms+joint+events",
+   "params": {
+    "kind": "geweke",
+    "n": "20000",
+    "m": "2",
+    "seed": "2",
+    "mode": "latents",
+    "sweeps": "2",
+    "latent_moves": "forms+joint+events"
+   },
+   "env": {
+    "MASSCOMP_LATENT_MOVES": "forms,joint,events"
+   },
+   "git": "14baee6",
+   "secs": 326.95133209228516,
+   "result": {
+    "stats": [
+     {
+      "stat": "omega",
+      "mc": 0.085,
+      "sc": 0.085,
+      "z": NaN,
+      "ess": 20000
+     },
+     {
+      "stat": "rho_mean",
+      "mc": 0.759,
+      "sc": 0.759,
+      "z": 0.0,
+      "ess": 20000
+     },
+     {
+      "stat": "lam0",
+      "mc": 6.489,
+      "sc": 6.489,
+      "z": NaN,
+      "ess": 20000
+     },
+     {
+      "stat": "lam1",
+      "mc": 2.381,
+      "sc": 2.381,
+      "z": 0.0,
+      "ess": 20000
+     },
+     {
+      "stat": "lam2",
+      "mc": 2.443,
+      "sc": 2.443,
+      "z": 0.0,
+      "ess": 20000
+     },
+     {
+      "stat": "lam3",
+      "mc": 7.0,
+      "sc": 7.0,
+      "z": NaN,
+      "ess": 20000
+     },
+     {
+      "stat": "t_root",
+      "mc": 1.0,
+      "sc": 1.0,
+      "z": NaN,
+      "ess": 20000
+     },
+     {
+      "stat": "n_u",
+      "mc": 56.0,
+      "sc": 56.0,
+      "z": NaN,
+      "ess": 20000
+     },
+     {
+      "stat": "sum_u2",
+      "mc": 501.53,
+      "sc": 501.53,
+      "z": 0.0,
+      "ess": 20000
+     },
+     {
+      "stat": "int_len",
+      "mc": 4.07,
+      "sc": 3.731,
+      "z": 2.08,
+      "ess": 4
+     },
+     {
+      "stat": "leaf_len",
+      "mc": 4.143,
+      "sc": 3.81,
+      "z": 1.79,
+      "ess": 4
+     },
+     {
+      "stat": "f_inherit",
+      "mc": 0.752,
+      "sc": 0.724,
+      "z": 3.61,
+      "ess": 51
+     },
+     {
+      "stat": "f_replace",
+      "mc": 0.225,
+      "sc": 0.257,
+      "z": -3.82,
+      "ess": 43
+     },
+     {
+      "stat": "f_borrow",
+      "mc": 0.023,
+      "sc": 0.019,
+      "z": 0.83,
+      "ess": 22
+     }
+    ],
+    "moves": "successive-conditional done (325s)   moves: y=41114/618143 joint=197424/1280000",
+    "max_abs_z": 3.82,
+    "returncode": 0,
+    "stdout": "marginal-conditional done (91s)\nsuccessive-conditional done (325s)   moves: y=41114/618143 joint=197424/1280000\nstat          mc mean    sc mean       z  ess_sc\nomega           0.085      0.085     nan   20000\nrho_mean        0.759      0.759    0.00   20000\nlam0            6.489      6.489     nan   20000\nlam1            2.381      2.381    0.00   20000\nlam2            2.443      2.443    0.00   20000\nlam3            7.000      7.000     nan   20000\nt_root          1.000      1.000     nan   20000\nn_u            56.000     56.000     nan   20000\nsum_u2        501.530    501.530    0.00   20000\nint_len         4.070      3.731    2.08       4\nleaf_len        4.143      3.810    1.79       4\nf_inherit       0.752      0.724    3.61      51\nf_replace       0.225      0.257   -3.82      43\nf_borrow        0.023      0.019    0.83      22\n(325s)\n",
+    "stderr": "/home/runner/work/masscomp/masscomp/studies/geweke.py:162: RuntimeWarning: invalid value encountered in scalar divide\n  z = (a.mean() - b.mean()) / np.sqrt(a.var() / len(a) + b.var() / e)\n"
+   }
+  },
+  {
+   "study": "diag",
+   "kind": "geweke",
+   "spec": "kind=geweke,n=20000,m=2,seed=2,mode=latents,sweeps=2,latent_moves=jffbs+events",
+   "params": {
+    "kind": "geweke",
+    "n": "20000",
+    "m": "2",
+    "seed": "2",
+    "mode": "latents",
+    "sweeps": "2",
+    "latent_moves": "jffbs+events"
+   },
+   "env": {
+    "MASSCOMP_LATENT_MOVES": "jffbs,events"
+   },
+   "git": "14baee6",
+   "secs": 273.6840605735779,
+   "result": {
+    "stats": [
+     {
+      "stat": "omega",
+      "mc": 0.085,
+      "sc": 0.085,
+      "z": NaN,
+      "ess": 20000
+     },
+     {
+      "stat": "rho_mean",
+      "mc": 0.759,
+      "sc": 0.759,
+      "z": 0.0,
+      "ess": 20000
+     },
+     {
+      "stat": "lam0",
+      "mc": 6.489,
+      "sc": 6.489,
+      "z": NaN,
+      "ess": 20000
+     },
+     {
+      "stat": "lam1",
+      "mc": 2.381,
+      "sc": 2.381,
+      "z": 0.0,
+      "ess": 20000
+     },
+     {
+      "stat": "lam2",
+      "mc": 2.443,
+      "sc": 2.443,
+      "z": 0.0,
+      "ess": 20000
+     },
+     {
+      "stat": "lam3",
+      "mc": 7.0,
+      "sc": 7.0,
+      "z": NaN,
+      "ess": 20000
+     },
+     {
+      "stat": "t_root",
+      "mc": 1.0,
+      "sc": 1.0,
+      "z": NaN,
+      "ess": 20000
+     },
+     {
+      "stat": "n_u",
+      "mc": 56.0,
+      "sc": 56.0,
+      "z": NaN,
+      "ess": 20000
+     },
+     {
+      "stat": "sum_u2",
+      "mc": 501.53,
+      "sc": 501.53,
+      "z": 0.0,
+      "ess": 20000
+     },
+     {
+      "stat": "int_len",
+      "mc": 4.07,
+      "sc": 3.373,
+      "z": 6.11,
+      "ess": 6
+     },
+     {
+      "stat": "leaf_len",
+      "mc": 4.143,
+      "sc": 3.671,
+      "z": 3.81,
+      "ess": 7
+     },
+     {
+      "stat": "f_inherit",
+      "mc": 0.752,
+      "sc": 0.778,
+      "z": -2.16,
+      "ess": 31
+     },
+     {
+      "stat": "f_replace",
+      "mc": 0.225,
+      "sc": 0.205,
+      "z": 1.9,
+      "ess": 33
+     },
+     {
+      "stat": "f_borrow",
+      "mc": 0.023,
+      "sc": 0.017,
+      "z": 1.57,
+      "ess": 38
+     }
+    ],
+    "moves": "successive-conditional done (272s)   moves: jffbs=2329/114916",
+    "max_abs_z": 2.16,
+    "returncode": 0,
+    "stdout": "marginal-conditional done (90s)\nsuccessive-conditional done (272s)   moves: jffbs=2329/114916\nstat          mc mean    sc mean       z  ess_sc\nomega           0.085      0.085     nan   20000\nrho_mean        0.759      0.759    0.00   20000\nlam0            6.489      6.489     nan   20000\nlam1            2.381      2.381    0.00   20000\nlam2            2.443      2.443    0.00   20000\nlam3            7.000      7.000     nan   20000\nt_root          1.000      1.000     nan   20000\nn_u            56.000     56.000     nan   20000\nsum_u2        501.530    501.530    0.00   20000\nint_len         4.070      3.373    6.11       6\nleaf_len        4.143      3.671    3.81       7\nf_inherit       0.752      0.778   -2.16      31\nf_replace       0.225      0.205    1.90      33\nf_borrow        0.023      0.017    1.57      38\n(272s)\n",
+    "stderr": "/home/runner/work/masscomp/masscomp/studies/geweke.py:162: RuntimeWarning: invalid value encountered in scalar divide\n  z = (a.mean() - b.mean()) / np.sqrt(a.var() / len(a) + b.var() / e)\n"
+   }
+  },
+  {
+   "study": "diag",
+   "kind": "geweke",
+   "spec": "kind=geweke,n=20000,m=2,seed=3,mode=latents,sweeps=2",
+   "params": {
+    "kind": "geweke",
+    "n": "20000",
+    "m": "2",
+    "seed": "3",
+    "mode": "latents",
+    "sweeps": "2"
+   },
+   "env": {},
+   "git": "14baee6",
+   "secs": 398.97347950935364,
+   "result": {
+    "stats": [
+     {
+      "stat": "omega",
+      "mc": 0.045,
+      "sc": 0.045,
+      "z": 0.0,
+      "ess": 20000
+     },
+     {
+      "stat": "rho_mean",
+      "mc": 1.623,
+      "sc": 1.623,
+      "z": NaN,
+      "ess": 20000
+     },
+     {
+      "stat": "lam0",
+      "mc": 4.136,
+      "sc": 4.136,
+      "z": NaN,
+      "ess": 20000
+     },
+     {
+      "stat": "lam1",
+      "mc": 3.042,
+      "sc": 3.042,
+      "z": 0.0,
+      "ess": 20000
+     },
+     {
+      "stat": "lam2",
+      "mc": 0.957,
+      "sc": 0.957,
+      "z": 0.0,
+      "ess": 20000
+     },
+     {
+      "stat": "lam3",
+      "mc": 7.0,
+      "sc": 7.0,
+      "z": NaN,
+      "ess": 20000
+     },
+     {
+      "stat": "t_root",
+      "mc": 1.0,
+      "sc": 1.0,
+      "z": NaN,
+      "ess": 20000
+     },
+     {
+      "stat": "n_u",
+      "mc": 60.0,
+      "sc": 60.0,
+      "z": NaN,
+      "ess": 20000
+     },
+     {
+      "stat": "sum_u2",
+      "mc": 321.778,
+      "sc": 321.778,
+      "z": NaN,
+      "ess": 20000
+     },
+     {
+      "stat": "int_len",
+      "mc": 4.025,
+      "sc": 3.881,
+      "z": 1.89,
+      "ess": 42
+     },
+     {
+      "stat": "leaf_len",
+      "mc": 4.052,
+      "sc": 3.934,
+      "z": 1.91,
+      "ess": 45
+     },
+     {
+      "stat": "f_inherit",
+      "mc": 0.577,
+      "sc": 0.565,
+      "z": 1.82,
+      "ess": 164
+     },
+     {
+      "stat": "f_replace",
+      "mc": 0.413,
+      "sc": 0.425,
+      "z": -1.84,
+      "ess": 170
+     },
+     {
+      "stat": "f_borrow",
+      "mc": 0.01,
+      "sc": 0.01,
+      "z": -0.27,
+      "ess": 509
+     }
+    ],
+    "moves": "successive-conditional done (397s)   moves: y=101735/686006 ffbs=99045/99353 jffbs=6817/115318 joint=145552/1279993",
+    "max_abs_z": 1.91,
+    "returncode": 0,
+    "stdout": "marginal-conditional done (83s)\nsuccessive-conditional done (397s)   moves: y=101735/686006 ffbs=99045/99353 jffbs=6817/115318 joint=145552/1279993\nstat          mc mean    sc mean       z  ess_sc\nomega           0.045      0.045    0.00   20000\nrho_mean        1.623      1.623     nan   20000\nlam0            4.136      4.136     nan   20000\nlam1            3.042      3.042    0.00   20000\nlam2            0.957      0.957    0.00   20000\nlam3            7.000      7.000     nan   20000\nt_root          1.000      1.000     nan   20000\nn_u            60.000     60.000     nan   20000\nsum_u2        321.778    321.778     nan   20000\nint_len         4.025      3.881    1.89      42\nleaf_len        4.052      3.934    1.91      45\nf_inherit       0.577      0.565    1.82     164\nf_replace       0.413      0.425   -1.84     170\nf_borrow        0.010      0.010   -0.27     509\n(397s)\n",
+    "stderr": "/home/runner/work/masscomp/masscomp/studies/geweke.py:162: RuntimeWarning: invalid value encountered in scalar divide\n  z = (a.mean() - b.mean()) / np.sqrt(a.var() / len(a) + b.var() / e)\n"
+   }
+  },
+  {
+   "study": "diag",
+   "kind": "geweke",
+   "spec": "kind=geweke,n=20000,m=2,seed=4,mode=latents,sweeps=2",
+   "params": {
+    "kind": "geweke",
+    "n": "20000",
+    "m": "2",
+    "seed": "4",
+    "mode": "latents",
+    "sweeps": "2"
+   },
+   "env": {},
+   "git": "14baee6",
+   "secs": 474.75646233558655,
+   "result": {
+    "stats": [
+     {
+      "stat": "omega",
+      "mc": 0.054,
+      "sc": 0.054,
+      "z": 0.0,
+      "ess": 20000
+     },
+     {
+      "stat": "rho_mean",
+      "mc": 1.292,
+      "sc": 1.292,
+      "z": 0.0,
+      "ess": 20000
+     },
+     {
+      "stat": "lam0",
+      "mc": 3.111,
+      "sc": 3.111,
+      "z": 0.0,
+      "ess": 20000
+     },
+     {
+      "stat": "lam1",
+      "mc": 3.718,
+      "sc": 3.718,
+      "z": 0.0,
+      "ess": 20000
+     },
+     {
+      "stat": "lam2",
+      "mc": 1.945,
+      "sc": 1.945,
+      "z": NaN,
+      "ess": 20000
+     },
+     {
+      "stat": "lam3",
+      "mc": 7.0,
+      "sc": 7.0,
+      "z": NaN,
+      "ess": 20000
+     },
+     {
+      "stat": "t_root",
+      "mc": 1.0,
+      "sc": 1.0,
+      "z": NaN,
+      "ess": 20000
+     },
+     {
+      "stat": "n_u",
+      "mc": 45.0,
+      "sc": 45.0,
+      "z": NaN,
+      "ess": 20000
+     },
+     {
+      "stat": "sum_u2",
+      "mc": 482.749,
+      "sc": 482.749,
+      "z": NaN,
+      "ess": 20000
+     },
+     {
+      "stat": "int_len",
+      "mc": 4.026,
+      "sc": 4.041,
+      "z": -0.15,
+      "ess": 42
+     },
+     {
+      "stat": "leaf_len",
+      "mc": 4.054,
+      "sc": 4.075,
+      "z": -0.25,
+      "ess": 43
+     },
+     {
+      "stat": "f_inherit",
+      "mc": 0.645,
+      "sc": 0.652,
+      "z": -1.55,
+      "ess": 343
+     },
+     {
+      "stat": "f_replace",
+      "mc": 0.341,
+      "sc": 0.335,
+      "z": 1.61,
+      "ess": 366
+     },
+     {
+      "stat": "f_borrow",
+      "mc": 0.013,
+      "sc": 0.013,
+      "z": -0.03,
+      "ess": 849
+     }
+    ],
+    "moves": "successive-conditional done (473s)   moves: y=91131/705172 ffbs=125216/126034 jffbs=7253/115853 joint=101029/1279987",
+    "max_abs_z": 1.61,
+    "returncode": 0,
+    "stdout": "marginal-conditional done (90s)\nsuccessive-conditional done (473s)   moves: y=91131/705172 ffbs=125216/126034 jffbs=7253/115853 joint=101029/1279987\nstat          mc mean    sc mean       z  ess_sc\nomega           0.054      0.054    0.00   20000\nrho_mean        1.292      1.292    0.00   20000\nlam0            3.111      3.111    0.00   20000\nlam1            3.718      3.718    0.00   20000\nlam2            1.945      1.945     nan   20000\nlam3            7.000      7.000     nan   20000\nt_root          1.000      1.000     nan   20000\nn_u            45.000     45.000     nan   20000\nsum_u2        482.749    482.749     nan   20000\nint_len         4.026      4.041   -0.15      42\nleaf_len        4.054      4.075   -0.25      43\nf_inherit       0.645      0.652   -1.55     343\nf_replace       0.341      0.335    1.61     366\nf_borrow        0.013      0.013   -0.03     849\n(473s)\n",
+    "stderr": "/home/runner/work/masscomp/masscomp/studies/geweke.py:162: RuntimeWarning: invalid value encountered in scalar divide\n  z = (a.mean() - b.mean()) / np.sqrt(a.var() / len(a) + b.var() / e)\n"
+   }
+  },
+  {
+   "study": "diag",
+   "kind": "geweke",
+   "spec": "kind=geweke,n=20000,m=2,seed=5,mode=latents,sweeps=2",
+   "params": {
+    "kind": "geweke",
+    "n": "20000",
+    "m": "2",
+    "seed": "5",
+    "mode": "latents",
+    "sweeps": "2"
+   },
+   "env": {},
+   "git": "14baee6",
+   "secs": 307.203528881073,
+   "result": {
+    "stats": [
+     {
+      "stat": "omega",
+      "mc": 0.165,
+      "sc": 0.165,
+      "z": 0.0,
+      "ess": 20000
+     },
+     {
+      "stat": "rho_mean",
+      "mc": 0.491,
+      "sc": 0.491,
+      "z": 0.0,
+      "ess": 20000
+     },
+     {
+      "stat": "lam0",
+      "mc": 4.594,
+      "sc": 4.594,
+      "z": 0.0,
+      "ess": 20000
+     },
+     {
+      "stat": "lam1",
+      "mc": 2.61,
+      "sc": 2.61,
+      "z": 0.0,
+      "ess": 20000
+     },
+     {
+      "stat": "lam2",
+      "mc": 0.958,
+      "sc": 0.958,
+      "z": NaN,
+      "ess": 20000
+     },
+     {
+      "stat": "lam3",
+      "mc": 7.0,
+      "sc": 7.0,
+      "z": NaN,
+      "ess": 20000
+     },
+     {
+      "stat": "t_root",
+      "mc": 1.0,
+      "sc": 1.0,
+      "z": NaN,
+      "ess": 20000
+     },
+     {
+      "stat": "n_u",
+      "mc": 54.0,
+      "sc": 54.0,
+      "z": NaN,
+      "ess": 20000
+     },
+     {
+      "stat": "sum_u2",
+      "mc": 558.91,
+      "sc": 558.91,
+      "z": 0.0,
+      "ess": 20000
+     },
+     {
+      "stat": "int_len",
+      "mc": 4.073,
+      "sc": 3.912,
+      "z": 0.51,
+      "ess": 5
+     },
+     {
+      "stat": "leaf_len",
+      "mc": 4.139,
+      "sc": 3.976,
+      "z": 0.55,
+      "ess": 5
+     },
+     {
+      "stat": "f_inherit",
+      "mc": 0.801,
+      "sc": 0.792,
+      "z": 0.89,
+      "ess": 37
+     },
+     {
+      "stat": "f_replace",
+      "mc": 0.155,
+      "sc": 0.163,
+      "z": -0.71,
+      "ess": 23
+     },
+     {
+      "stat": "f_borrow",
+      "mc": 0.044,
+      "sc": 0.045,
+      "z": -0.42,
+      "ess": 183
+     }
+    ],
+    "moves": "successive-conditional done (306s)   moves: y=30785/660140 ffbs=49772/51061 jffbs=4244/115654 joint=132188/1279992",
+    "max_abs_z": 0.89,
+    "returncode": 0,
+    "stdout": "marginal-conditional done (56s)\nsuccessive-conditional done (306s)   moves: y=30785/660140 ffbs=49772/51061 jffbs=4244/115654 joint=132188/1279992\nstat          mc mean    sc mean       z  ess_sc\nomega           0.165      0.165    0.00   20000\nrho_mean        0.491      0.491    0.00   20000\nlam0            4.594      4.594    0.00   20000\nlam1            2.610      2.610    0.00   20000\nlam2            0.958      0.958     nan   20000\nlam3            7.000      7.000     nan   20000\nt_root          1.000      1.000     nan   20000\nn_u            54.000     54.000     nan   20000\nsum_u2        558.910    558.910    0.00   20000\nint_len         4.073      3.912    0.51       5\nleaf_len        4.139      3.976    0.55       5\nf_inherit       0.801      0.792    0.89      37\nf_replace       0.155      0.163   -0.71      23\nf_borrow        0.044      0.045   -0.42     183\n(306s)\n",
+    "stderr": "/home/runner/work/masscomp/masscomp/studies/geweke.py:162: RuntimeWarning: invalid value encountered in scalar divide\n  z = (a.mean() - b.mean()) / np.sqrt(a.var() / len(a) + b.var() / e)\n"
+   }
+  },
+  {
+   "study": "diag",
+   "kind": "geweke",
+   "spec": "kind=geweke,n=60000,m=2,seed=2,mode=latents,sweeps=2",
+   "params": {
+    "kind": "geweke",
+    "n": "60000",
+    "m": "2",
+    "seed": "2",
+    "mode": "latents",
+    "sweeps": "2"
+   },
+   "env": {},
+   "git": "14baee6",
+   "secs": 852.6004285812378,
+   "result": {
+    "stats": [
+     {
+      "stat": "omega",
+      "mc": 0.085,
+      "sc": 0.085,
+      "z": 0.0,
+      "ess": 60000
+     },
+     {
+      "stat": "rho_mean",
+      "mc": 0.759,
+      "sc": 0.759,
+      "z": NaN,
+      "ess": 60000
+     },
+     {
+      "stat": "lam0",
+      "mc": 6.489,
+      "sc": 6.489,
+      "z": 0.0,
+      "ess": 60000
+     },
+     {
+      "stat": "lam1",
+      "mc": 2.381,
+      "sc": 2.381,
+      "z": 0.0,
+      "ess": 60000
+     },
+     {
+      "stat": "lam2",
+      "mc": 2.443,
+      "sc": 2.443,
+      "z": 0.0,
+      "ess": 60000
+     },
+     {
+      "stat": "lam3",
+      "mc": 7.0,
+      "sc": 7.0,
+      "z": NaN,
+      "ess": 60000
+     },
+     {
+      "stat": "t_root",
+      "mc": 1.0,
+      "sc": 1.0,
+      "z": NaN,
+      "ess": 60000
+     },
+     {
+      "stat": "n_u",
+      "mc": 56.0,
+      "sc": 56.0,
+      "z": NaN,
+      "ess": 60000
+     },
+     {
+      "stat": "sum_u2",
+      "mc": 501.53,
+      "sc": 501.53,
+      "z": 0.0,
+      "ess": 60000
+     },
+     {
+      "stat": "int_len",
+      "mc": 4.08,
+      "sc": 3.873,
+      "z": 1.97,
+      "ess": 12
+     },
+     {
+      "stat": "leaf_len",
+      "mc": 4.154,
+      "sc": 3.955,
+      "z": 1.65,
+      "ess": 11
+     },
+     {
+      "stat": "f_inherit",
+      "mc": 0.752,
+      "sc": 0.751,
+      "z": 0.17,
+      "ess": 61
+     },
+     {
+      "stat": "f_replace",
+      "mc": 0.225,
+      "sc": 0.233,
+      "z": -1.03,
+      "ess": 60
+     },
+     {
+      "stat": "f_borrow",
+      "mc": 0.023,
+      "sc": 0.016,
+      "z": 2.74,
+      "ess": 78
+     }
+    ],
+    "moves": "successive-conditional done (851s)   moves: y=86862/1843912 ffbs=74598/74958 jffbs=7464/346989 joint=576703/3840000",
+    "max_abs_z": 2.74,
+    "returncode": 0,
+    "stdout": "marginal-conditional done (166s)\nsuccessive-conditional done (851s)   moves: y=86862/1843912 ffbs=74598/74958 jffbs=7464/346989 joint=576703/3840000\nstat          mc mean    sc mean       z  ess_sc\nomega           0.085      0.085    0.00   60000\nrho_mean        0.759      0.759     nan   60000\nlam0            6.489      6.489    0.00   60000\nlam1            2.381      2.381    0.00   60000\nlam2            2.443      2.443    0.00   60000\nlam3            7.000      7.000     nan   60000\nt_root          1.000      1.000     nan   60000\nn_u            56.000     56.000     nan   60000\nsum_u2        501.530    501.530    0.00   60000\nint_len         4.080      3.873    1.97      12\nleaf_len        4.154      3.955    1.65      11\nf_inherit       0.752      0.751    0.17      61\nf_replace       0.225      0.233   -1.03      60\nf_borrow        0.023      0.016    2.74      78\n(851s)\n",
+    "stderr": "/home/runner/work/masscomp/masscomp/studies/geweke.py:162: RuntimeWarning: invalid value encountered in scalar divide\n  z = (a.mean() - b.mean()) / np.sqrt(a.var() / len(a) + b.var() / e)\n"
+   }
+  }
+ ],
+ "label": "Geweke latents: seed 2 long run (f_inherit z 3-4 at ESS 20 on old and new code), seeds 3-5 at N=20000",
+ "run_id": "41810792980"
+}
