@@ -138,7 +138,10 @@ times (the old criterion counted rules with opportunities that never fired).
 | detectable-rule coverage (n rules) | 0 | 0 (2) | 0.01 | 0.38 (15) | 0.47 (101) |
 
 (`results/cloud/recovery_41515150819.json`, `recovery_41515170630.json`, `recovery_41558063972.json`,
-`recovery_41558066414.json`.)
+`recovery_41558066414.json`.) Rerun at M=25 on the same seeds after the `move_u` birth-density fix
+(bba12c5; `recovery_41722894945.json`, n = 48): ω coverage 0.92 at 1.35× over, t_root 1.00, λ/ρ
+0.77–0.90, root-set 0.63, chains R̂ ≤ 1.25 0.52, detectable rules 0.38 (15). The u fix moves ω and
+between-chain agreement a little; the root forms do not move.
 The planted-rule traces behind v4 (`studies/u_planted.py`, `u_diag.py`): with latents clamped at
 truth the sampler finds the planted rule with inclusion 1.0 and ω exact; started from the study's
 child-copy initialisation, inclusion 1.0 and ω 1.2–1.3×; started from a prior draw it lands in a
