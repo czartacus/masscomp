@@ -41,14 +41,16 @@ def test_mcmc_prior_only():
 
 
 def test_mcmc_fixed_latents():
-    """True latents and u clamped: lam posterior mean within 0.3 of truth."""
+    """True latents and u clamped: lam posterior mean within 0.5 of truth and the truth inside the 99%
+    interval of every component (90% intervals failed one of four components a third of the time, as a
+    calibrated posterior should)."""
     ds = simulate_pair(related=True, depth=1.5, M=40, seed=7)
     truth = ds.truth
     th0 = truth["theta"].copy(); th0.lam = ev.LAM_MU.copy()
     init = (truth["y"], truth["event"], truth["donor"])
     _, out = run_chain(ds, th0, seed=8, n_sweeps=1000, burn=300, thin=2, init=init, clamp_latents=True, clamp_u=True)
     lam = np.array([o["lam"] for o in out])
-    lo, hi = np.percentile(lam, [5, 95], axis=0)
+    lo, hi = np.percentile(lam, [0.5, 99.5], axis=0)
     assert np.all(np.abs(lam.mean(0) - truth["theta"].lam) < 0.5), (lam.mean(0), truth["theta"].lam)
     assert np.all((lo <= truth["theta"].lam) & (truth["theta"].lam <= hi)), (lo, hi, truth["theta"].lam)
 
