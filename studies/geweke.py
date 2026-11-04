@@ -132,7 +132,17 @@ if __name__ == "__main__":
     leaves = set(f0.leaves)
     y = {k: v for k, v in t["y"].items() if k[0] not in leaves}; event, donor = dict(t["event"]), dict(t["donor"])
     sc = []; acc = {}
+    RESTART = __import__("os").environ.get("MASSCOMP_GEWEKE_RESTART", "0") == "1"
+    # RESTART: every iteration starts from a fresh exact joint draw and records the state after SWEEPS sweeps.
+    # Invariance is a one-step property (pi K = pi), so this detects a biased move without any mixing
+    # requirement - the successive-conditional chain's time average is meaningless when the chain is slow
+    # or a move subset leaves components frozen (ESS of 4-20 and z-scores of 10-80 on such runs, 4 Nov 2026).
     for i in range(N):
+        if RESTART and i > 0:
+            th = th_fix if th_fix is not None else prior_theta(rng)
+            ds = simulate(with_root_length(f0, th.t_root), th, M, rng)
+            t = ds.truth
+            y = {k: v for k, v in t["y"].items() if k[0] not in leaves}; event, donor = dict(t["event"]), dict(t["donor"])
         s = Sampler(Dataset(f0, M, ds.leaf_forms), th, rng, init=(y, event, donor))
         if ONLY:
             s.PARAM_MOVES = {ONLY}
@@ -144,6 +154,8 @@ if __name__ == "__main__":
         sc.append(stats(st.f, th, st.y, event, donor, {k: v for k, v in st.y.items() if k[0] in leaves}, lp, ll))
         for k, (a, b) in s.acc.items():
             acc[k] = [acc.get(k, [0, 0])[0] + a, acc.get(k, [0, 0])[1] + b]
+        if RESTART:
+            continue
         if MODE == "params":
             if ONLY:
                 th = resample_others(th, ONLY, rng)
@@ -161,7 +173,7 @@ if __name__ == "__main__":
         if nm in ("log_prior", "log_lik"):
             continue
         a, b = mc[:, j], sc[:, j]
-        e = ess(b)
+        e = float(len(b)) if RESTART else ess(b)
         z = (a.mean() - b.mean()) / np.sqrt(a.var() / len(a) + b.var() / e)
         print(f"{nm:10s} {a.mean():10.3f} {b.mean():10.3f} {z:7.2f} {e:7.0f}")
     print(f"({time.time() - t0:.0f}s)")
