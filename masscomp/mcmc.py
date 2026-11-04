@@ -518,11 +518,27 @@ class Sampler:
                 if rng.random() < p_select:
                     self._regrow_site(w, c)
 
-    def _regrow_site(self, w, c):
+    def move_root_regrow(self, p_select=1.0):
+        """The regrow move restricted to the root node(s) of the forest: the root form is redrawn from the
+        innovation prior times its (up to two) inheriting children's transducers and the events on the
+        root edges are re-decided (inherit / replace / borrow), the rest of the tree fixed. Targets the
+        basin the copy start leaves behind — the joined root a copy of one family's form, the other
+        family 'replaced' on its root edge and t_root pushed up to make that cheap (seed 1 at depth
+        0.25: copy-start t_root 1.2-1.7 against 0.26-0.30 from the truth, 146 nats apart)."""
+        self._fixed = None
+        rng = self.rng
+        for w in self.st.f.roots:
+            if self.st.is_leaf[w]:
+                continue
+            for c in self._concepts():
+                if rng.random() < p_select:
+                    self._regrow_site(w, c, max_depth=0)
+
+    def _regrow_site(self, w, c, max_depth=None):
         from .ffbs import draw as ffbs_draw, log_Z as ffbs_logZ
         st, f, rng = self.st, self.st.f, self.rng
         leaf = st.is_leaf
-        sub = [v for v in f.topo if not leaf[v] and (v == w or self._below(v, w))]
+        sub = [v for v in f.topo if not leaf[v] and (v == w or self._below(v, w, max_depth))]
         subset = set(sub)
         cur = {v: st.y[(v, c)] for v in sub}
 
@@ -641,12 +657,13 @@ class Sampler:
             for v in sub:
                 st.y[(v, c)] = cur[v]
 
-    def _below(self, v, w):
-        p = self.st.f.parent[v]
+    def _below(self, v, w, max_depth=None):
+        """Is v a proper descendant of w (within max_depth levels, if given)?"""
+        p = self.st.f.parent[v]; d = 1
         while p >= 0:
             if p == w:
-                return True
-            p = self.st.f.parent[p]
+                return max_depth is None or d <= max_depth
+            p = self.st.f.parent[p]; d += 1
         return False
 
     # ------------------------------------------------------------------ move 1d: tempered transitions
@@ -1088,7 +1105,8 @@ class Sampler:
 
     # ------------------------------------------------------------------ sweep
     FFBS_P = float(__import__("os").environ.get("MASSCOMP_FFBS_P", "0.25"))      # fraction of (node, concept) visited by the lattice FFBS move per sweep (0 = off)
-    REGROW_P = float(__import__("os").environ.get("MASSCOMP_REGROW_P", "0"))   # fraction of (subtree root, concept) regrown per sweep
+    REGROW_P = float(__import__("os").environ.get("MASSCOMP_REGROW_P", "0"))
+    ROOT_REGROW_P = float(__import__("os").environ.get("MASSCOMP_ROOT_REGROW_P", "0"))   # per-concept rate of the root-only regrow   # fraction of (subtree root, concept) regrown per sweep
     TEMPER_P = float(__import__("os").environ.get("MASSCOMP_TEMPER_P", "0"))
     REGROW_EVENTS = __import__("os").environ.get("MASSCOMP_REGROW_EVENTS", "1") == "1"
     REGROW_BORROW = __import__("os").environ.get("MASSCOMP_REGROW_BORROW", "1") == "1"
@@ -1114,6 +1132,8 @@ class Sampler:
                     self.move_joint_ffbs(self.FFBS_P)
             if self.REGROW_P > 0:
                 self.move_regrow(self.REGROW_P)
+            if self.ROOT_REGROW_P > 0:
+                self.move_root_regrow(self.ROOT_REGROW_P)
             if self.TEMPER_P > 0:
                 cs = [c for c in range(self.st.M) if self.rng.random() < self.TEMPER_P]
                 if cs:
