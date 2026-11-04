@@ -280,6 +280,29 @@ ancestor drawn bottom-up from G × its children's transducers) did not help — 
 worse t_root basin (1.9–2.4) — and stays optional. Seed 2 under the new cap: truth-start root
 coverage 0.67 and a 200-nat better posterior than before, copy start still 130 nats behind.
 
+**§8.1 rerun with root regrow (`recovery_41818033147.json`, 48 datasets, 3,000 sweeps).** Chains
+now agree: R̂ ≤ 1.25 on 92% of datasets (was 52%). Coverage: λ 0.81–0.88, ρ 0.90, t_root 1.00,
+ω 0.83 (median 1.43× over), detectable rules 0.54 (n = 15). Root-set coverage **unchanged at 0.64**,
+and per dataset almost identical to the previous run's (seed 424: 0.11 vs 0.16; seed 446: 0.94 vs
+0.94): it is a property of the dataset, not of the sampler.
+
+**The root-set metric was the problem.** On seed 424 (λ₀ = 2.6, heavy sound change) the exact
+conditional of the joined-root form, computed at the chain's states, puts the truth at
+probability e⁻⁷ to e⁻²⁵ — and the most probable forms at the same level: the posterior is diffuse
+over hundreds of forms, as it should be when the root edges carry little information. The 90% HPD
+set of such a posterior has hundreds of members and contains the truth, but the set assembled from
+a few hundred samples holds a sliver of the mass and counts the truth as missed. The study now also
+reports a **Rao-Blackwellised HPD membership** (`studies/common.root_hpd_rb`): for each recorded
+state the exact conditional of the root form with the adjacent events marginalised
+(`node_conditional`, the arithmetic of `move_root_regrow`), averaged over states to give every
+sampled form's and the truth's marginal probability; the truth is in the 90% set iff the posterior
+mass on forms more probable than it is below 0.9, estimated as the fraction of samples whose form
+is more probable than the truth. Seed 424: 0.90 (joined root 1.00, family roots 0.88) against 0.00
+/ 0.10 by the sample set; the truth's mass-above quantiles [0.21, 0.29, 0.48, 0.77, 0.86] against
+the [0.1, 0.25, 0.5, 0.75, 0.9] of a calibrated posterior. The full study with both metrics is run
+41824xxxxxx (filled in below when in). The family-root conditional is skipped in states where a
+cross-family edge borrows from that root (the lattice holds two out-edges), which is rare.
+
 **§8.3 noise check under the new cap (`pt_41815813221.json`, K=24, 3 replicates, root regrow still
 off in this run).** Not improved: per-estimate sd of a log-marginal 40–66 nats (related LBF
 replicates −23 / +118 / +87, unrelated +62 / −4 / +73), minimum adjacent-rung swap acceptance 0.00 in
