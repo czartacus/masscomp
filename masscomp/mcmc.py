@@ -129,6 +129,8 @@ class Sampler:
                         q_cur = _lse([T(c2).logprob(st.y[(c2, c)], cur) for c2 in chs]) - lk_
                         logq = q_cur - q_prop
                     elif kind == 0:          # substitute
+                        if L == 0:           # an empty form (the simulator can delete a form away; the sampler's
+                            continue         # support starts at one segment, the insert branch grows it back)
                         pos = int(rng.integers(L))
                         s = int(rng.integers(N_SEG - 1)); s = s + 1 if s >= cur[pos] else s
                         prop = cur[:pos] + (s,) + cur[pos + 1:]
