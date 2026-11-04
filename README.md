@@ -237,6 +237,49 @@ correct under Geweke, but it does not leave the basin at depth 1.5 or 0.25). Bot
 at 0.6–1.8 against a truth of 0.25. Candidates not yet tried: a joint θ-plus-latents proposal,
 SMC/annealed importance sampling from the prior, and more PT rungs at the cold end.
 
+### Findings of 2026-11-04 (cloud diagnostics)
+
+**The form-length support was too small.** Ancestral forms were capped at 8 segments
+(`MAX_FORM_LEN`, `ffbs.T_MAX`). Of 60 prior-simulated recovery datasets at depth 0.25, 22 contain
+true ancestors longer than 8 (2% of all ancestral forms, 4.4% of leaf forms); on seed 2 (λ₃ = 3.6,
+insertion probability ≈ 0.3 per slot) 24% of the ancestors and 42% of the leaves exceed 8 and one
+leaf is 26 segments. On that dataset even truth-started chains cannot hold the truth
+(`results/cloud/diag_41804631324.json`: root-set coverage 0.25–0.33 from every start, ω 5–26× the
+truth, mean log-likelihood 585 nats apart between starts). The cap is now 12 (`MASSCOMP_MAX_FORM_LEN`),
+covering 99.5% of simulated ancestors, at ~10% cost per sweep. Whether the simulator should produce
+such words is a question for the spec (plan §2 says forms are 2–6 segments; the λ₃ prior as coded
+puts a few per cent of its mass on runaway insertion).
+
+**Move mix (ESS per CPU-second, `diag_41806079603.json`).** Sixteen cells on seed 7 at depth 0.25
+(eight mixes × copy / truth start, 3,000 sweeps). The candidate-set Gibbs move came bottom on
+log-likelihood ESS/s in every mix containing it on both starts (0.02–0.12 against 0.15–0.21 without)
+while costing a third of the sweep; it is off by default (`MASSCOMP_LATENT_MOVES` still accepts
+`gibbs`). The older MH moves (`forms`, `joint`) help |u| and λ mixing (ESS/s 1.56 vs 0.93) for 30%
+of the cost and stay. No mix crosses from the copy-start basin to the truth-start one in 3,000
+sweeps (ω 3–11× vs 1.3–2.8× the truth), so the start point and the root-only move below are what
+is being tested, not the mix.
+
+**Basin controls on four datasets (`diag_41804631324.json`, 1,500 sweeps).** With the regrow move off,
+copy and truth starts agree on root coverage on seeds 1, 3 and 7 (0.65–0.91) but differ in the
+posterior by 30–150 nats: the copy basin has ω 1.4–5.5× (truth start 0.8–2.5×) and, on seed 1,
+t_root 1.2–1.7 against 0.26–0.30 — the second family explained as replaced at the root and the root
+edge stretched to make that cheap. The regrow move with events re-decided (inherit / replace /
+borrow) halves the ω gap at p = 0.1 and closes it on seed 7 at p = 0.3 (both starts ω 2.4×,
+posteriors 18 nats apart) at three times the sweep cost; it passes Geweke (max |z| 1.4 over the
+latent statistics, borrow fraction now exercised).
+
+**Two cheaper attacks under test** (`diag` runs 41806772059 and 41811261079): a *leaf-anchored
+initialisation* (`MASSCOMP_INIT=lattice`: every ancestor drawn bottom-up from G × its children's
+transducers instead of copying one child; 100 nats better in leaf likelihood at the start on seed
+7), and a *root-only regrow* (`MASSCOMP_ROOT_REGROW_P`: an exact Gibbs step on the root form and the
+events of the root edges, 10 ms per sweep for 25 concepts, accepted always as a Gibbs step should be).
+
+**Geweke after the speedups.** u move max |z| 1.9 (12,000 iterations × 6 sweeps); borrow-aware regrow
+1.4. One latent-moves cell on a new θ draw (seed 2) shows the event fractions 3–6 s.e. from the
+exact draws at an effective sample size of ~20; the pre-speedup code gives the same numbers on that
+seed, so it is not today's changes — a 60,000-iteration run and three more seeds are in flight to
+separate slow event mixing under that θ from a bias.
+
 ### Pre-v3 notes (kept for the record)
 
 #### §8.3 LBF separation — blocked on estimator noise
