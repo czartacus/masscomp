@@ -31,6 +31,12 @@ class State:
         self.cands = {e: self.f.donor_candidates(e) for e in self.f.edges}
         self.joined = len(self.f.roots) == 1 and self.f.family[self.f.roots[0]] == -1
         self.root_edges = list(self.f.children[self.f.roots[0]]) if self.joined else []
+        self.root_edge_set = set(self.root_edges)
+        # Join temperature (marglik.join_path): the inherit / borrow terms of the root edges are
+        # [term]^alpha [G(child)]^(1-alpha). At alpha = 1 this is H1; at alpha = 0 the family roots are
+        # ~ G and the joined root, t_root and the root-edge events are decoupled dummies whose priors
+        # integrate to 1, so the model is H0. The LBF is log Z(1) - log Z(0) along this path.
+        self.alpha = 1.0
         self.rebuild_edge_params()
         self.evp = {}
         self.rebuild_event_probs()
@@ -77,9 +83,26 @@ class State:
                 return -1e30, 0.0
             lp_ev += -math.log(len(self.cands[e]))      # donor choice is part of the event prior
             form = self.adapt.logprob(self.y[(dd, c)], yc)
+        if self.alpha != 1.0 and k != ev.REPLACE and e in self.root_edge_set:
+            form = self.alpha * form + (1.0 - self.alpha) * ev.log_G(yc)
         if self.is_leaf[e]:
             return lp_ev, form
         return lp_ev + form, 0.0
+
+    def join_delta(self):
+        """The join path's power variable: sum over the root edges and concepts of log term - log G(child)
+        for inherit / borrow events (0 for replace); d/d alpha of the log target."""
+        tot = 0.0
+        for e in self.root_edges:
+            p = self.f.parent[e]
+            for c in range(self.M):
+                k = self.event[(e, c)]
+                yc = self.y[(e, c)]
+                if k == ev.INHERIT:
+                    tot += self.ep[e].logprob(self.y[(p, c)], yc) - ev.log_G(yc)
+                elif k == ev.BORROW:
+                    tot += self.adapt.logprob(self.y[(self.donor[(e, c)], c)], yc) - ev.log_G(yc)
+        return tot
 
     def recompute_all(self):
         self.t_param = self.log_param_prior()

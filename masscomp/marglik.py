@@ -246,3 +246,51 @@ def stepping_stone_pt(ds, theta0, seed, K=24, n_sweeps=2000, burn=500, thin=5, p
             print(f"  stone {k:2d} beta={betas[k]:.4f} mean ll={x.mean():.1f} sd={x.std():.1f} term={log_terms[-1]:.3f} "
                   f"ess={info['ess'][-1]:.1f} swap_acc={acc[k] / max(tries[k], 1):.2f}", flush=True)
     return float(sum(log_terms)), log_terms, acc / np.maximum(tries, 1), list(betas), info
+
+
+def join_path(ds, theta0, seed, K=16, n_sweeps=1000, burn=300, thin=5, power=2.0, warmup=None, verbose=False,
+              direction="down", init_from_prior=True, **sweep_kw):
+    """Log Bayes factor H1 : H0 by a stepping stone along the JOIN rather than along the likelihood.
+
+    The target at join temperature alpha keeps the whole model except that the inherit / borrow terms of
+    the two root edges are raised to alpha and the family roots' innovation prior G to 1 - alpha
+    (State.alpha). alpha = 1 is H1; at alpha = 0 the family roots are independent G draws and the joined
+    root, t_root, the root-edge rules and events are dummies with proper priors, so Z(0) = p(X | H0).
+    Hence log p(X|H1) - log p(X|H0) = sum_k log E_{alpha_k}[exp((alpha_{k+1} - alpha_k) * Delta)] with
+    Delta = State.join_delta(), a sum over 2M (edge, concept) terms. Compared with the likelihood path
+    (stepping_stone / stepping_stone_pt), which carries the variance of the full leaf likelihood (hundreds
+    of terms, replicate sd 20-60 nats at M = 25) and needs its two marginals estimated separately, the
+    power variable here is small and the within-family posterior - the part that mixes slowly - is at
+    full strength at every stone. One chain, cooled from alpha = 1 to 0 (direction "down") after a warm-up
+    at alpha = 1, or heated from 0 ("up"). Returns (lbf, per-stone terms, sampler)."""
+    rng = np.random.default_rng(seed)
+    alphas = [(k / K) ** power for k in range(K + 1)]
+    s = Sampler(ds, theta0.copy(), rng, beta=1.0, init_from_prior=init_from_prior)
+    assert s.st.joined, "join_path needs the joined (H1) forest"
+    terms = [None] * K
+    if direction == "down":
+        for _ in range(warmup if warmup is not None else 2 * n_sweeps):
+            s.sweep(**sweep_kw)
+        order = range(K - 1, -1, -1)
+    else:
+        s.st.alpha = 0.0; s.st.recompute_all()
+        for _ in range(warmup if warmup is not None else 2 * n_sweeps):
+            s.sweep(**sweep_kw)
+        order = range(K)
+    for k in order:
+        s.st.alpha = alphas[k]; s.st.recompute_all()
+        d = alphas[k + 1] - alphas[k]
+        ds_ = []
+        for i in range(n_sweeps):
+            s.sweep(**sweep_kw)
+            if i >= burn and (i - burn) % thin == 0:
+                ds_.append(s.st.join_delta())
+        ds_ = np.array(ds_)
+        m = ds_.max()
+        w = np.exp(d * (ds_ - m))
+        terms[k] = d * m + math.log(w.mean())
+        if verbose:
+            print(f"  stone {k:2d} alpha={alphas[k]:.4f} mean delta={ds_.mean():.2f} sd={ds_.std():.2f} term={terms[k]:.3f} "
+                  f"ess={w.sum() ** 2 / (w ** 2).sum():.1f}", flush=True)
+    s.st.alpha = 1.0; s.st.recompute_all()
+    return float(sum(terms)), terms, s
