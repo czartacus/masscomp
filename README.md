@@ -353,8 +353,21 @@ enumeration on a two-family toy (`tests/test_join_path.py`: 0.61 exact, estimate
 0.54; the likelihood path gives 0.59). On the seed-2100 related pair (depth 0.25, K = 16, 600 sweeps
 per stone, ladder (k/K)², ~28 min on one core) two replicates give +51.1 and +44.0 against the
 likelihood path's −23 / +118 / +87 on the same data. The ladder is now dense near α = 1, where the
-power variable grows (the top stone had an effective sample size of 3). A 5-dataset × 3-replicate
-run is in the cloud (study `lbfj`).
+power variable grows (the top stone had an effective sample size of 3). Five datasets × three replicates in the
+cloud (`lbfj_41833085610.json`, depth 0.25, K = 16, 600 sweeps per stone):
+
+| pair | related LBF (3 replicates) | unrelated LBF (3 replicates) |
+| --- | --- | --- |
+| 2100 | +57.2, +73.5, +48.1 | −4.0, −5.9, −7.1 |
+| 2101 | +3.8, +4.7, +2.2 | −3.2, −1.8, −2.8 |
+| 2102 | +30.7, +22.1, +19.8 | −3.1, −7.2, −1.1 |
+| 2103 | +9.7, +19.7, +16.7 | −1.6, −0.4, −4.3 |
+| 2104 | +28.6, +28.2, +40.5 | +2.9, +1.5, +2.3 |
+
+Replicate sd 1–13 nats on related pairs and 1–3 on unrelated (the likelihood path: 40–70), every
+unrelated pair at or below +3, the 99th-percentile null τ = 2.8 nats and 14 of 15 related estimates
+above it (power 0.93 at depth 0.25). The first separation the study has shown. The full grid —
+depths 0.25 / 0.5 / 1.0, 20 pairs each, 2 replicates — is run 41847561276.
 
 **Geweke restart battery (`diag_41818729390.json`, `diag_41827548303.json`).** Sixteen cells, 12,000–
 20,000 fresh exact draws each, three sweeps per draw: latent moves on four θ draws with ω from the
