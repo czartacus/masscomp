@@ -1093,7 +1093,10 @@ class Sampler:
     REGROW_EVENTS = __import__("os").environ.get("MASSCOMP_REGROW_EVENTS", "1") == "1"
     REGROW_BORROW = __import__("os").environ.get("MASSCOMP_REGROW_BORROW", "1") == "1"
     INIT = __import__("os").environ.get("MASSCOMP_INIT", "copy")                        # copy | lattice (study start)   # regrow re-decides inherit/replace on subtree edges
-    LATENT_MOVES = set(__import__("os").environ.get("MASSCOMP_LATENT_MOVES", "gibbs,ffbs,jffbs,forms,joint,events").split(","))
+    LATENT_MOVES = set(__import__("os").environ.get("MASSCOMP_LATENT_MOVES", "ffbs,jffbs,forms,joint,events").split(","))
+    # 'gibbs' (the candidate-set Gibbs move) is off by default since 2026-11-04: the lattice FFBS move is its exact
+    # superset and the ESS-per-second grid (results/cloud/diag_41806079603.json) put every mix with it at the bottom
+    # on the log-likelihood while costing a third of the sweep.
     PARAM_MOVES = set(__import__("os").environ.get("MASSCOMP_PARAM_MOVES", "lam,u,rates,troot").split(","))   # diagnostics only   # fraction of concepts given a tempered excursion per sweep
 
     def sweep(self, clamp_latents=False, clamp_u=False, clamp_params=False):
