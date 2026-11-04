@@ -268,17 +268,31 @@ borrow) halves the ω gap at p = 0.1 and closes it on seed 7 at p = 0.3 (both st
 posteriors 18 nats apart) at three times the sweep cost; it passes Geweke (max |z| 1.4 over the
 latent statistics, borrow fraction now exercised).
 
-**Two cheaper attacks under test** (`diag` runs 41806772059 and 41811261079): a *leaf-anchored
-initialisation* (`MASSCOMP_INIT=lattice`: every ancestor drawn bottom-up from G × its children's
-transducers instead of copying one child; 100 nats better in leaf likelihood at the start on seed
-7), and a *root-only regrow* (`MASSCOMP_ROOT_REGROW_P`: an exact Gibbs step on the root form and the
-events of the root edges, 10 ms per sweep for 25 concepts, accepted always as a Gibbs step should be).
+**Root-only regrow closes most of the gap** (`diag_41811261079.json`, cap 12, no Gibbs move, 3,000
+sweeps). `move_root_regrow` is an exact Gibbs step on the joined root's form and the events of its
+two edges (the regrow machinery with the subtree limited to the root): 10 ms per sweep for 25
+concepts, accepted always. With it the posterior gap between copy-started and truth-started chains
+is 37 / 66 / 7–40 nats on seeds 1 / 3 / 7 (was 80–190), t_root from the copy start 0.25–0.9 (was
+1.2–2.1), and copy-start root coverage 0.96 / 0.75 / 0.70–0.78. On seed 7 with the subtree regrow
+added (p = 0.1) all three starts agree within 15 nats with the same ω. It is on by default
+(`MASSCOMP_ROOT_REGROW_P=1`). The *leaf-anchored initialisation* (`MASSCOMP_INIT=lattice`, every
+ancestor drawn bottom-up from G × its children's transducers) did not help — on seed 1 it found a
+worse t_root basin (1.9–2.4) — and stays optional. Seed 2 under the new cap: truth-start root
+coverage 0.67 and a 200-nat better posterior than before, copy start still 130 nats behind.
 
-**Geweke after the speedups.** u move max |z| 1.9 (12,000 iterations × 6 sweeps); borrow-aware regrow
-1.4. One latent-moves cell on a new θ draw (seed 2) shows the event fractions 3–6 s.e. from the
-exact draws at an effective sample size of ~20; the pre-speedup code gives the same numbers on that
-seed, so it is not today's changes — a 60,000-iteration run and three more seeds are in flight to
-separate slow event mixing under that θ from a bias.
+**Geweke after the speedups, and a correction to the test.** With the chained successive-conditional
+design, a move-subset cell that leaves most forms frozen (root regrow + events only) produced
+z = −42 on the internal form length at an "effective sample size" of 20,000: the chain's time
+average was one dataset's frozen values, and the error bar was meaningless. The same mechanism (very
+slow event mixing under some θ draws, ESS 4–20) produced the 3–6σ event-fraction discrepancies on
+seed 2 that appeared on both the old and new code, and the recurring positive z on the rare borrow
+fraction. `studies/geweke.py` therefore has a **restart variant** (`MASSCOMP_GEWEKE_RESTART=1`):
+every iteration starts from a fresh exact joint draw and records the state after a few sweeps.
+Invariance is a one-step property, so this tests the moves directly, with iid error bars, and no
+dependence on mixing. On seed 2 with borrowing made common (`MASSCOMP_GEWEKE_OMEGA=0.5`) the full
+default move set including root regrow passes (max |z| 1.5 over 3,000 draws, every statistic). A
+15-cell restart battery (latent moves on 4 seeds × 2 ω, each parameter move, full mode, regrow 0.3)
+is the authoritative check from now on; its results are recorded below when in.
 
 ### Pre-v3 notes (kept for the record)
 
