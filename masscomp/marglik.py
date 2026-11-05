@@ -292,7 +292,7 @@ def join_path(ds, theta0, seed, K=16, n_sweeps=1000, burn=300, thin=5, power=2.0
         for _ in range(warmup if warmup is not None else 2 * n_sweeps):
             s.sweep(**sweep_kw)
         order = range(K)
-    dc_mean = np.zeros((K + 1, M)); dc_sd = np.zeros((K + 1, M))
+    dc_mean = np.zeros((K + 1, M)); dc_sd = np.zeros((K + 1, M)); loo = np.zeros(M)
     for k in order:
         s.st.alpha = alphas[k]; s.st.recompute_all()
         d = alphas[k + 1] - alphas[k]
@@ -307,6 +307,14 @@ def join_path(ds, theta0, seed, K=16, n_sweeps=1000, burn=300, thin=5, power=2.0
         m = ds_.max()
         w = np.exp(d * (ds_ - m))
         terms[k] = d * m + math.log(w.mean())
+        if trace is not None:
+            # leave-one-concept-out stepping stone on the same samples: how much this stone's term falls
+            # when concept c's share of the power variable is removed (a marginal contribution; the M
+            # values do not sum to the total, unlike the TI trapezoid, which is biased at the bottom of
+            # a coarse ladder where E[Delta] is dominated by the dummy root's random inherit events)
+            X = ds_[:, None] - dcs                      # (n, M): Delta without concept c
+            mc = X.max(axis=0)
+            loo += terms[k] - (d * mc + np.log(np.exp(d * (X - mc)).mean(axis=0)))
         if verbose:
             print(f"  stone {k:2d} alpha={alphas[k]:.4f} mean delta={ds_.mean():.2f} sd={ds_.std():.2f} term={terms[k]:.3f} "
                   f"ess={w.sum() ** 2 / (w ** 2).sum():.1f}", flush=True)
@@ -321,7 +329,7 @@ def join_path(ds, theta0, seed, K=16, n_sweeps=1000, burn=300, thin=5, power=2.0
         for k in range(K):
             ti += (alphas[k + 1] - alphas[k]) * 0.5 * (dc_mean[k] + dc_mean[k + 1])
         trace.update(alphas=[float(a) for a in alphas], delta_c=dc_mean.tolist(), delta_c_sd=dc_sd.tolist(),
-                     ti_concept=ti.tolist(), ti_total=float(ti.sum()), ss_total=float(sum(terms)))
+                     ti_concept=ti.tolist(), ti_total=float(ti.sum()), ss_total=float(sum(terms)), loo_concept=loo.tolist())
         if at1 is not None:
             trace.update(at1.summary())
     return float(sum(terms)), terms, s

@@ -599,7 +599,15 @@ other concepts, the join-path estimator (K = 16 × 600 sweeps, two replicates). 
 records a trace: the power variable per concept at every stone (`join_delta_by_concept`), so the
 thermodynamic integral decomposes exactly into per-concept contributions (`ti_concept`, summing to
 `ti_total`; the stepping-stone total is the reported LBF), and at α = 1 the event fractions per edge,
-borrow routes, t_root, ω, λ and the sampled joined-root and family-root forms. `studies/explorer.py`
+borrow routes, t_root, ω, λ and the sampled joined-root and family-root forms. The TI total is biased on
+a coarse ladder: at the bottom stone the root-edge events are drawn from their prior (a tenth of them
+INHERIT from a joined root that is a random G draw), so E[Δ] there is a large negative number that the
+trapezoid integrates while the stepping stone's log-mean-exp is dominated by the samples without
+such events — the two totals can differ by 20 nats (Ibero–Slavic, full list: +12.2 against −6.7). The
+ranking of concepts by TI is what the loanword reading above used, and it holds up; for the number,
+`join_path` now also records a **leave-one-concept-out stepping stone** (`loo_concept`): on the same
+samples, how much each stone's term falls when one concept's share of Δ is removed, summed over
+stones. Marginal contributions, not a decomposition; the explorer shows them when present. `studies/explorer.py`
 turns a battery into one self-contained page (the *evidence atlas*: a map with the tested pairs as
 arcs weighted by LBF, the null band from the known-unrelated pairs, a per-pair dossier with the
 annotated tree, the per-concept attribution bars and sequence logos of the reconstructed forms).

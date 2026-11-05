@@ -63,7 +63,7 @@ def build(pairs, out_path, note=""):
         ests = []
         for e in r["estimates"]:
             t = e.get("trace", {})
-            ests.append(dict(lbf=e["lbf"], ti_total=t.get("ti_total"), ti_concept=t.get("ti_concept"), t_root=t.get("t_root_at1"),
+            ests.append(dict(lbf=e["lbf"], ti_total=t.get("ti_total"), ti_concept=t.get("ti_concept"), loo_concept=t.get("loo_concept"), t_root=t.get("t_root_at1"),
                              t_root_sd=t.get("t_root_sd_at1"), omega=t.get("omega_at1"), lam=t.get("lam_at1"), events=t.get("events_at1"),
                              borrow=t.get("borrow_from_at1"), root_forms=t.get("root_forms_at1"), fam_forms=t.get("fam_forms_at1")))
         recs.append(dict(fam1=c["fam1"], fam2=c["fam2"], known=r["known"], deep=r["deep"], g=c["g"], n=c["n"], K=c["K"], sweeps=c["sweeps"],
@@ -225,7 +225,7 @@ select:focus-visible, button:focus-visible, .arc:focus-visible { outline: 2px so
 
   <section class="foot">
     <p id="footnote"></p>
-    <p>Trees are fixed by the study (three languages per family, binary); only the join and its length t<sub>root</sub> are inferred. The Bayes factor is estimated along the join path and the per-concept attribution by thermodynamic integration over the same stones; the two totals differ by the ladder's discretisation. Data: NorthEuraLex 0.9 (Dellert et al. 2020, CC-BY-4.0), mapped onto a 40-segment inventory.</p>
+    <p>Trees are fixed by the study (three languages per family, binary); only the join and its length t<sub>root</sub> are inferred. The Bayes factor is a stepping-stone estimate along the join path; the per-word attribution comes from the same samples. Data: NorthEuraLex 0.9 (Dellert et al. 2020, CC-BY-4.0), mapped onto a 40-segment inventory.</p>
   </section>
 </div>
 
@@ -480,17 +480,23 @@ function drawTree(p) {
 }
 
 function conceptLabel(c) { return String(c).replace(/^\d+_/, ""); }
+// per-word attribution: the leave-one-out stepping stone when the run recorded it (how much the log Bayes
+// factor falls without the word), else the thermodynamic-integration trapezoid of older runs
+function attributionKind(p) { return p.estimates.some(e => e.loo_concept) ? "loo" : (p.estimates.some(e => e.ti_concept) ? "ti" : null); }
 function contributions(p) {
-  const ests = p.estimates.filter(e => e.ti_concept);
-  if (!ests.length || !p.concepts) return [];
-  const M = p.concepts.length;
-  return p.concepts.map((c, i) => ({ c, i, v: d3.mean(ests, e => e.ti_concept[i]) })).sort((a, b) => b.v - a.v);
+  const kind = attributionKind(p); if (!kind || !p.concepts) return [];
+  const key = kind === "loo" ? "loo_concept" : "ti_concept";
+  const ests = p.estimates.filter(e => e[key]);
+  return p.concepts.map((c, i) => ({ c, i, v: d3.mean(ests, e => e[key][i]) })).sort((a, b) => b.v - a.v);
 }
 function drawBars(p) {
   const svg = d3.select("#bars"); svg.selectAll("*").remove();
   const rows = contributions(p);
   const ests = p.estimates.filter(e => e.ti_total != null);
-  document.getElementById("barsnote").textContent = rows.length ? `Attribution of the evidence to concepts (thermodynamic integration, summing to ${fmt(d3.mean(ests, e => e.ti_total))} nats). Hover a bar for the daughter forms.` : "No per-concept trace in this run.";
+  const kind = attributionKind(p);
+  document.getElementById("barsnote").textContent = !rows.length ? "No per-concept trace in this run."
+    : kind === "loo" ? "How much the log Bayes factor falls when the word is left out (the same stepping-stone samples, one word's share of the power variable removed). Marginal contributions: they need not sum to the total. Hover a bar for the daughter forms."
+    : `Attribution of the evidence to words by thermodynamic integration over the same stones (summing to ${fmt(d3.mean(ests, e => e.ti_total))} nats; a biased total on a coarse ladder, so read the ranking, not the sum). Hover a bar for the daughter forms.`;
   if (!rows.length) return;
   const rh = 17, W = 560, ml = 128, mr = 56, mt = 8, H = mt + rows.length * rh + 24;
   svg.attr("viewBox", `0 0 ${W} ${H}`);

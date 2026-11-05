@@ -32,6 +32,11 @@ class State:
         self.joined = self.f.join_root is not None
         self.root_edges = list(self.f.children[self.f.join_root]) if self.joined else []
         self.root_edge_set = set(self.root_edges)
+        # nodes of donor trees (roots other than the join root and their descendants): a root-edge
+        # borrowing from one of them is contact with an outside family, which H0 allows as much as H1
+        # does, so the join temperature leaves it at full strength (see edge_terms)
+        self.external = {v for v in range(self.f.n) if self.f.parent[v] < 0 and v != self.f.join_root}
+        self.external |= {v for v in range(self.f.n) if self.f.ancestors[v] & self.external}
         # Join temperature (marglik.join_path): the inherit / borrow terms of the root edges are
         # [term]^alpha [G(child)]^(1-alpha). At alpha = 1 this is H1; at alpha = 0 the family roots are
         # ~ G and the joined root, t_root and the root-edge events are decoupled dummies whose priors
@@ -83,7 +88,10 @@ class State:
                 return -1e30, 0.0
             lp_ev += -math.log(len(self.cands[e]))      # donor choice is part of the event prior
             form = self.adapt.logprob(self.y[(dd, c)], yc)
-        if self.alpha != 1.0 and k != ev.REPLACE and e in self.root_edge_set:
+        if self.alpha != 1.0 and e in self.root_edge_set and (k == ev.INHERIT or (k == ev.BORROW and dd not in self.external)):
+            # the join path: inheritance from the joined root, and borrowing from the sister family at
+            # root level, are what H1 adds; at alpha = 0 both collapse to G(child). Borrowing from a donor
+            # family stays at full strength at every alpha, so H0 and H1 have the same access to it.
             form = self.alpha * form + (1.0 - self.alpha) * ev.log_G(yc)
         if self.is_leaf[e]:
             return lp_ev, form
@@ -105,7 +113,7 @@ class State:
                 yc = self.y[(e, c)]
                 if k == ev.INHERIT:
                     out[c] += self.ep[e].logprob(self.y[(p, c)], yc) - ev.log_G(yc)
-                elif k == ev.BORROW:
+                elif k == ev.BORROW and self.donor[(e, c)] not in self.external:
                     out[c] += self.adapt.logprob(self.y[(self.donor[(e, c)], c)], yc) - ev.log_G(yc)
         return out
 
