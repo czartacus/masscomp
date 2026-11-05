@@ -10,7 +10,7 @@ Usage: PYTHONPATH=. MASSCOMP_INVENTORY=extended python studies/realdata_lbf.py f
         spacing (top|both: where the ladder is dense; "both" keeps the bottom stone's power variable in range), power (2),
         direction (down|up|alt: cooled from alpha = 1 or heated from 0; alt = replicates alternate, so a pair brackets
         the hysteresis of the transition region), ess_min (0: a stone with fewer effective samples is sampled up to
-        twice as long again)
+        twice as long again), boost (1: sweeps multiplier for the stones with alpha in 0.7-0.98, the transition)
 Also a diag cell: kind=realdata_lbf,fam1=...,fam2=... (studies/diag.py)."""
 import sys, os, time, json
 import numpy as np
@@ -57,12 +57,12 @@ BASIC = """640_i 641_thou 642_he 643_we 637_this 638_that 647_who 646_what 620_n
 
 
 def _estimate(args):
-    ds, th, seed, K, sweeps, burn, thin, warmup, power, init_prior, g_tables, spacing, direction, ess_min = args
+    ds, th, seed, K, sweeps, burn, thin, warmup, power, init_prior, g_tables, spacing, direction, ess_min, boost = args
     ev.set_G(*g_tables)
     t0 = time.time()
     trace = {}
     val, terms, s = join_path(ds, th, seed, K=K, n_sweeps=sweeps, burn=burn, thin=thin, warmup=warmup, power=power, init_from_prior=init_prior,
-                              trace=trace, spacing=spacing, direction=direction, ess_min=ess_min)
+                              trace=trace, spacing=spacing, direction=direction, ess_min=ess_min, boost=boost)
     trace["direction"] = direction
     from masscomp.data import to_str
     for key in ("root_forms_at1", "fam_forms_at1"):
@@ -78,7 +78,7 @@ def lbf(p):
     K = int(p.get("K", 16)); sweeps = int(p.get("sweeps", 600)); burn = int(p.get("burn", 200)); warmup = int(p.get("warmup", 800))
     power = float(p.get("power", 2.0)); reps = int(p.get("reps", 1)); g_mode = p.get("g", "flat"); len_edge = float(p.get("len_edge", 0.3))
     thin = int(p.get("thin", 4)); init_prior = p.get("init", "copy") == "prior"; spacing = p.get("spacing", "top")
-    direction = p.get("direction", "down"); ess_min = float(p.get("ess_min", 0))
+    direction = p.get("direction", "down"); ess_min = float(p.get("ess_min", 0)); boost = int(p.get("boost", 1))
     concept_set = p.get("concepts", "all")                      # all | basic (BASIC above)
     donors = [(d, DONORS[d]) for d in p.get("donors", "").replace("+", ",").split(",") if d]
     families = [(f1, FAMILIES[f1]), (f2, FAMILIES[f2])]
@@ -108,7 +108,7 @@ def lbf(p):
     for r in range(reps):
         th = sample_theta(f, M, np.random.default_rng(seed * 100 + r))
         jobs.append((ds, th, seed * 1000 + r, K, sweeps, burn, thin, warmup, power, init_prior, (ev.G_LEN_RAW.copy(), ev.G_SEG.copy()), spacing,
-                     ("down" if r % 2 == 0 else "up") if direction == "alt" else direction, ess_min))
+                     ("down" if r % 2 == 0 else "up") if direction == "alt" else direction, ess_min, boost))
     t0 = time.time()
     if N_PROCS > 1 and reps > 1:
         from concurrent.futures import ProcessPoolExecutor
@@ -126,7 +126,7 @@ def lbf(p):
                             reps=reps, g=g_mode, len_edge=len_edge, init="prior" if init_prior else "copy", inventory_size=N_SEG,
                             lam_sd=ev.LAM_SD, lam_min=[None if not np.isfinite(x) else float(x) for x in ev.LAM_MIN],
                             u_context=ev.U_CONTEXT, u_rules=ev.U_RULES, u_per_t=ev.U_PER_T, concepts=concept_set, pool=len(pool),
-                            donors=donors, dropped_for_donors=dropped, spacing=spacing, direction=direction, ess_min=ess_min),
+                            donors=donors, dropped_for_donors=dropped, spacing=spacing, direction=direction, ess_min=ess_min, boost=boost),
                 known="related" if key in RELATED else "unrelated", deep=key in DEEP, common_concepts=len(common),
                 lbf_mean=float(np.mean(vals)), lbf_sd=float(np.std(vals)) if reps > 1 else None, estimates=ests, secs=time.time() - t0)
 

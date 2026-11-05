@@ -250,7 +250,8 @@ def stepping_stone_pt(ds, theta0, seed, K=24, n_sweeps=2000, burn=500, thin=5, p
 
 
 def join_path(ds, theta0, seed, K=16, n_sweeps=1000, burn=300, thin=5, power=2.0, warmup=None, verbose=False,
-              direction="down", init_from_prior=True, spacing="top", trace=None, ess_min=0.0, max_extend=2, **sweep_kw):
+              direction="down", init_from_prior=True, spacing="top", trace=None, ess_min=0.0, max_extend=2, boost=1, boost_range=(0.7, 0.98),
+              **sweep_kw):
     """Log Bayes factor H1 : H0 by a stepping stone along the JOIN rather than along the likelihood.
 
     The target at join temperature alpha keeps the whole model except that the inherit / borrow terms of
@@ -303,9 +304,13 @@ def join_path(ds, theta0, seed, K=16, n_sweeps=1000, burn=300, thin=5, power=2.0
         s.st.alpha = alphas[k]; s.st.recompute_all()
         d = alphas[k + 1] - alphas[k]
         ds_ = []; dcs = []
-        for i in range(n_sweeps):
+        # the transition region (family roots locking onto the joined root) relaxes slowly and the chain carries
+        # its state along the ladder; `boost` multiplies the sweeps of the stones in boost_range (burn-in too)
+        n_k = n_sweeps * (boost if boost_range[0] <= alphas[k] <= boost_range[1] else 1); burn_k = burn * (n_k // n_sweeps)
+        stone_sweeps[k] = n_k
+        for i in range(n_k):
             s.sweep(**sweep_kw)
-            if i >= burn and (i - burn) % thin == 0:
+            if i >= burn_k and (i - burn_k) % thin == 0:
                 dc = s.st.join_delta_by_concept()
                 ds_.append(float(dc.sum())); dcs.append(dc)
         # a stone whose effective sample size is below ess_min (the transition region on real data, where
