@@ -117,7 +117,20 @@ jobs (public repository: minutes are not metered), shared with the `study` workf
 ## Study results
 
 Settings and raw numbers are in `results/` (local) and `results/cloud/` (GitHub Actions, one job per
-replicate; see `.github/workflows/study.yml`). Status as of 2026-11-03.
+replicate; see `.github/workflows/study.yml`). The sections below are chronological; this is where
+things stand as of 2026-11-05 (the plan's §10 verdict is in the spec, Prototype plan §12).
+
+| | verdict | the number | where |
+| --- | --- | --- | --- |
+| §8.1 recovery | passes | 144 datasets: λ₀–λ₃ covered at 0.87–0.89, ρ 0.90, ω 0.875, t_root 0.99; root forms 0.95 (Rao-Blackwellised) | §8.1 v4, Findings of 11-04 |
+| §8.2 confound | fails as specified | 1 of 20 replicates flags the ambiguity; detection moves to prior-sensitivity refits | Pre-v3 notes |
+| §8.3 separation | passes on the join path | K = 16, two replicates: power 0.90 / 1.00 / 0.90 at depths 0.25 / 0.5 / 1.0; K = 24, single replicates: 0.90 / 1.00 at 0.25 / 1.0, unrelated 99th pct +2.4 | Findings of 11-04 |
+| sampler | correct | Geweke restart batteries: max \|z\| ≤ 2.6 under the default moves, a random non-flat G and the context rules | Sampler correctness; 11-05 sections |
+| real data | separates known pairs | NorthEuraLex, 11 family pairs, fitted G, basic vocabulary: related within a family +45 to +89, unrelated −7 to −29; one of two PIE-depth pairs at +7.6; flat G breaks the test (+143 on an unrelated pair) | Real-data relationship tests |
+
+Protocol for real data from here: the extended inventory, G fitted to the languages' other concepts,
+λ free, basic vocabulary, the join-path estimator at K = 24 (single replicates) or K = 16 in pairs,
+donor families in the forest for known contact sources, and the per-word attribution as the audit.
 
 ### Model change on 2026-11-02: cross-family borrowing donors, collapsed u move
 
