@@ -1,0 +1,277 @@
+{
+ "study": "diag",
+ "digest": [
+  {
+   "spec": "kind=geweke,n=20000,m=2,seed=1,mode=full,sweeps=3,geweke_restart=1,u_context=1",
+   "max_abs_z": 2.16,
+   "moves": "successive-conditional done (2107s)   moves: y=104600/1016520 ffbs=124670/126364 jffbs=7203/174353 regrow=160720/218643 joint=173354/1918228 lam=47363/60000 u=4003118/6263222 rho=93796/120000 omega=53091/60000 troot=46219/60000",
+   "secs": 2108.756920814514
+  },
+  {
+   "spec": "kind=geweke,n=20000,m=2,seed=4,mode=full,sweeps=3,geweke_restart=1,u_context=1",
+   "max_abs_z": 1.97,
+   "moves": "successive-conditional done (3481s)   moves: y=104314/1016547 ffbs=124785/126479 jffbs=7090/173349 regrow=160571/218567 joint=171880/1917955 lam=47209/60000 u=4001844/6264398 rho=93670/120000 omega=53221/60000 troot=46192/60000",
+   "secs": 3482.820989370346
+  }
+ ],
+ "cells": [
+  {
+   "study": "diag",
+   "kind": "geweke",
+   "spec": "kind=geweke,n=20000,m=2,seed=1,mode=full,sweeps=3,geweke_restart=1,u_context=1",
+   "params": {
+    "kind": "geweke",
+    "n": "20000",
+    "m": "2",
+    "seed": "1",
+    "mode": "full",
+    "sweeps": "3",
+    "geweke_restart": "1",
+    "u_context": "1"
+   },
+   "env": {
+    "MASSCOMP_GEWEKE_RESTART": "1",
+    "MASSCOMP_U_CONTEXT": "1"
+   },
+   "git": "77f0b33",
+   "secs": 2108.756920814514,
+   "result": {
+    "stats": [
+     {
+      "stat": "omega",
+      "mc": 0.101,
+      "sc": 0.1,
+      "z": 1.16,
+      "ess": 20000
+     },
+     {
+      "stat": "rho_mean",
+      "mc": 1.006,
+      "sc": 0.999,
+      "z": 1.26,
+      "ess": 20000
+     },
+     {
+      "stat": "lam0",
+      "mc": 4.507,
+      "sc": 4.5,
+      "z": 0.7,
+      "ess": 20000
+     },
+     {
+      "stat": "lam1",
+      "mc": 2.998,
+      "sc": 3.002,
+      "z": -0.43,
+      "ess": 20000
+     },
+     {
+      "stat": "lam2",
+      "mc": 2.004,
+      "sc": 2.001,
+      "z": 0.25,
+      "ess": 20000
+     },
+     {
+      "stat": "lam3",
+      "mc": 6.011,
+      "sc": 6.004,
+      "z": 0.73,
+      "ess": 20000
+     },
+     {
+      "stat": "t_root",
+      "mc": 1.995,
+      "sc": 2.008,
+      "z": -0.92,
+      "ess": 20000
+     },
+     {
+      "stat": "n_u",
+      "mc": 54.061,
+      "sc": 54.036,
+      "z": 0.34,
+      "ess": 20000
+     },
+     {
+      "stat": "sum_u2",
+      "mc": 413.086,
+      "sc": 414.076,
+      "z": -0.44,
+      "ess": 20000
+     },
+     {
+      "stat": "int_len",
+      "mc": 4.219,
+      "sc": 4.217,
+      "z": 0.3,
+      "ess": 20000
+     },
+     {
+      "stat": "leaf_len",
+      "mc": 4.477,
+      "sc": 4.48,
+      "z": -0.35,
+      "ess": 20000
+     },
+     {
+      "stat": "f_inherit",
+      "mc": 0.697,
+      "sc": 0.699,
+      "z": -1.21,
+      "ess": 20000
+     },
+     {
+      "stat": "f_replace",
+      "mc": 0.277,
+      "sc": 0.276,
+      "z": 0.58,
+      "ess": 20000
+     },
+     {
+      "stat": "f_borrow",
+      "mc": 0.026,
+      "sc": 0.025,
+      "z": 2.16,
+      "ess": 20000
+     }
+    ],
+    "moves": "successive-conditional done (2107s)   moves: y=104600/1016520 ffbs=124670/126364 jffbs=7203/174353 regrow=160720/218643 joint=173354/1918228 lam=47363/60000 u=4003118/6263222 rho=93796/120000 omega=53091/60000 troot=46219/60000",
+    "max_abs_z": 2.16,
+    "returncode": 0,
+    "stdout": "marginal-conditional done (256s)\nsuccessive-conditional done (2107s)   moves: y=104600/1016520 ffbs=124670/126364 jffbs=7203/174353 regrow=160720/218643 joint=173354/1918228 lam=47363/60000 u=4003118/6263222 rho=93796/120000 omega=53091/60000 troot=46219/60000\nstat          mc mean    sc mean       z  ess_sc\nomega           0.101      0.100    1.16   20000\nrho_mean        1.006      0.999    1.26   20000\nlam0            4.507      4.500    0.70   20000\nlam1            2.998      3.002   -0.43   20000\nlam2            2.004      2.001    0.25   20000\nlam3            6.011      6.004    0.73   20000\nt_root          1.995      2.008   -0.92   20000\nn_u            54.061     54.036    0.34   20000\nsum_u2        413.086    414.076   -0.44   20000\nint_len         4.219      4.217    0.30   20000\nleaf_len        4.477      4.480   -0.35   20000\nf_inherit       0.697      0.699   -1.21   20000\nf_replace       0.277      0.276    0.58   20000\nf_borrow        0.026      0.025    2.16   20000\n(2107s)\n",
+    "stderr": ""
+   }
+  },
+  {
+   "study": "diag",
+   "kind": "geweke",
+   "spec": "kind=geweke,n=20000,m=2,seed=4,mode=full,sweeps=3,geweke_restart=1,u_context=1",
+   "params": {
+    "kind": "geweke",
+    "n": "20000",
+    "m": "2",
+    "seed": "4",
+    "mode": "full",
+    "sweeps": "3",
+    "geweke_restart": "1",
+    "u_context": "1"
+   },
+   "env": {
+    "MASSCOMP_GEWEKE_RESTART": "1",
+    "MASSCOMP_U_CONTEXT": "1"
+   },
+   "git": "77f0b33",
+   "secs": 3482.820989370346,
+   "result": {
+    "stats": [
+     {
+      "stat": "omega",
+      "mc": 0.1,
+      "sc": 0.1,
+      "z": 0.32,
+      "ess": 20000
+     },
+     {
+      "stat": "rho_mean",
+      "mc": 0.999,
+      "sc": 0.999,
+      "z": -0.1,
+      "ess": 20000
+     },
+     {
+      "stat": "lam0",
+      "mc": 4.51,
+      "sc": 4.504,
+      "z": 0.65,
+      "ess": 20000
+     },
+     {
+      "stat": "lam1",
+      "mc": 3.003,
+      "sc": 2.998,
+      "z": 0.51,
+      "ess": 20000
+     },
+     {
+      "stat": "lam2",
+      "mc": 2.001,
+      "sc": 2.005,
+      "z": -0.37,
+      "ess": 20000
+     },
+     {
+      "stat": "lam3",
+      "mc": 6.005,
+      "sc": 5.995,
+      "z": 0.97,
+      "ess": 20000
+     },
+     {
+      "stat": "t_root",
+      "mc": 1.983,
+      "sc": 2.01,
+      "z": -1.97,
+      "ess": 20000
+     },
+     {
+      "stat": "n_u",
+      "mc": 53.942,
+      "sc": 54.003,
+      "z": -0.83,
+      "ess": 20000
+     },
+     {
+      "stat": "sum_u2",
+      "mc": 412.681,
+      "sc": 413.212,
+      "z": -0.24,
+      "ess": 20000
+     },
+     {
+      "stat": "int_len",
+      "mc": 4.22,
+      "sc": 4.234,
+      "z": -1.82,
+      "ess": 20000
+     },
+     {
+      "stat": "leaf_len",
+      "mc": 4.485,
+      "sc": 4.501,
+      "z": -1.65,
+      "ess": 20000
+     },
+     {
+      "stat": "f_inherit",
+      "mc": 0.699,
+      "sc": 0.699,
+      "z": -0.11,
+      "ess": 20000
+     },
+     {
+      "stat": "f_replace",
+      "mc": 0.275,
+      "sc": 0.275,
+      "z": 0.02,
+      "ess": 20000
+     },
+     {
+      "stat": "f_borrow",
+      "mc": 0.026,
+      "sc": 0.026,
+      "z": 0.31,
+      "ess": 20000
+     }
+    ],
+    "moves": "successive-conditional done (3481s)   moves: y=104314/1016547 ffbs=124785/126479 jffbs=7090/173349 regrow=160571/218567 joint=171880/1917955 lam=47209/60000 u=4001844/6264398 rho=93670/120000 omega=53221/60000 troot=46192/60000",
+    "max_abs_z": 1.97,
+    "returncode": 0,
+    "stdout": "marginal-conditional done (405s)\nsuccessive-conditional done (3481s)   moves: y=104314/1016547 ffbs=124785/126479 jffbs=7090/173349 regrow=160571/218567 joint=171880/1917955 lam=47209/60000 u=4001844/6264398 rho=93670/120000 omega=53221/60000 troot=46192/60000\nstat          mc mean    sc mean       z  ess_sc\nomega           0.100      0.100    0.32   20000\nrho_mean        0.999      0.999   -0.10   20000\nlam0            4.510      4.504    0.65   20000\nlam1            3.003      2.998    0.51   20000\nlam2            2.001      2.005   -0.37   20000\nlam3            6.005      5.995    0.97   20000\nt_root          1.983      2.010   -1.97   20000\nn_u            53.942     54.003   -0.83   20000\nsum_u2        412.681    413.212   -0.24   20000\nint_len         4.220      4.234   -1.82   20000\nleaf_len        4.485      4.501   -1.65   20000\nf_inherit       0.699      0.699   -0.11   20000\nf_replace       0.275      0.275    0.02   20000\nf_borrow        0.026      0.026    0.31   20000\n(3481s)\n",
+    "stderr": ""
+   }
+  }
+ ],
+ "label": "geweke_context_rerun",
+ "run_id": "42017443023"
+}
