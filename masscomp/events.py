@@ -1,5 +1,5 @@
 """Lexical events as competing hazards, single-event per edge (plan §3.3), and priors (§3.5)."""
-import math
+import math, os
 import numpy as np
 from scipy import stats
 from .segments import N_SEG, N_OUT
@@ -35,18 +35,124 @@ def event_logprobs(rho, omega, t):
     return np.array([s, math.log(rho / h) + one_minus, math.log(omega / h) + one_minus])
 
 
+# ---- innovation distribution G -------------------------------------------------------------
+# G(form) = G_LEN[len] * prod_i G_SEG[form_i]: a length distribution and a segment unigram. The plan's
+# flat G (uniform length 2-6, uniform segments) is the default; set_G / fit_G install a phonotactic one
+# (length histogram and segment frequencies of a wordlist), which is what real data need (README,
+# Romance probe of 4 Nov: under flat G a root segment costs log N_SEG = 3.7 nats, and the model
+# reconstructs consonant skeletons). Lengths with no probability get a soft floor, -40 - 8 per
+# segment beyond the support, rather than zero (a hard zero in the support breaks tempering).
+G_T_MAX = 32
+
+
+def _flat_G():
+    glen = np.full(G_T_MAX + 1, -np.inf)
+    for L in range(MIN_LEN, MAX_LEN + 1):
+        glen[L] = LOG_G_LEN
+    return glen, np.full(N_SEG, -math.log(N_SEG))
+
+
+def _with_floor(glen):
+    """Lengths outside the distribution's support get the soft floor relative to its nearest edge."""
+    out = glen.copy()
+    sup = np.where(np.isfinite(glen))[0]
+    lo, hi = int(sup.min()), int(sup.max())
+    for L in range(len(out)):
+        if not np.isfinite(out[L]):
+            out[L] = -40.0 - 8.0 * (max(0, L - hi) + max(0, lo - L))
+    return out
+
+
+G_LEN_RAW, G_SEG = _flat_G()
+G_LEN = _with_floor(G_LEN_RAW)
+G_SEG_P = np.exp(G_SEG)
+G_LEN_P = np.exp(G_LEN_RAW); G_LEN_P[~np.isfinite(G_LEN_RAW)] = 0.0; G_LEN_P /= G_LEN_P.sum()
+G_IS_FLAT = True
+
+
+def set_G(len_logp, seg_logp):
+    """Install an innovation distribution: len_logp[L] (normalised over its finite entries, -inf
+    elsewhere), seg_logp[s] over the inventory (normalised)."""
+    global G_LEN_RAW, G_LEN, G_SEG, G_SEG_P, G_LEN_P, G_IS_FLAT
+    glen = np.full(G_T_MAX + 1, -np.inf); n = min(len(len_logp), G_T_MAX + 1); glen[:n] = len_logp[:n]
+    fin = np.isfinite(glen); glen[fin] -= np.log(np.exp(glen[fin]).sum())
+    seg = np.asarray(seg_logp, float); seg = seg - np.log(np.exp(seg).sum())
+    G_LEN_RAW, G_SEG = glen, seg
+    G_LEN = _with_floor(glen); G_SEG_P = np.exp(seg)
+    G_LEN_P = np.exp(glen); G_LEN_P[~fin] = 0.0; G_LEN_P /= G_LEN_P.sum()
+    fl, fs = _flat_G()
+    G_IS_FLAT = bool(np.allclose(np.where(np.isfinite(glen), glen, -1e9), np.where(np.isfinite(fl), fl, -1e9)) and np.allclose(seg, fs))
+
+
+def reset_G():
+    set_G(*_flat_G())
+
+
+def fit_G(forms, len_pseudo=1.0, seg_pseudo=0.5, max_len=None):
+    """A phonotactic G from a collection of forms (tuples of segment ids): add-k smoothed length
+    histogram over 1..max_len (default: the longest form seen) and add-k smoothed segment unigram."""
+    forms = list(forms)
+    T = max_len or max(len(f) for f in forms)
+    cnt = np.full(T + 1, len_pseudo); cnt[0] = 0.0
+    for f in forms:
+        if 1 <= len(f) <= T:
+            cnt[len(f)] += 1
+    seg = np.full(N_SEG, seg_pseudo)
+    for f in forms:
+        for x in f:
+            seg[x] += 1
+    with np.errstate(divide="ignore"):
+        glen = np.full(T + 1, -np.inf); glen[1:] = np.log(cnt[1:] / cnt[1:].sum())
+        set_G(glen, np.log(seg / seg.sum()))
+
+
+def random_G(seed, max_len=8, len_conc=2.0, seg_conc=0.7):
+    """A random non-flat G (Dirichlet length table over 1..max_len and Dirichlet unigram) for the
+    consistency tests: the simulator and the sampler must agree under any G, not just the flat one."""
+    rng = np.random.default_rng(seed)
+    glen = np.full(max_len + 1, -np.inf); glen[1:] = np.log(rng.dirichlet(np.full(max_len, len_conc)))
+    set_G(glen, np.log(rng.dirichlet(np.full(N_SEG, seg_conc))))
+
+
+def save_G(path):
+    import json
+    json.dump({"len_logp": [float(v) for v in G_LEN_RAW], "seg_logp": [float(v) for v in G_SEG]}, open(path, "w"))
+
+
+def load_G(path):
+    import json
+    d = json.load(open(path))
+    set_G(np.array(d["len_logp"], float), np.array(d["seg_logp"], float))
+
+
+def install_from_env():
+    """MASSCOMP_G = flat (default) | random:<seed>[:<max_len>] | <path to a json written by save_G>."""
+    spec = os.environ.get("MASSCOMP_G", "flat")
+    if spec == "flat":
+        reset_G()
+    elif spec.startswith("random:"):
+        parts = spec.split(":")
+        random_G(int(parts[1]), int(parts[2]) if len(parts) > 2 else 8)
+    else:
+        load_G(spec)
+
+
+install_from_env()
+
+
 def log_G(form):
-    """Innovation distribution: uniform length 2-6, uniform segments. Lengths outside that
-    range get a soft floor rather than zero (a hard zero in the support breaks tempering)."""
+    """log G(form) under the installed innovation distribution."""
     L = len(form)
-    if L < MIN_LEN or L > MAX_LEN:
-        return -40.0 - 8.0 * (max(0, L - MAX_LEN) + max(0, MIN_LEN - L))
-    return LOG_G_LEN - L * math.log(N_SEG)
+    base = G_LEN[L] if L <= G_T_MAX else -40.0 - 8.0 * (L - G_T_MAX)
+    return base + sum(G_SEG[s] for s in form)
 
 
 def sample_G(rng):
-    L = int(rng.integers(MIN_LEN, MAX_LEN + 1))
-    return tuple(int(x) for x in rng.integers(N_SEG, size=L))
+    if G_IS_FLAT:                     # the plan's G, drawn exactly as before so every seeded dataset is unchanged
+        L = int(rng.integers(MIN_LEN, MAX_LEN + 1))
+        return tuple(int(x) for x in rng.integers(N_SEG, size=L))
+    L = int(rng.choice(len(G_LEN_P), p=G_LEN_P))
+    return tuple(int(x) for x in rng.choice(N_SEG, size=L, p=G_SEG_P))
 
 
 def u_slots():

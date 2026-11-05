@@ -22,17 +22,10 @@ import numpy as np
 from numba import njit
 from .segments import N_SEG, N_OUT, EPS
 from .transducer import DUMMY, NOINS, _lae_j
-from .events import MIN_LEN, MAX_LEN, LOG_G_LEN
+from . import events as _ev
 
 NEG = -1e30
 T_MAX = int(__import__("os").environ.get("MASSCOMP_MAX_FORM_LEN", "12"))   # == mcmc.MAX_FORM_LEN; forms longer than this are outside the sampler's support
-
-
-@njit(cache=True)
-def _log_G_t(t):
-    if t < MIN_LEN or t > MAX_LEN:
-        return -40.0 - 8.0 * (max(0, t - MAX_LEN) + max(0, MIN_LEN - t))
-    return LOG_G_LEN - t * math.log(N_SEG)
 
 
 @njit(cache=True)
@@ -61,7 +54,7 @@ def _out_step(ls, li, z, m, j, s, dsub, dins):
 
 
 @njit(cache=True)
-def forward(in_mode, ls_in, li_in, x, n, K, ls1, li1, z1, m1, ls2, li2, z2, m2, T):
+def forward(in_mode, ls_in, li_in, x, n, K, ls1, li1, z1, m1, ls2, li2, z2, m2, T, glen, lgseg):
     """in_mode: 0 = prior G (x unused), 1 = transducer from x. K in {0,1,2} active out-edges.
     Returns alpha[i, u, j1, j2, t] (log) and the terminal log weights term[i, u, j1, j2, t]."""
     alpha = np.full((n + 1, 2, m1 + 1, m2 + 1, T + 1), NEG)
@@ -121,7 +114,7 @@ def forward(in_mode, ls_in, li_in, x, n, K, ls1, li1, z1, m1, ls2, li2, z2, m2, 
                                 continue
                             any_ = True
                             if in_mode == 0:
-                                tmp_in[0, 0] = _lae_j(tmp_in[0, 0], a - math.log(N_SEG))
+                                tmp_in[0, 0] = _lae_j(tmp_in[0, 0], a + lgseg[s])
                                 continue
                             if u == 0:
                                 # insertion from the slot before x[i] (or the final slot)
@@ -168,7 +161,7 @@ def forward(in_mode, ls_in, li_in, x, n, K, ls1, li1, z1, m1, ls2, li2, z2, m2, 
             if in_mode == 0:
                 if u == 1:
                     continue
-                w = _log_G_t(t) + t * math.log(N_SEG)    # the per-segment 1/N_SEG was paid at emission
+                w = glen[t]                              # the per-segment G weights were paid at emission
             else:
                 w = li_in[_prev_x(x, n), NOINS] if u == 0 else 0.0
             term[n, u, m1, m2, t] = w
@@ -176,7 +169,7 @@ def forward(in_mode, ls_in, li_in, x, n, K, ls1, li1, z1, m1, ls2, li2, z2, m2, 
 
 
 @njit(cache=True, fastmath=True)
-def forward_lin(in_mode, ps_in, pi_in, x, n, K, ps1, pi1, z1, m1, ps2, pi2, z2, m2, T):
+def forward_lin(in_mode, ps_in, pi_in, x, n, K, ps1, pi1, z1, m1, ps2, pi2, z2, m2, T, glen, gseg):
     """Same recursion as `forward`, in linear space with one scale factor per layer t, and with the
     out-edge step written as a small matrix product over (symbol s) x (16 out-edge options), so the
     inner loops vectorise. Tables are probabilities (exp of the log tables). Returns alpha and term in
@@ -265,7 +258,6 @@ def forward_lin(in_mode, ps_in, pi_in, x, n, K, ps1, pi1, z1, m1, ps2, pi2, z2, 
             alpha[0, 0, a1, a2, 0] = v1 * v2
     tmp = np.zeros((n + 1, 2, N_SEG))
     out = np.zeros((n + 1, 2, NC))
-    inv_nseg = 1.0 / N_SEG
     for t in range(T + 1):
         # epsilon moves (deletions of x[i]) within layer t, increasing i
         if in_mode == 1:
@@ -320,7 +312,7 @@ def forward_lin(in_mode, ps_in, pi_in, x, n, K, ps1, pi1, z1, m1, ps2, pi2, z2, 
                             continue
                         if in_mode == 0:
                             for s in range(N_SEG):
-                                tmp[0, 0, s] += a * inv_nseg
+                                tmp[0, 0, s] += a * gseg[s]
                             continue
                         px = _prev_x(x, i)
                         if u == 0:
@@ -381,7 +373,7 @@ def forward_lin(in_mode, ps_in, pi_in, x, n, K, ps1, pi1, z1, m1, ps2, pi2, z2, 
             if in_mode == 0:
                 if u == 1:
                     continue
-                w = _log_G_t(t) + t * math.log(N_SEG)
+                w = glen[t]
             else:
                 if u == 0:
                     pv = pi_in[_prev_x(x, n), NOINS]
@@ -393,7 +385,7 @@ def forward_lin(in_mode, ps_in, pi_in, x, n, K, ps1, pi1, z1, m1, ps2, pi2, z2, 
 
 
 @njit(cache=True)
-def backward(alpha, term, in_mode, ls_in, li_in, x, n, K, ls1, li1, z1, m1, ls2, li2, z2, m2, T, unif):
+def backward(alpha, term, in_mode, ls_in, li_in, x, n, K, ls1, li1, z1, m1, ls2, li2, z2, m2, T, glen, lgseg, unif):
     """Draw one path backwards. unif: array of uniforms (one per decision, >= 2*T+n+2). Returns the
     form (array, length) and the log of the total forward mass (logZ)."""
     # terminal state
@@ -468,7 +460,7 @@ def backward(alpha, term, in_mode, ls_in, li_in, x, n, K, ls1, li1, z1, m1, ls2,
                                 if in_mode == 0:
                                     a = alpha[0, 0, jp1, jp2, t - 1]
                                     if a > NEG / 2:
-                                        wbuf[cnt] = a + wo - math.log(N_SEG); pi[cnt] = 0; pu[cnt] = 0; pj1[cnt] = jp1; pj2[cnt] = jp2; pt[cnt] = t - 1; ps[cnt] = s; cnt += 1
+                                        wbuf[cnt] = a + wo + lgseg[s]; pi[cnt] = 0; pu[cnt] = 0; pj1[cnt] = jp1; pj2[cnt] = jp2; pt[cnt] = t - 1; ps[cnt] = s; cnt += 1
                                     continue
                                 if u == 1:
                                     # insertion: pred (i, 0)
@@ -541,7 +533,7 @@ def clear_memo():
 
 def _prep(in_mode, in_tables, x, outs, T):
     key = (in_mode, id(in_tables[0]) if in_mode == 1 else 0, id(in_tables[1]) if in_mode == 1 else 0, x,
-           tuple((id(ls), id(li), z) for ls, li, z in outs), T)
+           tuple((id(ls), id(li), z) for ls, li, z in outs), T, id(_ev.G_LEN))
     hit = _MEMO.get(key)
     if hit is not None:
         held, largs, alpha, term = hit
@@ -568,19 +560,20 @@ def _prep_compute(in_mode, in_tables, x, outs, T):
         else:
             ps2, pi2, z2 = _P0, _PI0, ()
         z1a, z2a = _arr(z1), _arr(z2)
-        args = (in_mode, ps_in, pi_in, xa, len(xa), K, ps1, pi1, z1a, len(z1a), ps2, pi2, z2a, len(z2a), T)
+        glen, lgseg = _ev.G_LEN[:T + 1], _ev.G_SEG
+        args = (in_mode, ps_in, pi_in, xa, len(xa), K, ps1, pi1, z1a, len(z1a), ps2, pi2, z2a, len(z2a), T, glen, _ev.G_SEG_P)
         alpha, term = forward_lin(*args)
         # backward() takes log tables
         largs = (in_mode, in_tables[0] if in_mode == 1 else _LS0, in_tables[1] if in_mode == 1 else _LI0, xa, len(xa), K,
                  outs[0][0] if K >= 1 else _LS0, outs[0][1] if K >= 1 else _LI0, z1a, len(z1a),
-                 outs[1][0] if K >= 2 else _LS0, outs[1][1] if K >= 2 else _LI0, z2a, len(z2a), T)
+                 outs[1][0] if K >= 2 else _LS0, outs[1][1] if K >= 2 else _LI0, z2a, len(z2a), T, glen, lgseg)
         return largs, alpha, term
     ls_in, li_in = in_tables if in_mode == 1 else (_LS0, _LI0)
     xa = _arr(x) if in_mode == 1 else _Z0
     ls1, li1, z1 = outs[0] if K >= 1 else (_LS0, _LI0, ())
     ls2, li2, z2 = outs[1] if K >= 2 else (_LS0, _LI0, ())
     z1a, z2a = _arr(z1), _arr(z2)
-    args = (in_mode, ls_in, li_in, xa, len(xa), K, ls1, li1, z1a, len(z1a), ls2, li2, z2a, len(z2a), T)
+    args = (in_mode, ls_in, li_in, xa, len(xa), K, ls1, li1, z1a, len(z1a), ls2, li2, z2a, len(z2a), T, _ev.G_LEN[:T + 1], _ev.G_SEG)
     alpha, term = forward(*args)
     return args, alpha, term
 
