@@ -458,36 +458,47 @@ relationships, attested proto-language, used to find what the prototype gets wro
   held-out proto-language, with the usual caveat that Romance continues the spoken accusative
   (flos → flor), so exact matches are not the right score.
 
-**First reconstruction probe (`results/realdata/`): the prototype model degenerates on real Romance
-data.** Six Romance languages on a fixed two-family tree (Ibero-Romance spa/por/cat; ita/fra/ron),
-50 random concepts, Latin held out, 1,500 sweeps × 2 chains, extended inventory.
+**First reconstruction probe (2026-11-04) — withdrawn.** The run reported here on 11-04 (λ₃ dragged
+to −1.6 and consonant-skeleton roots with λ free; 99% of root edges replaced with λ fixed) was computed
+with broken kernels: numba's on-disk cache had been populated under the plan inventory, and the cached
+edit DP and lattice read `EPS`, `NOINS` and `DUMMY` as compile-time constants (29) while the extended
+tables put them at 40, so the deletion column, the no-insertion column and the start-of-form row were
+all read from a vowel's slot. Found on 11-05 when the Rao-Blackwellised root probabilities came out
+above 1 (`results/realdata/withdrawn/`). The kernels now derive the inventory size from their array
+arguments (`tests/test_inventory_cache.py` checks the other inventory in a subprocess after this one
+has cached); nothing else ran under the extended inventory, so no simulation result is affected, and
+the cloud runners compile fresh in every job. The cost arithmetic below still describes the model;
+the measured degeneracy does not.
 
-- *λ free (the plan's N(6, 1) prior on the insertion cost λ₃):* the posterior drags λ₃ to **−1.6**,
-  7.5 prior sd from its mean — insertion becomes the *favoured* event at nearly every slot — and
-  reconstructs consonant skeletons: lupus → `lp`, wena → `vn`, pinus → `pn`, klarus → `lr`, sapor →
-  `ut`. The Latin form is never the modal root and never within one edit of it; its log posterior
-  probability is −25 against −2.6 for the mode. Pinning λ harder (prior sd 0.25) only moves λ₃ to
-  1.1 (19 prior sd): the data prefer the degenerate solution by hundreds of nats.
-- *λ fixed at the plan's prior mean (sd 0.02):* the model instead calls **99% of the root edges
-  replaced** (t_root 5–6) — no inheritance across the join at all — while the *family* roots come out
-  recognisably Latin: Ibero `lovu` (lobo), `vena`, `erva`, `pinju`, `aʕila` (aquila), `klaru`,
-  `dente`, `siŋku`; the other family `lup`, `ven`, `erb`, `pin`, `tʃinkwe`. Within a shallow family
-  the machinery reconstructs; across the join it would report LBF ≈ 0 for families that are
-  obviously related.
+In the model's own cost terms (prototype λ = 4.5 / 3 / 2 / 6, 40 segments): a root segment costs 3.7
+nats under the flat innovation prior G; inheriting a segment unchanged costs 0.2; any substitution
+4.8–6 and a deletion 6.7; an insertion 3.8 at λ₃ = 6. Romance daughters share consonant skeletons and
+differ systematically in their vowels, and the context-free transducer has no cheap way to say "the
+vowels changed regularly": a per-edge rule could, but the spike-and-slab prior expects three rules per
+edge where a real edge carries dozens. The roadmap items — a phonotactic G, rule budgets that scale,
+context-conditioned rules, λ fitted on reference families — are still the things real data need.
 
-Why, in the model's own cost terms (prototype λ = 4.5 / 3 / 2 / 6, 40 segments): a root segment
-costs 3.7 nats under the flat innovation prior G; inheriting a segment unchanged costs 0.2; any
-substitution 4.8–6 and a deletion 6.7; an insertion 3.8 at λ₃ = 6 and less as λ₃ falls. Romance
-daughters share consonant skeletons and differ systematically in their vowels (Latin u → Spanish o,
-French loss of final vowels, …), and the context-free transducer has no cheap way to say "the
-vowels changed regularly": a per-edge rule could, but the spike-and-slab prior expects three rules
-per edge where a real edge carries dozens. So the cheapest explanations are "short root, each
-daughter inserts its own vowels" (λ free) or "replaced" (λ fixed). Three things in the roadmap
-address exactly this, now with a measured cost of their absence: a phonotactic innovation prior in
-place of flat G; per-edge rule budgets that scale with what real edges carry, with the rules
-conditioned on context; and λ fitted on reference families under a constraint that keeps the
-insertion rate per slot linguistic. None of the §8 results depend on it — the simulator never
-generates data of this kind — but no real-data claim is possible before it.
+### Innovation prior G (2026-11-05)
+
+`events.py` now holds G as a length table times a segment unigram: `G(y) = G_LEN[|y|] ∏ G_SEG[y_i]`.
+The plan's flat G (uniform length 2–6, uniform segments, soft floor −40 − 8/segment outside) is the
+default and draws from the same RNG stream as before, so every seeded dataset above is unchanged.
+`set_G(len_logp, seg_logp)` installs another; `fit_G(forms)` an add-½ smoothed unigram and add-1
+length histogram of a wordlist; `random_G(seed)` a Dirichlet draw for consistency tests;
+`MASSCOMP_G = flat | random:<seed> | <json from save_G>` selects one per process (diag knob `g`).
+The lattice takes the tables as arguments and stays exact: the segment weight is paid at emission
+and the length weight at the terminal, so a unigram × length G costs nothing over the flat one
+(`tests/test_phonotactic_g.py`: lattice vs brute force and the candidate Gibbs move vs enumeration
+under a random non-flat G). A bigram G would need an MH correction on top of the lattice proposal;
+not done.
+
+Why the simple form first: the Romance degeneracy argument above is about the *level* of the
+innovation cost (3.7 nats per segment makes "replace" dear and "short root + insertions" cheap);
+a unigram over the daughters' own segment frequencies brings a typical 5-segment form from −19 to
+about −13 nats, which is the correction that matters, and it does so without any claim about which
+sequences are words. The Geweke restart battery under two random non-flat G's (`MASSCOMP_G=random:3`,
+`random:11`; eight cells, full and latent-move modes) and the Romance probe with G fitted to the
+daughters' other concepts are in the cloud; results below when in.
 
 ### Pre-v3 notes (kept for the record)
 
