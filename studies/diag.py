@@ -168,5 +168,7 @@ if __name__ == "__main__":
         print("\n".join(result["summary"]))
     elif kind == "realdata_lbf":
         print(result["summary"])
+        for i, e in enumerate(result["estimates"]):          # per-stone terms, bottom first, so a job log carries the split
+            print(f"STONES rep{i} {e.get('trace', {}).get('direction', 'down')}: " + " ".join(f"{t:+.2f}" for t in e["terms"]))
     else:
         print(f"{result['secs_per_sweep']*1000:.0f} ms/sweep; ESS/s:", {k: round(v, 3) for k, v in result["ess_per_sec"].items()}, "root change rate", result["root_change_rate"])
