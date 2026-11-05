@@ -338,7 +338,7 @@ class _Alpha1Record:
         self.borrow_from = {}
         self.t_root = []; self.omega = []; self.lam = []
         self.root_forms = {c: {} for c in range(st.M)}
-        self.fam_forms = {(v, c): {} for v in f.children[f.roots[0]] for c in range(st.M)}
+        self.fam_forms = {(v, c): {} for v in f.children[f.join_root] for c in range(st.M)}
 
     def add(self):
         st = self.s.st; f = st.f
@@ -352,7 +352,7 @@ class _Alpha1Record:
                     key = (e, st.donor[(e, c)])
                     self.borrow_from[key] = self.borrow_from.get(key, 0) + 1
         self.t_root.append(st.theta.t_root); self.omega.append(st.theta.omega); self.lam.append(st.theta.lam.copy())
-        R = f.roots[0]
+        R = f.join_root
         for c in range(st.M):
             y = st.y[(R, c)]; d = self.root_forms[c]; d[y] = d.get(y, 0) + 1
             for v in f.children[R]:

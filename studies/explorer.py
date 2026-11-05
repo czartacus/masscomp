@@ -18,10 +18,12 @@ def load_inputs(paths):
     pairs = []
     for p in paths:
         d = json.load(open(p))
-        if d.get("study") == "diag":
+        if d.get("study") == "diag" and "cells" in d:          # a merged battery
             for c in d.get("cells", []):
                 if c.get("kind") == "realdata_lbf":
                     r = dict(c["result"]); r["source"] = os.path.basename(p); pairs.append(r)
+        elif d.get("study") == "diag" and d.get("kind") == "realdata_lbf":   # one cell
+            r = dict(d["result"]); r["source"] = os.path.basename(p); pairs.append(r)
         elif "lbf_mean" in d:
             d["source"] = os.path.basename(p); pairs.append(d)
     return pairs
@@ -40,7 +42,7 @@ def build(pairs, out_path, note=""):
     land = json.load(open(LAND))
     fams = {}
     for r in pairs:
-        for name, sub in r["config"]["families"]:
+        for name, sub in list(r["config"]["families"]) + list(r["config"].get("donors") or []):
             if name in fams:
                 continue
             ls = []
@@ -420,16 +422,22 @@ function drawTree(p) {
   for (const x of ests) for (const [k, v] of Object.entries(x.borrow || {})) bor[k] = (bor[k] || 0) + v / ests.length;
   const tr = meanOf(ests.map(e => e.t_root).filter(v => v != null)) ?? 1.0;
   const roots = []; for (let v = 0; v < n; v++) if (T.parent[v] < 0) roots.push(v);
-  const R = roots[0];
+  // the joined root is the one outside every family; other roots are donor families, drawn below it
+  const R = roots.find(v => (T.family[v] ?? -1) < 0) ?? roots[0];
+  const donorRoots = roots.filter(v => v !== R);
   const children = {}; for (let v = 0; v < n; v++) children[v] = [];
   for (let v = 0; v < n; v++) if (T.parent[v] >= 0) children[T.parent[v]].push(v);
   const len = (v) => (T.parent[v] === R ? tr : T.length[v]);
-  const depth = {}; depth[R] = 0;
-  const order = [R]; for (let i = 0; i < order.length; i++) for (const c of children[order[i]]) { depth[c] = depth[order[i]] + len(c); order.push(c); }
+  const depth = {}; const order = [];
+  const visit = (v) => { order.push(v); for (const c of children[v]) { depth[c] = depth[v] + len(c); visit(c); } };   // pre-order: each family's leaves stay together
+  for (const r of [R, ...donorRoots]) { depth[r] = 0; visit(r); }
   const leaves = order.filter(v => children[v].length === 0);
-  const W = 560, H = 360, ml = 24, mr = 118, mt = 26, mb = 20;
+  const nDonorLeaves = leaves.filter(v => { let u = v; while (T.parent[u] >= 0) u = T.parent[u]; return u !== R; }).length;
+  const W = 560, H = 360 + (donorRoots.length ? 30 + 22 * nDonorLeaves : 0), ml = 24, mr = 118, mt = 26, mb = 20;
+  svg.attr("viewBox", `0 0 ${W} ${H}`);
   const x = d3.scaleLinear().domain([0, d3.max(leaves, v => depth[v])]).range([ml, W - mr]);
-  const y = {}; leaves.forEach((v, i) => y[v] = mt + (i + 0.5) * (H - mt - mb) / leaves.length);
+  const y = {}; let slot = 0;
+  leaves.forEach((v) => { let u = v; while (T.parent[u] >= 0) u = T.parent[u]; if (u !== R && slot === leaves.length - nDonorLeaves) slot += 1; y[v] = mt + (slot + 0.5) * (H - mt - mb) / (leaves.length + (donorRoots.length ? 1 : 0)); slot += 1; });
   const post = order.slice().reverse(); for (const v of post) if (children[v].length) y[v] = d3.mean(children[v], c => y[c]);
   const g = svg.append("g");
   const col = { inherit: css("--for"), replace: css("--against"), borrow: css("--borrow") };
@@ -447,11 +455,12 @@ function drawTree(p) {
   }
   for (const v of order) {
     const name = T.names[String(v)]; const isLeaf = children[v].length === 0;
-    let label = isLeaf ? (DATA.languages[name] ? DATA.languages[name].name : name) : (v === R ? "joined root" : (name && name.includes("/") ? "" : famLabel(name)));
+    let label = isLeaf ? (DATA.languages[name] ? DATA.languages[name].name : name) : (v === R ? "joined root" : (name && name.includes("/") ? "" : famLabel(name) + (donorRoots.includes(v) ? " (donor, not joined)" : "")));
     if (isLeaf) label = label.replace(/\s*\(.*\)$/, "");
     g.append("circle").attr("cx", x(depth[v])).attr("cy", y[v]).attr("r", isLeaf ? 3 : 3.5).attr("fill", isLeaf ? css("--ink") : css("--panel")).attr("stroke", css("--ink")).attr("stroke-width", 1.2);
-    if (label) g.append("text").attr("class", "nlab").attr("x", x(depth[v]) + (isLeaf ? 8 : (v === R ? 0 : -8))).attr("y", y[v] + (isLeaf ? 4.5 : -10))
-      .attr("text-anchor", isLeaf ? "start" : (v === R ? "start" : "end")).text(label);
+    const atRoot = v === R || donorRoots.includes(v);
+    if (label) g.append("text").attr("class", "nlab").attr("x", x(depth[v]) + (isLeaf ? 8 : (atRoot ? 0 : -8))).attr("y", y[v] + (isLeaf ? 4.5 : (atRoot ? 16 : -10)))
+      .attr("text-anchor", isLeaf ? "start" : (atRoot ? "start" : "end")).text(label);
   }
   // borrowing arrows: key "e<-d"
   const defs = svg.append("defs");

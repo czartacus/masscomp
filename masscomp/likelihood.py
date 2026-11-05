@@ -29,8 +29,8 @@ class State:
         self.event = dict(event) if event else {}
         self.donor = dict(donor) if donor else {}
         self.cands = {e: self.f.donor_candidates(e) for e in self.f.edges}
-        self.joined = len(self.f.roots) == 1 and self.f.family[self.f.roots[0]] == -1
-        self.root_edges = list(self.f.children[self.f.roots[0]]) if self.joined else []
+        self.joined = self.f.join_root is not None
+        self.root_edges = list(self.f.children[self.f.join_root]) if self.joined else []
         self.root_edge_set = set(self.root_edges)
         # Join temperature (marglik.join_path): the inherit / borrow terms of the root edges are
         # [term]^alpha [G(child)]^(1-alpha). At alpha = 1 this is H1; at alpha = 0 the family roots are

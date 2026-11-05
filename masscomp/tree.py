@@ -21,6 +21,9 @@ class Forest:
     def __post_init__(self):
         n = len(self.parent)
         self.roots = [v for v in range(n) if self.parent[v] < 0]
+        # the joining root of H1 (family -1), if any; other roots are family roots of separate trees
+        # (H0's families, or donor families that are never joined)
+        self.join_root = next((v for v in self.roots if self.family[v] < 0), None)
         self.children = {v: [] for v in range(n)}
         for v in range(n):
             if self.parent[v] >= 0:
@@ -97,7 +100,7 @@ def benchmark_a(related=False, t_root=1.5):
 def with_root_length(forest, t_root):
     """Return a copy of a joined forest with the root edges set to t_root."""
     length = list(forest.length)
-    R = forest.roots[0]
+    R = forest.join_root
     for c in forest.children[R]:
         length[c] = t_root
     return Forest(list(forest.parent), length, list(forest.family), list(forest.leaves), names=dict(forest.names))

@@ -27,7 +27,7 @@ class Sampler:
                              # inference and for the stepping stone, = beta in full-tempering PT (mixing only)
         y, event, donor = {}, {}, {}
         f = ds.forest
-        if len(f.roots) == 1 and f.family[f.roots[0]] == -1:
+        if f.join_root is not None:
             # the sampler owns its own copy of the forest; the root-edge length is a parameter
             from dataclasses import replace
             ds = replace(ds, forest=with_root_length(f, theta.t_root))

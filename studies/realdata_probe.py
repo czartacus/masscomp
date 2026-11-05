@@ -30,11 +30,14 @@ PROTO = "lat"
 FAMILIES = [("ibero", (("spa", "por"), "cat")), ("italo", (("ita", "fra"), "ron"))]
 
 
-def build_forest(families, len_edge):
-    """Joined root 0; family roots 1..F; then each family's subtree. A nested tuple is an internal
-    node; every leaf sits at depth len_edge below its family root (internal edges split it in half)."""
-    F = len(families)
-    parent = [-1] + [0] * F; length = [0.0] + [1.0] * F; family = [-1] + list(range(F)); leaves = []; names = {}
+def build_forest(families, len_edge, donors=()):
+    """The joined families under one root R (family roots are R's children); every leaf sits at depth
+    len_edge below its family root (a nested tuple is an internal node; internal edges split the budget
+    in half). `donors` are families that are never joined: each is a separate tree of the forest, built
+    first so that its nodes precede the joined families in the breadth-first order that
+    Forest.donor_candidates uses, and so can be borrowed from at every level, the family roots included.
+    A donor given as a bare language name is a root with that one leaf."""
+    parent, length, family, leaves, names = [], [], [], [], {}
 
     def add(sub, par, fi, budget):
         v = len(parent)
@@ -45,10 +48,23 @@ def build_forest(families, len_edge):
         else:
             parent.append(par); length.append(budget); family.append(fi); leaves.append(v); names[v] = sub
 
-    for fi, (fname, sub) in enumerate(families):
-        names[1 + fi] = fname
-        for s in sub:
-            add(s, 1 + fi, fi, len_edge)
+    def subtree(sub):
+        return sub if isinstance(sub, tuple) else (sub,)
+
+    fi = 0
+    for dname, sub in donors:                       # each donor: its root, then its subtree
+        r = len(parent); parent.append(-1); length.append(0.0); family.append(fi); names[r] = dname
+        for s in subtree(sub):
+            add(s, r, fi, len_edge)
+        fi += 1
+    R = len(parent)                                 # the joined root, then the family roots 1..F below it, then the subtrees
+    parent.append(-1); length.append(0.0); family.append(-1)
+    first = fi
+    for fname, _ in families:
+        r = len(parent); parent.append(R); length.append(1.0); family.append(fi); names[r] = fname; fi += 1
+    for k, (fname, sub) in enumerate(families):
+        for s in subtree(sub):
+            add(s, R + 1 + k, first + k, len_edge)
     return Forest(parent, length, family, leaves, names=names)
 
 
@@ -164,7 +180,7 @@ def probe(p):
     else:
         runs = [_chain(j) for j in jobs]
     chains = [r[0] for r in runs]
-    R = f.roots[0]; fam_roots = list(f.children[R])
+    R = f.join_root; fam_roots = list(f.children[R])
     per_chain = []
     for out, secs, acc in runs:
         lam = np.array([o["lam"] for o in out]); kinds = {}
