@@ -801,7 +801,22 @@ exactly the look-alikes long-range comparison has always cited — *quién* ~ *k
 chance-resemblance control is 10–20 nats, with a hysteresis bracket of 10–20 nats on each. Mass
 comparison with this machinery finds Indo-European, and it also finds Nostratic. The rule-budget
 battery (κ = 30, context rules on; the Grimm's-law test) and the Latin-in-tree battery are in the
-cloud on the same protocol. (`diag_42043900602.json`, the same cells on the "top" ladder, is
+cloud on the same protocol.
+
+**The hysteresis is a first-order transition, not a sampling budget (Finnic–Saami, 50 words,
+K = 24 two-sided, local runs).** Tripling the sweeps on the transition stones (`boost=3`) widens the
+cooled/heated bracket rather than closing it (+70.7 against +23.6, from +45.9 / +33.1): with more
+time at each α the cooled chain locks harder and the heated chain stays free longer, i.e. the two
+directions sit in two modes — every family root locked onto the joined root, or every one free —
+separated by a barrier no single-site move crosses, and the mean of the two is the estimate with
+the half-width as its error. Fixing t_root at 1.0 (no t_root move) does not remove it, it moves it:
+the transition shifts to α ≈ 0.5–0.8 and the bracket is +53.6 / +15.5, so the slow variable is the
+latents' collective state (with λ), not the root length. What would cross the barrier is replica
+exchange between the stones of the join path with the transition region dense enough for adjacent
+stones' power variables to overlap, or a per-concept join path (one concept joined at a time, each
+step a short ladder) that never has a collective transition; both are estimator work for the next
+round. For every number here the bracket is reported and the verdicts do not depend on which end is
+taken. (`diag_42043900602.json`, the same cells on the "top" ladder, is
 dominated by its bottom stone — Ibero–Turkic −116 and −147 on two draws — and is kept only as the
 record of why the ladder changed.)
 
