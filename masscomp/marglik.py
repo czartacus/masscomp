@@ -272,7 +272,13 @@ def join_path(ds, theta0, seed, K=16, n_sweeps=1000, burn=300, thin=5, power=2.0
     rng = np.random.default_rng(seed)
     # Delta grows with alpha (the join terms matter most near alpha = 1), so the stones are dense at the
     # top by default: alpha_k = 1 - (1 - k/K)^power; spacing="bottom" is the likelihood path's (k/K)^power
-    alphas = [1.0 - (1.0 - k / K) ** power for k in range(K + 1)] if spacing == "top" else [(k / K) ** power for k in range(K + 1)]
+    if spacing == "both":
+        # dense at both ends: at alpha = 0 the joined root is a free G draw and the root-edge events come
+        # from their prior, so Delta has a huge spread there too (real data: mean -400, sd 240 at the bottom
+        # stone of a "top" ladder, ESS ~1); a two-sided power ladder keeps d * sd(Delta) of order one at both ends
+        alphas = [0.5 * (2 * k / K) ** power if 2 * k <= K else 1.0 - 0.5 * (2 * (K - k) / K) ** power for k in range(K + 1)]
+    else:
+        alphas = [1.0 - (1.0 - k / K) ** power for k in range(K + 1)] if spacing == "top" else [(k / K) ** power for k in range(K + 1)]
     s = Sampler(ds, theta0.copy(), rng, beta=1.0, init_from_prior=init_from_prior)
     assert s.st.joined, "join_path needs the joined (H1) forest"
     terms = [None] * K

@@ -6,7 +6,10 @@ in all six languages; G flat or fitted to the six languages' other concepts.
 Usage: PYTHONPATH=. MASSCOMP_INVENTORY=extended python studies/realdata_lbf.py fam1=ibero,fam2=finnic,n=50,...
   keys: fam1, fam2, n (50), seed (1), K (16), sweeps (600), burn (200), warmup (800), power (2), reps (1),
         g (flat|fit), len_edge (0.3), thin (4), init (copy|prior), concepts (all|basic: Swadesh-100 + Leipzig-Jakarta),
-        donors (none, or DONORS names joined by +: separate trees that are never joined but can be borrowed from)
+        donors (none, or DONORS names joined by +: separate trees that are never joined but can be borrowed from),
+        spacing (top|both: where the ladder is dense; "both" keeps the bottom stone's power variable in range), power (2),
+        direction (down|up|alt: cooled from alpha = 1 or heated from 0; alt = replicates alternate, so a pair brackets
+        the hysteresis of the transition region)
 Also a diag cell: kind=realdata_lbf,fam1=...,fam2=... (studies/diag.py)."""
 import sys, os, time, json
 import numpy as np
@@ -53,12 +56,13 @@ BASIC = """640_i 641_thou 642_he 643_we 637_this 638_that 647_who 646_what 620_n
 
 
 def _estimate(args):
-    ds, th, seed, K, sweeps, burn, thin, warmup, power, init_prior, g_tables = args
+    ds, th, seed, K, sweeps, burn, thin, warmup, power, init_prior, g_tables, spacing, direction = args
     ev.set_G(*g_tables)
     t0 = time.time()
     trace = {}
     val, terms, s = join_path(ds, th, seed, K=K, n_sweeps=sweeps, burn=burn, thin=thin, warmup=warmup, power=power, init_from_prior=init_prior,
-                              trace=trace)
+                              trace=trace, spacing=spacing, direction=direction)
+    trace["direction"] = direction
     from masscomp.data import to_str
     for key in ("root_forms_at1", "fam_forms_at1"):
         trace[key] = {k: [[to_str(form), round(p_, 3)] for form, p_ in v] for k, v in trace.get(key, {}).items()}
@@ -72,7 +76,8 @@ def lbf(p):
     f1, f2 = p["fam1"], p["fam2"]
     K = int(p.get("K", 16)); sweeps = int(p.get("sweeps", 600)); burn = int(p.get("burn", 200)); warmup = int(p.get("warmup", 800))
     power = float(p.get("power", 2.0)); reps = int(p.get("reps", 1)); g_mode = p.get("g", "flat"); len_edge = float(p.get("len_edge", 0.3))
-    thin = int(p.get("thin", 4)); init_prior = p.get("init", "copy") == "prior"
+    thin = int(p.get("thin", 4)); init_prior = p.get("init", "copy") == "prior"; spacing = p.get("spacing", "top")
+    direction = p.get("direction", "down")
     concept_set = p.get("concepts", "all")                      # all | basic (BASIC above)
     donors = [(d, DONORS[d]) for d in p.get("donors", "").replace("+", ",").split(",") if d]
     families = [(f1, FAMILIES[f1]), (f2, FAMILIES[f2])]
@@ -101,7 +106,8 @@ def lbf(p):
     jobs = []
     for r in range(reps):
         th = sample_theta(f, M, np.random.default_rng(seed * 100 + r))
-        jobs.append((ds, th, seed * 1000 + r, K, sweeps, burn, thin, warmup, power, init_prior, (ev.G_LEN_RAW.copy(), ev.G_SEG.copy())))
+        jobs.append((ds, th, seed * 1000 + r, K, sweeps, burn, thin, warmup, power, init_prior, (ev.G_LEN_RAW.copy(), ev.G_SEG.copy()), spacing,
+                     ("down" if r % 2 == 0 else "up") if direction == "alt" else direction))
     t0 = time.time()
     if N_PROCS > 1 and reps > 1:
         from concurrent.futures import ProcessPoolExecutor
@@ -119,7 +125,7 @@ def lbf(p):
                             reps=reps, g=g_mode, len_edge=len_edge, init="prior" if init_prior else "copy", inventory_size=N_SEG,
                             lam_sd=ev.LAM_SD, lam_min=[None if not np.isfinite(x) else float(x) for x in ev.LAM_MIN],
                             u_context=ev.U_CONTEXT, u_rules=ev.U_RULES, u_per_t=ev.U_PER_T, concepts=concept_set, pool=len(pool),
-                            donors=donors, dropped_for_donors=dropped),
+                            donors=donors, dropped_for_donors=dropped, spacing=spacing, direction=direction),
                 known="related" if key in RELATED else "unrelated", deep=key in DEEP, common_concepts=len(common),
                 lbf_mean=float(np.mean(vals)), lbf_sd=float(np.std(vals)) if reps > 1 else None, estimates=ests, secs=time.time() - t0)
 
@@ -127,7 +133,8 @@ def lbf(p):
 def summary_line(r):
     c = r["config"]
     return (f"{c['fam1']}-{c['fam2']} ({r['known']}{', deep' if r['deep'] else ''}) G={c['g']} n={c['n']}/{c.get('pool', '?')} {c.get('concepts', 'all')}"
-            f"{' donors ' + '+'.join(d for d, _ in c['donors']) if c.get('donors') else ''} K={c['K']}x{c['sweeps']}: "
+            f"{' donors ' + '+'.join(d for d, _ in c['donors']) if c.get('donors') else ''} K={c['K']}x{c['sweeps']}"
+            f"{' ' + c['spacing'] + '^' + str(c['power']).rstrip('0').rstrip('.') if c.get('spacing', 'top') != 'top' or c.get('power', 2) != 2 else ''}: "
             f"LBF {r['lbf_mean']:+.1f}" + (f" sd {r['lbf_sd']:.1f}" if r['lbf_sd'] is not None else "") +
             f"  [{', '.join(f'{e['lbf']:+.1f}' for e in r['estimates'])}] t_root_end {[round(e['t_root_end'], 2) for e in r['estimates']]} ({r['secs']:.0f}s)")
 
