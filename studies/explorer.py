@@ -77,7 +77,8 @@ def build(pairs, out_path, note=""):
     return len(recs)
 
 
-TEMPLATE = r'''<title>Masscomp Evidence Atlas</title>
+TEMPLATE = r'''<meta charset="utf-8">
+<title>Masscomp Evidence Atlas</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gentium+Plus:ital,wght@0,400;0,700;1,400&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
 <style>
@@ -196,7 +197,7 @@ select:focus-visible, button:focus-visible, .arc:focus-visible { outline: 2px so
       <label for="pairsel">Pair <select id="pairsel"></select></label>
       <span class="muted" id="bandnote"></span>
     </div>
-    <div class="scroll"><svg id="line" class="line" viewBox="0 0 1140 120" role="img" aria-label="Log Bayes factors of all pairs"></svg></div>
+    <div class="scroll"><svg id="line" class="line" viewBox="0 0 1140 140" role="img" aria-label="Log Bayes factors of all pairs"></svg></div>
   </section>
 
   <section id="dossier" class="wrap" style="gap:18px">
@@ -252,17 +253,17 @@ const SETS = Object.keys(byKey).sort((a, b) => (a === "all" ? -1 : b === "all" ?
 const pairsOf = (s) => Object.values(byKey[s] || {}).sort((a, b) => b.lbf - a.lbf);
 const bandOf = (s) => {
   const un = pairsOf(s).filter(p => p.known === "unrelated").map(p => p.lbf);
-  return { unrelated: un, tau: un.length ? d3.quantile(un.slice().sort(d3.ascending), 0.99) : null, lo: un.length ? d3.min(un) : null };
+  return { unrelated: un, tau: un.length ? d3.quantile(un.slice().sort(d3.ascending), 0.99) : null, lo: un.length ? d3.min(un) : null, hi: un.length ? d3.max(un) : null };
 };
 const state = { set: SETS[0], sel: null };
-let PAIRS = pairsOf(state.set), BAND = bandOf(state.set), unrelated = BAND.unrelated, tau = BAND.tau, lo = BAND.lo;
+let PAIRS = pairsOf(state.set), BAND = bandOf(state.set), unrelated = BAND.unrelated, tau = BAND.tau, lo = BAND.lo, hi = BAND.hi;
 state.sel = PAIRS.length ? PAIRS[0] : null;
 const counterpart = (p) => { for (const s of SETS) if (s !== state.set && byKey[s][pairKey(p)]) return byKey[s][pairKey(p)]; return null; };
 
 function setSet(s) {
   if (!byKey[s]) return;
   const k = state.sel ? pairKey(state.sel) : null;
-  state.set = s; PAIRS = pairsOf(s); BAND = bandOf(s); unrelated = BAND.unrelated; tau = BAND.tau; lo = BAND.lo;
+  state.set = s; PAIRS = pairsOf(s); BAND = bandOf(s); unrelated = BAND.unrelated; tau = BAND.tau; lo = BAND.lo; hi = BAND.hi;
   state.sel = (k && byKey[s][k]) || (PAIRS.length ? PAIRS[0] : null);
   drawSetSwitch(); drawMap(); pairSelect(); drawLine(); drawDossier();
 }
@@ -277,7 +278,7 @@ function drawSetSwitch() {
   }
 }
 
-function arcClass(p) { if (tau != null && p.lbf <= tau) return "null"; return p.lbf > 0 ? "for" : "against"; }
+function arcClass(p) { if (hi != null && p.lbf <= hi) return "null"; return p.lbf > 0 ? "for" : "against"; }
 function arcColor(p) { const c = arcClass(p); return c === "null" ? css("--null") : (c === "for" ? css("--for") : css("--against")); }
 
 // ---------- map ----------
@@ -344,16 +345,16 @@ function hideTip() { document.getElementById("tip").hidden = true; }
 // ---------- number line ----------
 function drawLine() {
   const svg = d3.select("#line"); svg.selectAll("*").remove();
-  const W = 1140, H = 120, m = { l: 30, r: 30 };
+  const W = 1140, H = 140, m = { l: 30, r: 30 };
   const ext = d3.extent(PAIRS, p => p.lbf); const pad = Math.max(2, (ext[1] - ext[0]) * 0.08);
   const x = d3.scaleLinear().domain([Math.min(ext[0] - pad, -2), Math.max(ext[1] + pad, 2)]).range([m.l, W - m.r]);
   if (tau != null) {
-    svg.append("rect").attr("x", x(lo)).attr("y", 20).attr("width", Math.max(2, x(tau) - x(lo))).attr("height", 60).attr("fill", css("--band"));
-    svg.append("text").attr("x", (x(lo) + x(tau)) / 2).attr("y", 14).attr("text-anchor", "middle").attr("fill", css("--muted")).style("font-size", "11px").text("unrelated pairs");
+    svg.append("rect").attr("x", x(lo)).attr("y", 20).attr("width", Math.max(2, x(hi) - x(lo))).attr("height", 78).attr("fill", css("--band"));
+    svg.append("text").attr("x", (x(lo) + x(hi)) / 2).attr("y", 14).attr("text-anchor", "middle").attr("fill", css("--muted")).style("font-size", "11px").text("unrelated pairs");
   }
-  svg.append("g").attr("class", "axis").attr("transform", `translate(0,82)`).call(d3.axisBottom(x).ticks(10));
-  svg.append("text").attr("x", W - m.r).attr("y", 112).attr("text-anchor", "end").attr("fill", css("--muted")).style("font-size", "11px").text("log Bayes factor, shared ancestor vs separate (nats)");
-  svg.append("line").attr("x1", x(0)).attr("x2", x(0)).attr("y1", 20).attr("y2", 82).attr("stroke", css("--line"));
+  svg.append("g").attr("class", "axis").attr("transform", `translate(0,100)`).call(d3.axisBottom(x).ticks(10));
+  svg.append("text").attr("x", W - m.r).attr("y", 132).attr("text-anchor", "end").attr("fill", css("--muted")).style("font-size", "11px").text("log Bayes factor, shared ancestor vs separate (nats)");
+  svg.append("line").attr("x1", x(0)).attr("x2", x(0)).attr("y1", 20).attr("y2", 100).attr("stroke", css("--line"));
   // the same pair on the other concept set: a hollow marker joined to the active one, so the shift reads directly
   let ghosts = 0;
   const gg = svg.append("g");
@@ -365,15 +366,16 @@ function drawLine() {
   // stagger labels
   const sorted = PAIRS.slice().sort((a, b) => a.lbf - b.lbf);
   const g = svg.append("g");
+  const rowY = [-14, 22, -28, 36], rowLast = [-1e9, -1e9, -1e9, -1e9], minGap = 64;
   sorted.forEach((p, i) => {
     const gx = g.append("g").datum(p).attr("class", "pair").attr("transform", `translate(${x(p.lbf)},50)`).on("click", (ev, d) => select(d)).on("mousemove", (ev, d) => showTipLine(ev, d)).on("mouseleave", hideTip);
     gx.append("circle").attr("r", state.sel === p ? 7 : 5).attr("fill", arcColor(p)).attr("stroke", state.sel === p ? css("--ink") : css("--panel")).attr("stroke-width", 1.5);
     if (p.deep) gx.append("circle").attr("r", 9).attr("fill", "none").attr("stroke", arcColor(p)).attr("stroke-dasharray", "1 3");
-    const up = i % 2 === 0;
-    gx.append("text").attr("class", "plab").attr("y", up ? -14 : 22).attr("text-anchor", "middle").text(`${famLabel(p.fam1).slice(0, 5)}–${famLabel(p.fam2).slice(0, 5)}`);
+    let row = rowY.findIndex((_, r) => x(p.lbf) - rowLast[r] >= minGap); if (row < 0) row = i % rowY.length; rowLast[row] = x(p.lbf);
+    gx.append("text").attr("class", "plab").attr("y", rowY[row]).attr("text-anchor", "middle").text(`${famLabel(p.fam1).slice(0, 5)}–${famLabel(p.fam2).slice(0, 5)}`);
   });
   const other = SETS.find(s => s !== state.set);
-  document.getElementById("bandnote").textContent = (tau != null ? `Noise band: ${unrelated.length} known-unrelated pairs span ${fmt(lo)} to ${fmt(d3.max(unrelated))} nats (99th percentile ${fmt(tau)}).` : "")
+  document.getElementById("bandnote").textContent = (tau != null ? `Noise band: ${unrelated.length} known-unrelated pairs span ${fmt(lo)} to ${fmt(hi)} nats.` : "")
     + (ghosts ? ` Hollow markers: the same pair on ${setLabel(other).toLowerCase()}.` : "");
 }
 function showTipLine(ev, p) { const t = document.getElementById("tip"); const r = document.querySelector("#map").getBoundingClientRect(); showTip(ev, p); t.style.top = (ev.clientY - r.top + 14) + "px"; }
@@ -397,7 +399,7 @@ function drawDossier() {
   const tr = meanOf(ests.map(e => e.t_root).filter(v => v != null));
   const om = meanOf(ests.map(e => e.omega).filter(v => v != null));
   const q = counterpart(p);
-  const qcls = q ? (() => { const b = bandOf(q.cset || "all"); return b.tau != null && q.lbf <= b.tau ? "null" : (q.lbf > 0 ? "for" : "against"); })() : "";
+  const qcls = q ? (() => { const b = bandOf(q.cset || "all"); return b.hi != null && q.lbf <= b.hi ? "null" : (q.lbf > 0 ? "for" : "against"); })() : "";
   document.getElementById("stat").innerHTML = `
     <div><div class="big ${cls}">${fmt(p.lbf)}</div><small>log Bayes factor, ${pairName(p)}${p.lbf_sd != null ? ` · replicates ± ${p.lbf_sd.toFixed(1)}` : ""}</small></div>
     <div><div style="font-family:var(--display);font-size:1.3rem">${verdict}</div><small>${p.known === "related" ? (p.deep ? "known to be related, at Indo-European depth" : "known to be related") : "known to be unrelated"} · ${p.n} concepts · G ${p.g === "fit" ? "fitted to the daughters" : "flat"}</small></div>

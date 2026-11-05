@@ -604,9 +604,52 @@ items (135 mapped onto NorthEuraLex; 125–135 available per pair), the vocabula
 full-list battery (11 pairs: three known related within a family, two Indo-European pairs at
 Proto-Indo-European depth, six not known to be related, of which Turkic–Mongolic is the contested
 Altaic case and is scored as unrelated; plus two flat-G controls) and the same 11 pairs on basic
-vocabulary are in the cloud; both are reported here when in, and the atlas is rebuilt from
-them. The donor families themselves (Latin is in the data) are the second remedy — in the forest,
-"shared from Latin" becomes a borrowing path the model can take — and are next.
+vocabulary ran as `diag_42005522205.json` and `diag_42017391267.json` (K = 16 × 600, two
+replicates, 50 concepts, fitted G, extended inventory; the same seed draws the same 50 words within
+a concept set):
+
+| pair | known | log BF, full list (2 replicates) | log BF, basic vocabulary (2 replicates) |
+|---|---|---|---|
+| Germanic – Nordic | related | +53.5 (+56.9, +50.0) | **+89.3** (+91.9, +86.8) |
+| Ibero – Italo-Romance | related | +39.5 (+41.5, +37.5) | **+70.4** (+75.6, +65.3) |
+| Finnic – Saami | related | +33.9 (+33.2, +34.6) | **+45.5** (+33.0, +57.9) |
+| Ibero – Germanic | related, PIE depth | +16.8 (+13.1, +20.6) | +7.6 (+10.8, +4.4) |
+| Ibero – Slavic | related, PIE depth | +12.2 (+15.3, +9.2) | −17.5 (−32.1, −2.9) |
+| Ibero – Finnic | unrelated | −6.6 (+1.4, −14.6) | −10.0 (−5.3, −14.7) |
+| Ibero – Mongolic | unrelated | −8.4 (−5.5, −11.4) | −29.4 (−16.0, −42.8) |
+| Germanic – Finnic | unrelated | −9.9 (−0.3, −19.5) | −18.5 (−11.7, −25.3) |
+| Turkic – Mongolic | contested (Altaic) | −12.3 (−18.9, −5.7) | −7.4 (−11.2, −3.5) |
+| Ibero – Turkic | unrelated | −12.5 (−3.3, −21.8) | −8.8 (−3.1, −14.4) |
+| Finnic – Turkic | unrelated | −22.0 (−12.7, −31.3) | −6.7 (−8.0, −5.4) |
+| Ibero – Finnic, flat G | unrelated | +143.5 (+145.2, +141.7) | — |
+| Ibero – Italo-Romance, flat G | related | +113.9 (+139.0, +88.7) | — |
+
+Every pair known to be related within a family is far above every pair known not to be, on both
+lists; every unrelated pair is negative on the mean on both lists (worst single replicate +1.4, on
+the full list), and Turkic–Mongolic sits among the unrelated pairs. The flat-G controls say why the
+phonotactic prior is not optional on real data: under the plan's flat G the *unrelated* Ibero–Finnic
+pair scores +143, because a new word is so dear that sharing any root and editing it heavily beats
+two independent draws.
+
+The two lists disagree exactly where a linguist would expect, and the per-concept attribution says
+why. On basic vocabulary the within-family evidence roughly doubles (basic vocabulary is where the
+cognates are: Germanic–Nordic's top words become *blood, swim, wind, bite, wing, we*, from *creep,
+price, wait, fingernail* on the full list), while the two Proto-Indo-European-depth pairs lose the
+words that carried them on the full list, which are loans in every case: Ibero–Germanic's +16.8
+rested on *family* (+10.9; Latin *familia* in German and English), *figure* (+5.7; Latin *figura*),
+*grey* (+4.4; Romance *gris* is a Germanic loan), *north* (+3.1; Romance *norte* from Germanic),
+*boat* (+1.7), and Ibero–Slavic's +12.2 on *figure* (+11.3) and *master* (+2.8) alone. What remains
+on basic vocabulary is the real thing or nothing: Ibero–Germanic keeps +7.6 from *wind* (+4.1;
+Latin *ventus* ~ *wind*), *salt* (+1.9), *thou* (+1.1; *tu* ~ *du*), *fish*, *nose*, *star* — Indo-
+European cognates, with one loan (*mountain*, English from French) — and Ibero–Slavic keeps only
+*thou* (+2.7) and *I* (+0.8) and falls to −17.5. So the prototype, on basic vocabulary, detects one
+of the two PIE-depth pairs marginally (+7.6 against a null band whose six members span −6.7 to
+−29.4, with replicate sds of 1–13) and misses the other, which is about what the simulator's
+horizon (12.3) led us to expect; on the full list it "detects" both with borrowed vocabulary. Basic
+vocabulary is the protocol from here, and the attribution trace is the audit that makes a positive
+result readable. The donor families (Latin is in the data) are the second remedy — in the forest,
+"shared from Latin" becomes a borrowing path the model can take — and their battery is in the
+cloud.
 
 ### Pre-v3 notes (kept for the record)
 
