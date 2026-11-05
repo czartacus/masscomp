@@ -129,8 +129,9 @@ things stand as of 2026-11-05 (the plan's §10 verdict is in the spec, Prototype
 | real data | separates known pairs | NorthEuraLex, 11 family pairs, fitted G, basic vocabulary: related within a family +45 to +89, unrelated −7 to −29; one of two PIE-depth pairs at +7.6; flat G breaks the test (+143 on an unrelated pair) | Real-data relationship tests |
 
 Protocol for real data from here: the extended inventory, G fitted to the languages' other concepts,
-λ free, basic vocabulary, the join-path estimator at K = 24 (single replicates) or K = 16 in pairs,
-donor families in the forest for known contact sources, and the per-word attribution as the audit.
+λ free, basic vocabulary, the join-path estimator on the two-sided ladder (`spacing=both,power=3`,
+K = 24, replicates cooled and heated), donor families in the forest for known contact sources that
+are not ancestors, attested older stages inside the tree, and the per-word attribution as the audit.
 
 ### Model change on 2026-11-02: cross-family borrowing donors, collapsed u move
 
@@ -735,8 +736,30 @@ the ancestor removes the evidence, as it should under this model's definition of
 the right structure for Latin is in the tree, as an attested older stage (the `romlat` family, in
 the cloud). Second, several donor cells have replicate sds of 12–32 nats where the same pairs
 without donors had 1–13 (Finnic–Saami +0.4 / +64.5, Finnic–Turkic −52.5 / +1.5), on pairs where
-Latin is irrelevant; the merged traces will say whether that is the estimator's bottom stones or
-the sampler, and until then the donor numbers are indicative, not protocol.
+Latin is irrelevant. Per-stone diagnostics on Finnic–Saami (below) show where this comes from, and
+it is not specific to donors.
+
+**The ladder on real data (per-stone diagnostics, Finnic–Saami, 50 basic words).** On the "top"
+ladder (α_k = 1 − (1 − k/K)², dense at α = 1) the bottom stone is broken on real data: at α = 0 the
+joined root is a free G draw and the root-edge events come from their prior, so Δ there has mean
+−370 to −660 with sd 240–260 (two root edges × 50 concepts × a random inherit term), and the first
+stone's log-mean-exp, over an interval of 0.23 (K = 8), 0.12 (K = 16) or 0.08 (K = 24), is estimated
+from one effective sample (ESS 1.0–1.4; term −27 to −57, different on every replicate). The
+simulation studies never saw this because M = 25 short forms keep Δ ten times smaller. A
+**two-sided ladder** (`spacing=both`, α_k = ½(2k/K)^p mirrored at the top; `power=3`, K = 24)
+puts stones at 0.0003, 0.002, 0.008, 0.02, … and keeps d·sd(Δ) of order one at the bottom: every
+bottom stone then has ESS 12–25 and the bottom region sums to −12.5 and −13.0 on two seeds — a real
+part of the LBF (the Occam cost of H1's root structure, the reason unrelated pairs sit below zero),
+now measured instead of guessed. What remains is **hysteresis in the transition** (α ≈ 0.8–0.95),
+where the family roots lock onto the joined root concept by concept and the chain, cooled from
+α = 1 with 150 sweeps per stone, carries its state down: two seeds give +46 and +86 on the same
+data with every bottom stone agreeing and stones 15–18 contributing 34 against 69 (ESS 1.4–7).
+That is the sampler's mixing in a phase-change region, not the ladder; `direction=alt` runs the two
+replicates cooled and heated so the pair brackets it, and more sweeps per stone there are the cure.
+Every real-data number above was estimated on the "top" ladder: the separations stand (the bottom
+stone's noise is the same for every pair), the values carry an extra 10–30 nats of noise, and the
+protocol from here is `spacing=both,power=3,K=24,direction=alt`. The 130-word deep-pair battery, the
+rule-budget battery (κ = 30, context rules on) and the Latin-in-tree battery run on it.
 
 ### Pre-v3 notes (kept for the record)
 
