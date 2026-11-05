@@ -20,6 +20,10 @@ if study == "diag":
             digest.append(dict(spec=c["spec"], ned=r["ned"], root_len_ratio=r["root_len_ratio"], fam_root_len_ratio=r["fam_root_len_ratio"],
                                t_root=[pc["t_root"] for pc in r["per_chain"]], omega=[pc["omega"] for pc in r["per_chain"]],
                                lam=[pc["lam"] for pc in r["per_chain"]], mean_logp_latin_root=r["mean_logp_latin_root"], secs=c["secs"]))
+        elif c["kind"] == "realdata_lbf":
+            r = c["result"]
+            digest.append(dict(spec=c["spec"], pair=f"{r['config']['fam1']}-{r['config']['fam2']}", known=r["known"], deep=r["deep"],
+                               lbf_mean=r["lbf_mean"], lbf_sd=r["lbf_sd"], estimates=[e["lbf"] for e in r["estimates"]], secs=c["secs"]))
         elif c["kind"] == "essrate":
             r = c["result"]
             digest.append(dict(spec=c["spec"], ms_per_sweep=1000 * r["secs_per_sweep"], root_change_rate=r["root_change_rate"],

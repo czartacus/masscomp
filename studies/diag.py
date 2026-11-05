@@ -150,6 +150,9 @@ if __name__ == "__main__":
     elif kind == "realdata":
         from studies.realdata_probe import probe, summary_lines
         result = probe(p); result["summary"] = summary_lines(result)
+    elif kind == "realdata_lbf":
+        from studies.realdata_lbf import lbf, summary_line
+        result = lbf(p); result["summary"] = summary_line(result)
     else:
         raise SystemExit(f"unknown kind {kind}")
     rec = dict(study="diag", kind=kind, spec=spec, params=p, env=env, git=git_sha(), secs=time.time() - t0, result=result)
@@ -163,5 +166,7 @@ if __name__ == "__main__":
         print(result.get("moves")); print("max |z| (ess>=20):", result.get("max_abs_z"))
     elif kind == "realdata":
         print("\n".join(result["summary"]))
+    elif kind == "realdata_lbf":
+        print(result["summary"])
     else:
         print(f"{result['secs_per_sweep']*1000:.0f} ms/sweep; ESS/s:", {k: round(v, 3) for k, v in result["ess_per_sec"].items()}, "root change rate", result["root_change_rate"])
