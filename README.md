@@ -756,9 +756,21 @@ where the family roots lock onto the joined root concept by concept and the chai
 data with every bottom stone agreeing and stones 15–18 contributing 34 against 69 (ESS 1.4–7).
 That is the sampler's mixing in a phase-change region, not the ladder; `direction=alt` runs the two
 replicates cooled and heated so the pair brackets it, and more sweeps per stone there are the cure.
-Every real-data number above was estimated on the "top" ladder: the separations stand (the bottom
-stone's noise is the same for every pair), the values carry an extra 10–30 nats of noise, and the
-protocol from here is `spacing=both,power=3,K=24,direction=alt`. The 130-word deep-pair battery, the
+Every real-data number above was estimated on the "top" ladder. Splitting each estimate into its
+bottom stone and the rest shows what that cost: the bottom stone ranges from −3 to −87 between
+replicates of the same cell (Finnic–Saami with the Latin donor: −86.5 and −7.6, the rest +86.9 and
++72.1), while **the sum of stones 1 and up agrees across replicates and draws** — within a family
++40 to +133 (Ibero–Italo-Romance with Latin as donor +16 to +22), Ibero–Germanic on basic vocabulary
++6 to +22 (full list +32 to +35), Ibero–Slavic +11 to +21 (full list +20), the unrelated pairs +2 to
++12, except Turkic–Mongolic at +7 to +22. The bottom region's true value, measured on the two-sided
+ladder, is about −12 for a 50-word pair and depends little on the pair (at α = 0 the dummies follow
+their priors whatever the data), so the picture with the bottom region taken as −12 is: within-family
+pairs +30 to +120, the two PIE-depth pairs on basic vocabulary −6 to +10, the unrelated pairs −10 to
+0, and Turkic–Mongolic −5 to +10 — the contested Altaic pair resembles the Proto-Indo-European-depth
+pairs, not the unrelated ones, which is what contact between proto-languages looks like to a model
+with no morphology and no notion of regular correspondence beyond its per-edge rules. The
+separations reported above stand; the deep pairs are at the threshold, and the protocol from here is
+`spacing=both,power=3,K=24,direction=alt,ess_min=8`. The 130-word deep-pair battery, the
 rule-budget battery (κ = 30, context rules on) and the Latin-in-tree battery run on it.
 
 ### Pre-v3 notes (kept for the record)
