@@ -63,11 +63,12 @@ def build(pairs, out_path, note=""):
         ests = []
         for e in r["estimates"]:
             t = e.get("trace", {})
-            ests.append(dict(lbf=e["lbf"], ti_total=t.get("ti_total"), ti_concept=t.get("ti_concept"), loo_concept=t.get("loo_concept"), t_root=t.get("t_root_at1"),
+            ests.append(dict(lbf=e["lbf"], ti_total=t.get("ti_total"), ti_concept=t.get("ti_concept"), loo_concept=t.get("loo_concept"), direction=t.get("direction"), t_root=t.get("t_root_at1"),
                              t_root_sd=t.get("t_root_sd_at1"), omega=t.get("omega_at1"), lam=t.get("lam_at1"), events=t.get("events_at1"),
                              borrow=t.get("borrow_from_at1"), root_forms=t.get("root_forms_at1"), fam_forms=t.get("fam_forms_at1")))
         recs.append(dict(fam1=c["fam1"], fam2=c["fam2"], known=r["known"], deep=r["deep"], g=c["g"], n=c["n"], K=c["K"], sweeps=c["sweeps"],
-                         cset=c.get("concepts", "all"), pool=c.get("pool"), seed=c.get("seed"), donors=[d for d, _ in (c.get("donors") or [])],
+                         cset=(c.get("concepts", "all") + ("_all" if c.get("concepts") == "basic" and c["n"] > 100 else "")),   # the whole basic list is its own set
+                         pool=c.get("pool"), seed=c.get("seed"), donors=[d for d, _ in (c.get("donors") or [])], ladder=f"{c.get('spacing', 'top')}^{c.get('power', 2):g} K{c['K']}",
                          lbf=r["lbf_mean"], lbf_sd=r["lbf_sd"], estimates=ests, concepts=r.get("concepts"), leaf_forms=r.get("leaf_forms"),
                          tree=r.get("tree"), secs=r.get("secs"), source=r.get("source")))
     # several runs of one pair on one concept set (other seeds = other draws of the words, other ladders): the lowest
@@ -79,7 +80,7 @@ def build(pairs, out_path, note=""):
     for key, rs in groups.items():
         rs.sort(key=lambda x: ((x["seed"] or 0), -x["K"]))
         main = rs[0]
-        main["draws"] = [dict(seed=x["seed"], K=x["K"], n=x["n"], lbf=x["lbf"], lbf_sd=x["lbf_sd"], reps=len(x["estimates"])) for x in rs]
+        main["draws"] = [dict(seed=x["seed"], K=x["K"], n=x["n"], lbf=x["lbf"], lbf_sd=x["lbf_sd"], reps=len(x["estimates"]), ladder=x["ladder"]) for x in rs]
         recs.append(main)
     data = dict(generated=datetime.date.today().isoformat(), note=note, languages={k: v for k, v in langs.items()}, families=fams, pairs=recs)
     html = TEMPLATE.replace("__DATA__", json.dumps(data, separators=(",", ":"))).replace("__LAND__", json.dumps(land, separators=(",", ":")))
@@ -252,7 +253,7 @@ const pairName = (p) => `${famLabel(p.fam1)} – ${famLabel(p.fam2)}`;
 
 // one table per concept set (the full list, basic vocabulary); within a set prefer the fitted-G run for a pair and keep flat runs as controls
 const pairKey = (p) => [p.fam1, p.fam2].sort().join("|");
-const SET_LABEL = { all: ["Full list", "1,016 concepts"], basic: ["Basic vocabulary", "Swadesh + Leipzig-Jakarta"] };
+const SET_LABEL = { all: ["Full list", "50 of 1,016 concepts"], basic: ["Basic vocabulary", "50 of Swadesh + Leipzig-Jakarta"], basic_all: ["All basic vocabulary", "every available item, 125–135"] };
 const setLabel = (s) => (SET_LABEL[s] || [s, ""])[0];
 const byKey = {};
 for (const p of DATA.pairs) {
@@ -260,7 +261,8 @@ for (const p of DATA.pairs) {
   byKey[s] = byKey[s] || {};
   if (!byKey[s][k] || (p.g === "fit" && byKey[s][k].g !== "fit")) byKey[s][k] = p;
 }
-const SETS = Object.keys(byKey).sort((a, b) => (a === "all" ? -1 : b === "all" ? 1 : a.localeCompare(b)));
+const SET_ORDER = ["all", "basic", "basic_all"];
+const SETS = Object.keys(byKey).sort((a, b) => (SET_ORDER.indexOf(a) + 99) % 99 - (SET_ORDER.indexOf(b) + 99) % 99 || a.localeCompare(b));
 const pairsOf = (s) => Object.values(byKey[s] || {}).sort((a, b) => b.lbf - a.lbf);
 const bandOf = (s) => {
   const un = pairsOf(s).filter(p => p.known === "unrelated").map(p => p.lbf);
@@ -426,7 +428,7 @@ function drawDossier() {
     ${tr != null ? `<div><div class="big" style="font-size:1.6rem">${tr.toFixed(2)}</div><small>t<sub>root</sub>, length of the join edges (posterior mean)</small></div>` : ""}
     ${om != null ? `<div><div class="big" style="font-size:1.6rem">${om.toFixed(3)}</div><small>&omega;, borrowing rate</small></div>` : ""}`;
   drawTree(p); drawBars(p); drawLogos(p);
-  document.getElementById("footnote").textContent = `${pairName(p)}: ${p.n} concepts drawn from ${p.pool ? p.pool + " available on " : ""}${setLabel(p.cset || "all").toLowerCase()}; ${p.K} stones × ${p.sweeps} sweeps per estimate, ${ests.length} replicate${ests.length > 1 ? "s" : ""}; ${p.source || ""}`;
+  document.getElementById("footnote").textContent = `${pairName(p)}: ${p.n} concepts drawn from ${p.pool ? p.pool + " available on " : ""}${setLabel(p.cset || "all").toLowerCase()}; ${p.K} stones × ${p.sweeps} sweeps per estimate (ladder ${p.ladder || ""}), ${ests.length} replicate${ests.length > 1 ? "s" : ""}${ests.some(e => e.direction) ? " (" + ests.map(e => e.direction || "down").join(" / ") + ")" : ""}; ${p.source || ""}`;
 }
 
 // tree: nodes from the stored forest (parent array), horizontal, root at left
@@ -510,11 +512,12 @@ function contributions(p) {
 }
 function drawBars(p) {
   const svg = d3.select("#bars"); svg.selectAll("*").remove();
-  const rows = contributions(p);
+  let rows = contributions(p); const nAll = rows.length;
+  if (rows.length > 50) rows = rows.slice(0, 40).concat(rows.slice(-6));      // long lists: the 40 largest and the 6 most negative
   const ests = p.estimates.filter(e => e.ti_total != null);
   const kind = attributionKind(p);
   document.getElementById("barsnote").textContent = !rows.length ? "No per-concept trace in this run."
-    : kind === "loo" ? "How much the log Bayes factor falls when the word is left out (the same stepping-stone samples, one word's share of the power variable removed). Marginal contributions: they need not sum to the total. Hover a bar for the daughter forms."
+    : kind === "loo" ? `How much the log Bayes factor falls when the word is left out (the same stepping-stone samples, one word's share of the power variable removed). Marginal contributions: they need not sum to the total.${nAll > rows.length ? ` Of ${nAll} words, the 40 largest and the 6 most negative are shown.` : ""} Hover a bar for the daughter forms.`
     : `Attribution of the evidence to words by thermodynamic integration over the same stones (summing to ${fmt(d3.mean(ests, e => e.ti_total))} nats; a biased total on a coarse ladder, so read the ranking, not the sum). Hover a bar for the daughter forms.`;
   if (!rows.length) return;
   const rh = 17, W = 560, ml = 128, mr = 56, mt = 8, H = mt + rows.length * rh + 24;

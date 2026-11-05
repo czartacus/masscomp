@@ -770,8 +770,40 @@ pairs +30 to +120, the two PIE-depth pairs on basic vocabulary −6 to +10, the 
 pairs, not the unrelated ones, which is what contact between proto-languages looks like to a model
 with no morphology and no notion of regular correspondence beyond its per-edge rules. The
 separations reported above stand; the deep pairs are at the threshold, and the protocol from here is
-`spacing=both,power=3,K=24,direction=alt,ess_min=8`. The 130-word deep-pair battery, the
-rule-budget battery (κ = 30, context rules on) and the Latin-in-tree battery run on it.
+`spacing=both,power=3,K=24,direction=alt,ess_min=8`.
+
+**All basic vocabulary on the two-sided ladder (`diag_42057281462.json`: 127–135 words per pair,
+K = 24 cubic two-sided, 600 sweeps per stone with extension below ESS 8, one replicate cooled from
+α = 1 and one heated from 0).**
+
+| pair | known | log BF (cooled, heated) | bottom region (α ≤ 0.04) | top region (α ≥ 0.9), cooled / heated | words doing the work |
+|---|---|---|---|---|---|
+| Ibero – Germanic | PIE depth | **+24.1** (+31.0, +17.1) | −15.9 / −13.5 | +41 / +21 | horn, salt, wind, night, name, thou, nose, fire; mountain, round (loans) |
+| Ibero – Slavic | PIE depth | **+19.1** (+29.0, +9.2) | −13.7 / −14.3 | +28 / +15 | new, salt, thou, night, full, seed, white, fly |
+| Ibero – Finnic | unrelated | +7.5 (+15.5, −0.6) | −12.5 / −14.4 | +26 / +14 | who (*quién* ~ *ken*), seed, name (*nombre* ~ *nimi*), neck, woman |
+| Slavic – Finnic | unrelated | +3.7 (+7.4, +0.1) | −13.7 / −13.1 | +19 / +11 | we, leaf, bark, fly, salt, name |
+| Germanic – Slavic | PIE depth | −7.1 (−5.1, −9.1) | −14.2 / −16.8 | +7 / +8 | salt, two, water, nail, not |
+| Ibero – Turkic | unrelated | −7.1 (−9.1, −5.1) | −15.2 / −13.3 | +6 / +7 | who, he, red |
+| Germanic – Finnic | unrelated | −9.2 (−8.9, −9.4) | −13.1 / −14.3 | +4.5 / +5 | name |
+
+The ladder now behaves: the bottom region is −12.5 to −16.8 on every pair and both directions
+(the Occam cost of the join, now measured), and the whole replicate spread sits in the top region,
+cooled above heated wherever something locks (hysteresis: +41 against +21, +28 against +15, +26
+against +14), nothing where nothing does (Germanic–Finnic 4.5 / 5.1). With 130 words the two
+Ibero-Romance pairs at Proto-Indo-European depth come out clearly positive on both directions and
+on the cognates a linguist would list — *horn, salt, wind, night, name, nose, thou* against Germanic;
+*new, salt, thou, night, full (lleno ~ polnyj), seed* against Slavic — while Germanic–Slavic is
+missed: its cognates (*two, water, nail, salt, not*) sit behind Grimm's law, and a feature-distance
+model without rules cannot see *zwei* ~ *dva*, *Nacht* ~ *noč*, *Herz* ~ *serdce*. The controls are
+the other half of the story: Ibero–Finnic reaches +7.5 (cooled +15.5) and Slavic–Finnic +3.7 on
+exactly the look-alikes long-range comparison has always cited — *quién* ~ *ken*, *nombre* ~ *nimi*,
+*semilla* ~ *siemen* — so at 130 words the gap between a Proto-Indo-European-depth pair and a
+chance-resemblance control is 10–20 nats, with a hysteresis bracket of 10–20 nats on each. Mass
+comparison with this machinery finds Indo-European, and it also finds Nostratic. The rule-budget
+battery (κ = 30, context rules on; the Grimm's-law test) and the Latin-in-tree battery are in the
+cloud on the same protocol. (`diag_42043900602.json`, the same cells on the "top" ladder, is
+dominated by its bottom stone — Ibero–Turkic −116 and −147 on two draws — and is kept only as the
+record of why the ladder changed.)
 
 ### Pre-v3 notes (kept for the record)
 
