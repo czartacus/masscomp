@@ -23,6 +23,7 @@ if study == "diag":
         elif c["kind"] == "realdata_lbf":
             r = c["result"]
             digest.append(dict(spec=c["spec"], pair=f"{r['config']['fam1']}-{r['config']['fam2']}", known=r["known"], deep=r["deep"],
+                               concepts=r["config"].get("concepts", "all"), pool=r["config"].get("pool"),
                                lbf_mean=r["lbf_mean"], lbf_sd=r["lbf_sd"], estimates=[e["lbf"] for e in r["estimates"]], secs=c["secs"]))
         elif c["kind"] == "essrate":
             r = c["result"]
