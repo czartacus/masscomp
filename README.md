@@ -816,7 +816,17 @@ exchange between the stones of the join path with the transition region dense en
 stones' power variables to overlap, or a per-concept join path (one concept joined at a time, each
 step a short ladder) that never has a collective transition; both are estimator work for the next
 round. For every number here the bracket is reported and the verdicts do not depend on which end is
-taken. (`diag_42043900602.json`, the same cells on the "top" ladder, is
+taken.
+
+**The rule budget must be bounded (`diag_42057298026.json`: κ = 30 with context rules, all basic
+vocabulary, two-sided ladder).** With the expected number of rules per edge at κ·t_e and t_root
+free, the root edges buy rules by growing: t_root ends at 6–13 on every pair, the budget on a root
+edge at 200–400 rules, and H1 fits anything — the cooled replicate of an *unrelated* pair reaches
++36 (Ibero–Finnic) and +13 (Germanic–Finnic), the heated one −40 and −46, brackets of 60–100 nats
+on every cell, Germanic–Slavic at +22 / −33. Nothing can be read from it except that the plan's
+scaling of the rule prior with edge length (§3.5) is unsafe on an edge whose length is itself a free
+parameter. The bounded variants — context rules at the default budget of three, ten rules per edge
+without context, and both — are in the cloud. (`diag_42043900602.json`, the same cells on the "top" ladder, is
 dominated by its bottom stone — Ibero–Turkic −116 and −147 on two draws — and is kept only as the
 record of why the ladder changed.)
 
