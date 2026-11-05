@@ -500,6 +500,27 @@ sequences are words. The Geweke restart battery under two random non-flat G's (`
 `random:11`; eight cells, full and latent-move modes) and the Romance probe with G fitted to the
 daughters' other concepts are in the cloud; results below when in.
 
+### Rule budget and left-context rules (2026-11-05)
+
+Two switches, both off by default so every result above stands. `MASSCOMP_U_RULES` (default 3) is
+the expected number of rules per edge under the spike-and-slab prior whatever the edge's length;
+`MASSCOMP_U_PER_T=κ` makes it κ·t_e instead, scaling with time as the slab variance already does.
+`MASSCOMP_U_CONTEXT=1` adds left-context-conditioned rule slots: `(s, o, ctx)` applies s → o only
+after input segment ctx (N_SEG = start of form), `("ins", o, ctx)` inserts o only after ctx; the
+unconditioned slots stay, so a regular change costs one rule and a conditioned one costs one rule
+too. The transducer builds a (ctx, s, o) table when an edge carries conditioned substitution rules
+(conditioned insertions live in the existing per-context insertion table and are exact everywhere),
+and the exact edit DP, the simulator's sampler and `derive` read it. The alignment lattice keeps
+proposing from the context-free tables; the proposal density of every lattice move (`_ffbs_score`)
+is now the lattice's own density (`logprob_lattice`) and the target the exact edge terms, so the
+moves are Metropolis-Hastings steps that remain exact Gibbs steps whenever no conditioned rule is
+present. Mismatch counts for the data-informed rule birth carry the left context. Cost: +11% per
+sweep on the depth-0.25 benchmark with the switch on. The Geweke restart battery with the switch on
+(and with κ = 10, and under a random G) is in the cloud; numbers below when in. Right context is not
+built: the lattice resolves a dependency on the preceding segment at emission time, and a dependency
+on the following one would need a state the lattice does not carry; a mirrored transducer (right
+context = left context of the reversed strings) is the way to add it if the probes call for it.
+
 ### Pre-v3 notes (kept for the record)
 
 #### §8.3 LBF separation — blocked on estimator noise
