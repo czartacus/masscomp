@@ -106,9 +106,12 @@ gh api -X POST repos/czartacus/masscomp/actions/workflows/diag.yml/dispatches -f
 
 Cell kinds: `basin` (`root_diag.basin`: copy / lattice / truth / prior / ptK starts on one recovery
 dataset), `geweke` (`studies/geweke.py`), `essrate` (one chain; Geyer ESS per CPU-second of the
-log-likelihood, ω, λ, t_root, |u| and the root forms' change rate, for comparing move mixes).
-Sampler knobs (`regrow_p`, `regrow_events`, `regrow_borrow`, `ffbs_p`, `latent_moves`, `init`, …)
-go in the spec and become the `MASSCOMP_*` environment variables. The account allows 20 concurrent
+log-likelihood, ω, λ, t_root, |u| and the root forms' change rate, for comparing move mixes),
+`realdata` (`studies/realdata_probe.py`: Romance reconstruction with Latin held out) and
+`realdata_lbf` (`studies/realdata_lbf.py`: join-path LBF of a named family pair, `fam1=`, `fam2=`).
+Sampler and model knobs (`regrow_p`, `regrow_events`, `regrow_borrow`, `ffbs_p`, `latent_moves`,
+`init`, `g`, `inventory`, `lam_sd`, `u_context`, `u_rules`, `u_per_t`, …; any other as
+`env_<name>=`) go in the spec and become the `MASSCOMP_*` environment variables. The account allows 20 concurrent
 jobs (public repository: minutes are not metered), shared with the `study` workflow.
 
 ## Study results
