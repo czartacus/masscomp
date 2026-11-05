@@ -182,7 +182,8 @@ def node_conditional(s, v, c):
     def logp(form):
         acc = []
         for w, lz, in_mode, tab, x, lat in cfgs:
-            sc = (ev.log_G(form) if in_mode == 0 else tab.logprob(x, form)) + sum(ep.logprob(form, z) for ep, z in lat)
+            # context-free tables, like the lattice normaliser (exact unless the edge carries context rules)
+            sc = (ev.log_G(form) if in_mode == 0 else tab.logprob_lattice(x, form)) + sum(ep.logprob_lattice(form, z) for ep, z in lat)
             acc.append(w + sc)
         return _lse_list(acc) - tot
     return logp

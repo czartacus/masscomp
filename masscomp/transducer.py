@@ -74,9 +74,49 @@ def _dp(ls, li, y1, y2):
     return out
 
 
+@njit(cache=True, fastmath=False)
+def _dp3(ls3, li, y1, y2):
+    """_dp with a left-context substitution table ls3[prev, s, o] (prev = the input segment before s,
+    DUMMY at the start): the rules u_e[(s, o, prev)] condition on the preceding input segment."""
+    EPS = ls3.shape[1]; NOINS = EPS; DUMMY = EPS
+    n = y1.shape[0]; m = y2.shape[0]
+    cur = np.full(m + 1, NEG)
+    cur[0] = 0.0
+    nxt = np.full(m + 1, NEG)
+    for i in range(n):
+        prev = y1[i - 1] if i > 0 else DUMMY
+        s = y1[i]
+        noins = li[prev, NOINS]
+        ldel = ls3[prev, s, EPS]
+        for j in range(m + 1):
+            nxt[j] = NEG
+        for j in range(m + 1):
+            f = cur[j]
+            if f <= -5e29:
+                continue
+            nxt[j] = _lae_j(nxt[j], f + noins + ldel)
+            if j < m:
+                o = y2[j]
+                v = _lae_j(f + noins + ls3[prev, s, o], f + li[prev, o] + ldel)
+                nxt[j + 1] = _lae_j(nxt[j + 1], v)
+                if j + 1 < m:
+                    nxt[j + 2] = _lae_j(nxt[j + 2], f + li[prev, o] + ls3[prev, s, y2[j + 1]])
+        tmp = cur; cur = nxt; nxt = tmp
+    prev = y1[n - 1] if n > 0 else DUMMY
+    out = cur[m] + li[prev, NOINS]
+    if m > 0:
+        out = _lae_j(out, cur[m - 1] + li[prev, y2[m - 1]])
+    return out
+
+
 def _lse_rows(a):
     m = a.max(axis=1, keepdims=True)
     return m + np.log(np.exp(a - m).sum(axis=1, keepdims=True))
+
+
+def _norm3(psi3):
+    m = psi3.max(axis=2, keepdims=True)
+    return psi3 - (m + np.log(np.exp(psi3 - m).sum(axis=2, keepdims=True)))
 
 
 _ARR = {}
@@ -105,15 +145,27 @@ class EdgeParams:
         ins[:N_SEG, :N_SEG] += -lam3 - lam1 * DIST
         ins[DUMMY, :N_SEG] += -lam3
         ins[:, NOINS] = 0.0
+        psi3 = None                                       # (N_SEG+1 contexts, N_SEG, N_OUT), only with conditioned rules
         for key, w in u.items():
             if key[0] == "ins":
-                ins[:, key[1]] += w
+                if len(key) == 3:                         # ("ins", o, ctx): insertion of o after ctx only
+                    ins[key[2], key[1]] += w
+                else:
+                    ins[:, key[1]] += w
+            elif len(key) == 3:                           # (s, o, ctx): s -> o after ctx only
+                if psi3 is None:
+                    psi3 = np.repeat(psi[None, :, :], N_SEG + 1, axis=0)
+                psi3[key[2], key[0], key[1]] += w
             else:
                 psi[key[0], key[1]] += w
-        self._psi, self._ins = psi, ins                  # unnormalised, kept for derive()
-        self.log_sub_np = psi - _lse_rows(psi)
+                if psi3 is not None:
+                    psi3[:, key[0], key[1]] += w
+        self._psi, self._ins, self._psi3 = psi, ins, psi3   # unnormalised, kept for derive()
+        self.log_sub_np = psi - _lse_rows(psi)             # the context-free table: the lattice proposals use it
         self.log_ins_np = ins - _lse_rows(ins)
+        self.log_sub3_np = _norm3(psi3) if psi3 is not None else None
         self._cache = {}
+        self._cache_lat = None
 
     @property
     def top_parents(self):
@@ -136,21 +188,41 @@ class EdgeParams:
         table is renormalised. Tables that do not change are shared with self (they are never
         mutated), so the derived object costs one row or one small table, not a rebuild."""
         new = EdgeParams.__new__(EdgeParams)
-        new._cache = {}
+        new._cache = {}; new._cache_lat = None
+        new._psi, new._ins, new._psi3 = self._psi, self._ins, self._psi3
+        new.log_sub_np, new.log_ins_np, new.log_sub3_np = self.log_sub_np, self.log_ins_np, self.log_sub3_np
         if slot[0] == "ins":
-            ins = self._ins.copy(); ins[:, slot[1]] += delta
-            new._psi, new._ins = self._psi, ins
-            new.log_sub_np = self.log_sub_np
-            new.log_ins_np = ins - _lse_rows(ins)
+            ins = self._ins.copy()
+            if len(slot) == 3:
+                ins[slot[2], slot[1]] += delta
+                li = self.log_ins_np.copy(); row = ins[slot[2]]; m = row.max()
+                li[slot[2]] = row - (m + np.log(np.exp(row - m).sum()))
+                new.log_ins_np = li
+            else:
+                ins[:, slot[1]] += delta
+                new.log_ins_np = ins - _lse_rows(ins)
+            new._ins = ins
+        elif len(slot) == 3:
+            s_, o, ctx = slot
+            psi3 = (self._psi3 if self._psi3 is not None else np.repeat(self._psi[None, :, :], N_SEG + 1, axis=0)).copy()
+            psi3[ctx, s_, o] += delta
+            ls3 = self.log_sub3_np.copy() if self.log_sub3_np is not None else np.repeat(self.log_sub_np[None, :, :], N_SEG + 1, axis=0)
+            row = psi3[ctx, s_]; m = row.max()
+            ls3[ctx, s_] = row - (m + np.log(np.exp(row - m).sum()))
+            new._psi3, new.log_sub3_np = psi3, ls3
         else:
             s_, o = slot
             psi = self._psi.copy(); psi[s_, o] += delta
             ls = self.log_sub_np.copy()
             row = psi[s_]; m = row.max()
             ls[s_] = row - (m + np.log(np.exp(row - m).sum()))
-            new._psi, new._ins = psi, self._ins
-            new.log_sub_np = ls
-            new.log_ins_np = self.log_ins_np
+            new._psi, new.log_sub_np = psi, ls
+            if self._psi3 is not None:
+                psi3 = self._psi3.copy(); psi3[:, s_, o] += delta
+                ls3 = self.log_sub3_np.copy()
+                rows = psi3[:, s_, :]; m3 = rows.max(axis=1, keepdims=True)
+                ls3[:, s_, :] = rows - (m3 + np.log(np.exp(rows - m3).sum(axis=1, keepdims=True)))
+                new._psi3, new.log_sub3_np = psi3, ls3
         return new
 
     # the list and cumulative tables are only needed by the pure-Python reference DP and the simulator
@@ -178,6 +250,13 @@ class EdgeParams:
         return c
 
     @property
+    def _c_sub3(self):
+        c = getattr(self, "_c_sub3_", None)
+        if c is None:
+            c = self._c_sub3_ = np.cumsum(np.exp(self.log_sub3_np), axis=2)
+        return c
+
+    @property
     def _c_ins(self):
         c = getattr(self, "_c_ins_", None)
         if c is None:
@@ -189,7 +268,8 @@ class EdgeParams:
         """An EdgeParams over given (already normalised) log tables; used for proposal transducers."""
         self = cls.__new__(cls)
         self.log_sub_np = np.asarray(log_sub, dtype=float); self.log_ins_np = np.asarray(log_ins, dtype=float)
-        self._cache = {}
+        self.log_sub3_np = None; self._psi3 = None
+        self._cache = {}; self._cache_lat = None
         return self
 
     def reverse(self):
@@ -226,8 +306,34 @@ class EdgeParams:
                 self._cache[key] = v
         return v
 
+    @property
+    def conditioned(self):
+        return self.log_sub3_np is not None
+
+    def logprob_lattice(self, y1, y2):
+        """log probability under the context-free tables (log_sub_np, log_ins_np): the density the
+        alignment lattice (ffbs.py) samples from. Equal to logprob() unless the edge carries
+        context-conditioned substitution rules, in which case the lattice is a proposal and the MH
+        ratio uses this for q and logprob() for the target."""
+        if self.log_sub3_np is None:
+            return self.logprob(y1, y2)
+        if self._cache_lat is None:
+            self._cache_lat = {}
+        key = (y1, y2)
+        v = self._cache_lat.get(key)
+        if v is None:
+            v = _dp(self.log_sub_np, self.log_ins_np, _arr(y1), _arr(y2))
+            if v <= -5e29:
+                v = FLOOR - FLOOR_PER_SEG * max(0, len(y2) - 2 * len(y1) - 1)
+            if len(self._cache_lat) < 200000:
+                self._cache_lat[key] = v
+        return v
+
     def _logprob(self, y1, y2):
-        v = _dp(self.log_sub_np, self.log_ins_np, _arr(y1), _arr(y2))
+        if self.log_sub3_np is not None:
+            v = _dp3(self.log_sub3_np, self.log_ins_np, _arr(y1), _arr(y2))
+        else:
+            v = _dp(self.log_sub_np, self.log_ins_np, _arr(y1), _arr(y2))
         if v <= -5e29:
             # The one-insertion-per-slot transducer gives exactly zero probability to an output
             # more than len(y1)+1 segments longer than its input. A hard zero inside the prior's
@@ -274,13 +380,15 @@ class EdgeParams:
         us = rng.random(2 * n + 1)
         out = []
         k_u = 0
+        c3 = self._c_sub3 if self.log_sub3_np is not None else None
         for i in range(n + 1):
             prev = y1[i - 1] if i > 0 else DUMMY
             k = int(np.searchsorted(self._c_ins[prev], us[k_u])); k_u += 1
             if k < NOINS:
                 out.append(k)
             if i < n:
-                o = int(np.searchsorted(self._c_sub[y1[i]], us[k_u])); k_u += 1
+                row = c3[prev, y1[i]] if c3 is not None else self._c_sub[y1[i]]
+                o = int(np.searchsorted(row, us[k_u])); k_u += 1
                 if o < EPS:
                     out.append(o)
         return tuple(out)

@@ -29,7 +29,8 @@ KNOBS = {"regrow_p": "MASSCOMP_REGROW_P", "regrow_events": "MASSCOMP_REGROW_EVEN
          "temper_p": "MASSCOMP_TEMPER_P", "latent_moves": "MASSCOMP_LATENT_MOVES", "param_moves": "MASSCOMP_PARAM_MOVES",
          "procs": "MASSCOMP_PROCS", "ffbs_p": "MASSCOMP_FFBS_P", "init": "MASSCOMP_INIT",
          "root_regrow_p": "MASSCOMP_ROOT_REGROW_P", "max_form_len": "MASSCOMP_MAX_FORM_LEN", "geweke_omega": "MASSCOMP_GEWEKE_OMEGA", "geweke_restart": "MASSCOMP_GEWEKE_RESTART",
-         "g": "MASSCOMP_G", "inventory": "MASSCOMP_INVENTORY", "lam_sd": "MASSCOMP_LAM_SD"}
+         "g": "MASSCOMP_G", "inventory": "MASSCOMP_INVENTORY", "lam_sd": "MASSCOMP_LAM_SD",
+         "u_context": "MASSCOMP_U_CONTEXT", "u_rules": "MASSCOMP_U_RULES", "u_per_t": "MASSCOMP_U_PER_T"}
 
 
 def parse(spec):

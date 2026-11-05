@@ -16,7 +16,15 @@ SIGMA2_U = 16.0                           # u_e[s,s'] ~ N(0, t_e * SIGMA2_U); sl
 # by more than a few percent (identity sits at logit ~6, a one-feature neighbour at ~ -0.3), so
 # no prior-drawn rule is audible in the data and the u layer cannot be tested. Sound laws are
 # near-categorical: a slab wide enough to reach logit parity with identity is the right prior.
-N_U_SLOTS = N_SEG * (N_OUT - 1) + N_SEG   # off-diagonal sub/del entries + insertion entries
+# Rule slots: (s, o) substitution / deletion, ("ins", o) insertion; with MASSCOMP_U_CONTEXT=1 also the
+# left-context-conditioned (s, o, ctx) and ("ins", o, ctx), ctx = the preceding input segment or
+# N_SEG (start of form). An unconditioned rule applies in every context; a conditioned one adds to a
+# single context (transducer.py builds a (ctx, s, o) table and the exact DP reads it; the alignment
+# lattice proposes from the context-free table and the moves correct by Metropolis-Hastings).
+U_CONTEXT = os.environ.get("MASSCOMP_U_CONTEXT", "0") == "1"
+N_U_SLOTS = N_SEG * (N_OUT - 1) + N_SEG   # off-diagonal sub/del entries + insertion entries (context-free)
+if U_CONTEXT:
+    N_U_SLOTS += (N_SEG + 1) * (N_SEG * (N_OUT - 1) + N_SEG)
 # Rule budget: each slot present w.p. pi_u(t). The plan's prior expects 3 rules per edge whatever its
 # length (MASSCOMP_U_RULES, default 3). MASSCOMP_U_PER_T=<kappa> makes it kappa * t_e rules per edge
 # instead (a real edge carries dozens; the budget should scale with time like the slab variance does).
@@ -170,6 +178,10 @@ def sample_G(rng):
 def u_slots():
     out = [(s, o) for s in range(N_SEG) for o in range(N_OUT) if o != s]
     out += [("ins", s) for s in range(N_SEG)]
+    if U_CONTEXT:
+        out += [(s, o, ctx) for ctx in range(N_SEG + 1) for s in range(N_SEG) for o in range(N_OUT) if o != s]
+        out += [("ins", s, ctx) for ctx in range(N_SEG + 1) for s in range(N_SEG)]
+    assert len(out) == N_U_SLOTS
     return out
 
 
@@ -189,9 +201,14 @@ def log_prior_u(u, t):
 def sample_u(t, rng):
     u = {}
     p = pi_u(t)
-    for slot in U_SLOTS:
-        if rng.random() < p:
-            u[slot] = float(rng.normal(0, math.sqrt(t * SIGMA2_U)))
+    if not U_CONTEXT:                 # the plan's slots, drawn exactly as before (seeded datasets unchanged)
+        for slot in U_SLOTS:
+            if rng.random() < p:
+                u[slot] = float(rng.normal(0, math.sqrt(t * SIGMA2_U)))
+        return u
+    hit = np.nonzero(rng.random(N_U_SLOTS) < p)[0]
+    for i in hit:
+        u[U_SLOTS[int(i)]] = float(rng.normal(0, math.sqrt(t * SIGMA2_U)))
     return u
 
 

@@ -349,9 +349,12 @@ class Sampler:
 
     @staticmethod
     def _ffbs_score(in_mode, tab, x, lat, y):
-        sc = ev.log_G(y) if in_mode == 0 else tab.logprob(x, y)
+        """log of the lattice's unnormalised density of y: the context-free tables (logprob_lattice),
+        which is what ffbs.draw samples from; with context-conditioned rules the target (edge_terms,
+        exact) differs and the MH ratio of every lattice move corrects for it."""
+        sc = ev.log_G(y) if in_mode == 0 else tab.logprob_lattice(x, y)
         for ep, z in lat:
-            sc += ep.logprob(y, z)
+            sc += ep.logprob_lattice(y, z)
         return sc
 
     def move_joint_ffbs(self, p_select=0.25):
@@ -791,20 +794,27 @@ class Sampler:
         st, f = self.st, self.st.f
         p = f.parent[e]
         counts = {}
+        ctx = ev.U_CONTEXT
+
+        def add(slot, prev):
+            counts[slot] = counts.get(slot, 0) + 1
+            if ctx:                                # the same mismatch also counts for its left-context slot
+                counts[slot + (prev,)] = counts.get(slot + (prev,), 0) + 1
+
         for c in range(st.M):
             x, y = st.y[(p, c)], st.y[(e, c)]      # all pairs: a true inherited-with-u pair may currently be labelled borrow
             if len(x) == len(y):
-                for a, b in zip(x, y):
+                for i, (a, b) in enumerate(zip(x, y)):
                     if a != b:
-                        counts[(a, b)] = counts.get((a, b), 0) + 1
+                        add((a, b), x[i - 1] if i > 0 else N_SEG)
             elif len(x) == len(y) + 1:
                 for i in range(len(x)):
                     if x[:i] + x[i + 1:] == y:
-                        counts[(x[i], EPS)] = counts.get((x[i], EPS), 0) + 1
+                        add((x[i], EPS), x[i - 1] if i > 0 else N_SEG)
             elif len(y) == len(x) + 1:
                 for j in range(len(y)):
                     if y[:j] + y[j + 1:] == x:
-                        counts[("ins", y[j])] = counts.get(("ins", y[j]), 0) + 1
+                        add(("ins", y[j]), x[j - 1] if j > 0 else N_SEG)
         return counts
 
     def _u_slot_logq(self, slot, present, counts):
