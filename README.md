@@ -597,9 +597,10 @@ languages — a pairwise test on the full 1,016-concept list credits shared cont
 inheritance, and would eventually draw a Hungarian–German arc. The remedy the comparative method
 uses is the one applied here: `concepts=basic` restricts the draw to the Swadesh-100 ∪ Leipzig-Jakarta
 items (135 mapped onto NorthEuraLex; 125–135 available per pair), the vocabulary borrowed least. The
-full-list battery (11 pairs: three known related within a family, three Indo-European pairs at
-Proto-Indo-European depth, five known unrelated; plus two flat-G controls) and the same 11 pairs on
-basic vocabulary are in the cloud; both are reported here when in, and the atlas is rebuilt from
+full-list battery (11 pairs: three known related within a family, two Indo-European pairs at
+Proto-Indo-European depth, six not known to be related, of which Turkic–Mongolic is the contested
+Altaic case and is scored as unrelated; plus two flat-G controls) and the same 11 pairs on basic
+vocabulary are in the cloud; both are reported here when in, and the atlas is rebuilt from
 them. The donor families themselves (Latin is in the data) are the second remedy — in the forest,
 "shared from Latin" becomes a borrowing path the model can take — and are next.
 
