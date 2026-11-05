@@ -15,6 +15,11 @@ if study == "diag":
             for m, r in c["result"].items():
                 digest.append(dict(spec=c["spec"], mode=m, root_cov_R=r["root_cov_R"], root_cov_fam=r["root_cov_fam"], mean_ll=r["mean_ll"],
                                    omega_ratio=r["omega_ratio"], t_root=r["t_root"], log_prior=r["log_prior"], secs=r["secs"]))
+        elif c["kind"] == "realdata":
+            r = c["result"]
+            digest.append(dict(spec=c["spec"], ned=r["ned"], root_len_ratio=r["root_len_ratio"], fam_root_len_ratio=r["fam_root_len_ratio"],
+                               t_root=[pc["t_root"] for pc in r["per_chain"]], omega=[pc["omega"] for pc in r["per_chain"]],
+                               lam=[pc["lam"] for pc in r["per_chain"]], mean_logp_latin_root=r["mean_logp_latin_root"], secs=c["secs"]))
         elif c["kind"] == "essrate":
             r = c["result"]
             digest.append(dict(spec=c["spec"], ms_per_sweep=1000 * r["secs_per_sweep"], root_change_rate=r["root_change_rate"],

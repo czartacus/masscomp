@@ -40,7 +40,10 @@ def _lae_j(a, b):
 
 @njit(cache=True, fastmath=False)
 def _dp(ls, li, y1, y2):
-    """Compiled edit-DP. ls: (N_SEG, N_OUT) log-sub table; li: (N_SEG+1, N_SEG+1) log-ins table."""
+    """Compiled edit-DP. ls: (N_SEG, N_OUT) log-sub table; li: (N_SEG+1, N_SEG+1) log-ins table.
+    The inventory constants are derived from the table (EPS = NOINS = DUMMY = N_SEG = ls.shape[0]), never
+    read as globals: numba's disk cache bakes globals in (see ffbs.py)."""
+    EPS = ls.shape[0]; NOINS = EPS; DUMMY = EPS
     n = y1.shape[0]; m = y2.shape[0]
     cur = np.full(m + 1, NEG)
     cur[0] = 0.0

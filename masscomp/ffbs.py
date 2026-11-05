@@ -28,15 +28,22 @@ NEG = -1e30
 T_MAX = int(__import__("os").environ.get("MASSCOMP_MAX_FORM_LEN", "12"))   # == mcmc.MAX_FORM_LEN; forms longer than this are outside the sampler's support
 
 
+# The inventory constants (N_SEG, and EPS = NOINS = DUMMY = N_SEG) are never read as globals inside the
+# compiled kernels: numba's on-disk cache bakes globals in at compile time, so code compiled under one
+# inventory would silently run with the other's constants (found 2026-11-05: the extended-inventory
+# runs loaded kernels cached from the plan inventory). Each kernel derives ns from an array argument.
+
+
 @njit(cache=True)
-def _prev_x(x, i):
-    return x[i - 1] if i > 0 else DUMMY
+def _prev_x(x, i, ns):
+    return x[i - 1] if i > 0 else ns
 
 
 @njit(cache=True)
 def _out_step(ls, li, z, m, j, s, dsub, dins):
     """log weight of out-edge transition from j by (dsub: 1 = s substituted by z[j], 0 = s deleted)
     then (dins: 1 = slot after s inserts the next z segment, 0 = no insertion). NEG if impossible."""
+    EPS = ls.shape[0]; NOINS = EPS
     jj = j
     if dsub == 1:
         if jj >= m:
@@ -57,6 +64,7 @@ def _out_step(ls, li, z, m, j, s, dsub, dins):
 def forward(in_mode, ls_in, li_in, x, n, K, ls1, li1, z1, m1, ls2, li2, z2, m2, T, glen, lgseg):
     """in_mode: 0 = prior G (x unused), 1 = transducer from x. K in {0,1,2} active out-edges.
     Returns alpha[i, u, j1, j2, t] (log) and the terminal log weights term[i, u, j1, j2, t]."""
+    N_SEG = lgseg.shape[0]; EPS = N_SEG; NOINS = N_SEG; DUMMY = N_SEG
     alpha = np.full((n + 1, 2, m1 + 1, m2 + 1, T + 1), NEG)
     # initial slots of the out-edges (conditioned on DUMMY)
     for a1 in range(2):
@@ -90,7 +98,7 @@ def forward(in_mode, ls_in, li_in, x, n, K, ls1, li1, z1, m1, ls2, li2, z2, m2, 
                 for u in range(2):
                     w = ls_in[x[i], EPS]
                     if u == 0:
-                        w += li_in[_prev_x(x, i), NOINS]
+                        w += li_in[_prev_x(x, i, N_SEG), NOINS]
                     for j1 in range(m1 + 1):
                         for j2 in range(m2 + 1):
                             a = alpha[i, u, j1, j2, t]
@@ -118,9 +126,9 @@ def forward(in_mode, ls_in, li_in, x, n, K, ls1, li1, z1, m1, ls2, li2, z2, m2, 
                                 continue
                             if u == 0:
                                 # insertion from the slot before x[i] (or the final slot)
-                                tmp_in[i, 1] = _lae_j(tmp_in[i, 1], a + li_in[_prev_x(x, i), s])
+                                tmp_in[i, 1] = _lae_j(tmp_in[i, 1], a + li_in[_prev_x(x, i, N_SEG), s])
                                 if i < n:
-                                    tmp_in[i + 1, 0] = _lae_j(tmp_in[i + 1, 0], a + li_in[_prev_x(x, i), NOINS] + ls_in[x[i], s])
+                                    tmp_in[i + 1, 0] = _lae_j(tmp_in[i + 1, 0], a + li_in[_prev_x(x, i, N_SEG), NOINS] + ls_in[x[i], s])
                             else:
                                 if i < n:
                                     tmp_in[i + 1, 0] = _lae_j(tmp_in[i + 1, 0], a + ls_in[x[i], s])
@@ -163,7 +171,7 @@ def forward(in_mode, ls_in, li_in, x, n, K, ls1, li1, z1, m1, ls2, li2, z2, m2, 
                     continue
                 w = glen[t]                              # the per-segment G weights were paid at emission
             else:
-                w = li_in[_prev_x(x, n), NOINS] if u == 0 else 0.0
+                w = li_in[_prev_x(x, n, N_SEG), NOINS] if u == 0 else 0.0
             term[n, u, m1, m2, t] = w
     return alpha, term
 
@@ -174,6 +182,7 @@ def forward_lin(in_mode, ps_in, pi_in, x, n, K, ps1, pi1, z1, m1, ps2, pi2, z2, 
     out-edge step written as a small matrix product over (symbol s) x (16 out-edge options), so the
     inner loops vectorise. Tables are probabilities (exp of the log tables). Returns alpha and term in
     LOG space, identical to `forward` up to rounding, so `backward` is unchanged."""
+    N_SEG = gseg.shape[0]; EPS = N_SEG; NOINS = N_SEG; DUMMY = N_SEG
     NC = 16                                    # out-edge options: (dsub1, dins1, dsub2, dins2)
     alpha = np.zeros((n + 1, 2, m1 + 1, m2 + 1, T + 1))
     scale = np.zeros(T + 1)
@@ -265,7 +274,7 @@ def forward_lin(in_mode, ps_in, pi_in, x, n, K, ps1, pi1, z1, m1, ps2, pi2, z2, 
                 for u in range(2):
                     w = ps_in[x[i], EPS]
                     if u == 0:
-                        w *= pi_in[_prev_x(x, i), NOINS]
+                        w *= pi_in[_prev_x(x, i, N_SEG), NOINS]
                     for j1 in range(m1 + 1):
                         for j2 in range(m2 + 1):
                             a = alpha[i, u, j1, j2, t]
@@ -314,7 +323,7 @@ def forward_lin(in_mode, ps_in, pi_in, x, n, K, ps1, pi1, z1, m1, ps2, pi2, z2, 
                             for s in range(N_SEG):
                                 tmp[0, 0, s] += a * gseg[s]
                             continue
-                        px = _prev_x(x, i)
+                        px = _prev_x(x, i, N_SEG)
                         if u == 0:
                             for s in range(N_SEG):
                                 tmp[i, 1, s] += a * pi_in[px, s]
@@ -376,7 +385,7 @@ def forward_lin(in_mode, ps_in, pi_in, x, n, K, ps1, pi1, z1, m1, ps2, pi2, z2, 
                 w = glen[t]
             else:
                 if u == 0:
-                    pv = pi_in[_prev_x(x, n), NOINS]
+                    pv = pi_in[_prev_x(x, n, N_SEG), NOINS]
                     w = math.log(pv) if pv > 0.0 else NEG
                 else:
                     w = 0.0
@@ -388,6 +397,7 @@ def forward_lin(in_mode, ps_in, pi_in, x, n, K, ps1, pi1, z1, m1, ps2, pi2, z2, 
 def backward(alpha, term, in_mode, ls_in, li_in, x, n, K, ls1, li1, z1, m1, ls2, li2, z2, m2, T, glen, lgseg, unif):
     """Draw one path backwards. unif: array of uniforms (one per decision, >= 2*T+n+2). Returns the
     form (array, length) and the log of the total forward mass (logZ)."""
+    N_SEG = lgseg.shape[0]; EPS = N_SEG; NOINS = N_SEG; DUMMY = N_SEG
     # terminal state
     logZ = NEG
     for u in range(2):
@@ -423,7 +433,7 @@ def backward(alpha, term, in_mode, ls_in, li_in, x, n, K, ls1, li1, z1, m1, ls2,
                     continue
                 w = ls_in[x[i - 1], EPS]
                 if up == 0:
-                    w += li_in[_prev_x(x, i - 1), NOINS]
+                    w += li_in[_prev_x(x, i - 1, N_SEG), NOINS]
                 wbuf[cnt] = a + w; pi[cnt] = i - 1; pu[cnt] = up; pj1[cnt] = j1; pj2[cnt] = j2; pt[cnt] = t; ps[cnt] = -1; cnt += 1
         # emission predecessors from layer t-1
         if t >= 1:
@@ -466,12 +476,12 @@ def backward(alpha, term, in_mode, ls_in, li_in, x, n, K, ls1, li1, z1, m1, ls2,
                                     # insertion: pred (i, 0)
                                     a = alpha[i, 0, jp1, jp2, t - 1]
                                     if a > NEG / 2:
-                                        wbuf[cnt] = a + wo + li_in[_prev_x(x, i), s]; pi[cnt] = i; pu[cnt] = 0; pj1[cnt] = jp1; pj2[cnt] = jp2; pt[cnt] = t - 1; ps[cnt] = s; cnt += 1
+                                        wbuf[cnt] = a + wo + li_in[_prev_x(x, i, N_SEG), s]; pi[cnt] = i; pu[cnt] = 0; pj1[cnt] = jp1; pj2[cnt] = jp2; pt[cnt] = t - 1; ps[cnt] = s; cnt += 1
                                 else:
                                     if i >= 1:
                                         a = alpha[i - 1, 0, jp1, jp2, t - 1]
                                         if a > NEG / 2:
-                                            wbuf[cnt] = a + wo + li_in[_prev_x(x, i - 1), NOINS] + ls_in[x[i - 1], s]; pi[cnt] = i - 1; pu[cnt] = 0; pj1[cnt] = jp1; pj2[cnt] = jp2; pt[cnt] = t - 1; ps[cnt] = s; cnt += 1
+                                            wbuf[cnt] = a + wo + li_in[_prev_x(x, i - 1, N_SEG), NOINS] + ls_in[x[i - 1], s]; pi[cnt] = i - 1; pu[cnt] = 0; pj1[cnt] = jp1; pj2[cnt] = jp2; pt[cnt] = t - 1; ps[cnt] = s; cnt += 1
                                         a = alpha[i - 1, 1, jp1, jp2, t - 1]
                                         if a > NEG / 2:
                                             wbuf[cnt] = a + wo + ls_in[x[i - 1], s]; pi[cnt] = i - 1; pu[cnt] = 1; pj1[cnt] = jp1; pj2[cnt] = jp2; pt[cnt] = t - 1; ps[cnt] = s; cnt += 1

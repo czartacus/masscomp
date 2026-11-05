@@ -54,10 +54,13 @@ def map_segment(seg):
 
 def load_cldf(cldf_dir, languages, concepts=None, max_len=12, min_len=1):
     """{language_id: {parameter_id: form tuple}} for the given language ids, plus a report dict.
-    concepts: optional list of parameter ids to keep (default: every concept with a form in every language)."""
+    cldf_dir: a CLDF directory (its forms.csv is read) or a csv file with the same columns
+    (data/northeuralex_sel.csv). concepts: optional list of parameter ids to keep (default: every
+    concept with a form in every language)."""
     forms_by = collections.defaultdict(dict)
     unmapped = collections.Counter(); dropped = collections.Counter(); kept = collections.Counter()
-    with open(os.path.join(cldf_dir, "forms.csv"), encoding="utf-8") as fh:
+    path = cldf_dir if cldf_dir.endswith(".csv") else os.path.join(cldf_dir, "forms.csv")
+    with open(path, encoding="utf-8") as fh:
         for r in csv.DictReader(fh):
             L, c = r["Language_ID"], r["Parameter_ID"]
             if L not in languages or (concepts is not None and c not in concepts) or c in forms_by[L]:

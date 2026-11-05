@@ -128,7 +128,7 @@ def load_G(path):
 def install_from_env():
     """MASSCOMP_G = flat (default) | random:<seed>[:<max_len>] | <path to a json written by save_G>."""
     spec = os.environ.get("MASSCOMP_G", "flat")
-    if spec == "flat":
+    if spec in ("flat", "fit"):              # "fit": a study fits G from its data (studies/realdata_probe.py); flat until then
         reset_G()
     elif spec.startswith("random:"):
         parts = spec.split(":")

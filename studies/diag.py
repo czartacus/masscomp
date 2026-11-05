@@ -146,6 +146,9 @@ if __name__ == "__main__":
         result = run_geweke(p)
     elif kind == "essrate":
         result = run_essrate(p)
+    elif kind == "realdata":
+        from studies.realdata_probe import probe, summary_lines
+        result = probe(p); result["summary"] = summary_lines(result)
     else:
         raise SystemExit(f"unknown kind {kind}")
     rec = dict(study="diag", kind=kind, spec=spec, params=p, env=env, git=git_sha(), secs=time.time() - t0, result=result)
@@ -157,5 +160,7 @@ if __name__ == "__main__":
             print(f"{m:6s} root cov R={s['root_cov_R']:.2f} fam={s['root_cov_fam']:.2f} ll={s['mean_ll']:.1f} omega x{s['omega_ratio']:.2f} t_root={s['t_root']:.2f} ({s['secs']:.0f}s)")
     elif kind == "geweke":
         print(result.get("moves")); print("max |z| (ess>=20):", result.get("max_abs_z"))
+    elif kind == "realdata":
+        print("\n".join(result["summary"]))
     else:
         print(f"{result['secs_per_sweep']*1000:.0f} ms/sweep; ESS/s:", {k: round(v, 3) for k, v in result["ess_per_sec"].items()}, "root change rate", result["root_change_rate"])
