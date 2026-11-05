@@ -250,7 +250,7 @@ def stepping_stone_pt(ds, theta0, seed, K=24, n_sweeps=2000, burn=500, thin=5, p
 
 
 def join_path(ds, theta0, seed, K=16, n_sweeps=1000, burn=300, thin=5, power=2.0, warmup=None, verbose=False,
-              direction="down", init_from_prior=True, spacing="top", trace=None, **sweep_kw):
+              direction="down", init_from_prior=True, spacing="top", trace=None, ess_min=0.0, max_extend=2, **sweep_kw):
     """Log Bayes factor H1 : H0 by a stepping stone along the JOIN rather than along the likelihood.
 
     The target at join temperature alpha keeps the whole model except that the inherit / borrow terms of
@@ -298,7 +298,7 @@ def join_path(ds, theta0, seed, K=16, n_sweeps=1000, burn=300, thin=5, power=2.0
         for _ in range(warmup if warmup is not None else 2 * n_sweeps):
             s.sweep(**sweep_kw)
         order = range(K)
-    dc_mean = np.zeros((K + 1, M)); dc_sd = np.zeros((K + 1, M)); loo = np.zeros(M)
+    dc_mean = np.zeros((K + 1, M)); dc_sd = np.zeros((K + 1, M)); loo = np.zeros(M); stone_sweeps = [n_sweeps] * K
     for k in order:
         s.st.alpha = alphas[k]; s.st.recompute_all()
         d = alphas[k + 1] - alphas[k]
@@ -308,6 +308,20 @@ def join_path(ds, theta0, seed, K=16, n_sweeps=1000, burn=300, thin=5, power=2.0
             if i >= burn and (i - burn) % thin == 0:
                 dc = s.st.join_delta_by_concept()
                 ds_.append(float(dc.sum())); dcs.append(dc)
+        # a stone whose effective sample size is below ess_min (the transition region on real data, where
+        # the family roots lock onto the joined root and Delta jumps by hundreds) is sampled up to
+        # max_extend further blocks of n_sweeps, no burn-in, before its term is taken
+        ext = 0
+        while ess_min > 0 and ext < max_extend:
+            a = np.array(ds_); w = np.exp(d * (a - a.max()))
+            if w.sum() ** 2 / (w ** 2).sum() >= ess_min:
+                break
+            for i in range(n_sweeps):
+                s.sweep(**sweep_kw)
+                if i % thin == 0:
+                    dc = s.st.join_delta_by_concept()
+                    ds_.append(float(dc.sum())); dcs.append(dc)
+            ext += 1; stone_sweeps[k] += n_sweeps
         ds_ = np.array(ds_); dcs = np.array(dcs)
         dc_mean[k] = dcs.mean(axis=0); dc_sd[k] = dcs.std(axis=0)
         m = ds_.max()
@@ -335,7 +349,8 @@ def join_path(ds, theta0, seed, K=16, n_sweeps=1000, burn=300, thin=5, power=2.0
         for k in range(K):
             ti += (alphas[k + 1] - alphas[k]) * 0.5 * (dc_mean[k] + dc_mean[k + 1])
         trace.update(alphas=[float(a) for a in alphas], delta_c=dc_mean.tolist(), delta_c_sd=dc_sd.tolist(),
-                     ti_concept=ti.tolist(), ti_total=float(ti.sum()), ss_total=float(sum(terms)), loo_concept=loo.tolist())
+                     ti_concept=ti.tolist(), ti_total=float(ti.sum()), ss_total=float(sum(terms)), loo_concept=loo.tolist(),
+                     stone_terms=[float(t) for t in terms], stone_sweeps=stone_sweeps)
         if at1 is not None:
             trace.update(at1.summary())
     return float(sum(terms)), terms, s
