@@ -144,7 +144,16 @@ def _chain(args):
     return out, time.time() - t0, {k: list(map(int, v)) for k, v in s.acc.items()}
 
 
+def require_extended_inventory():
+    """Real wordlists need the 40-segment inventory (README, Real-data groundwork); the plan's 29 stay
+    the default so every simulation result keeps its random stream, and a real-data run on them is a
+    mistake rather than a setting."""
+    if N_SEG < 40:
+        raise SystemExit("real-data studies need MASSCOMP_INVENTORY=extended (the plan inventory folds Romance / Germanic segments away)")
+
+
 def probe(p):
+    require_extended_inventory()
     data = p.get("data", "data/northeuralex_sel.csv"); n = int(p.get("n", 50)); seed = int(p.get("seed", 1))
     sweeps = int(p.get("sweeps", 1500)); burn = int(p.get("burn", 500)); n_chains = int(p.get("chains", 2))
     g_mode = p.get("g", "flat"); len_edge = float(p.get("len_edge", 0.3)); thin = int(p.get("thin", 5)); n_states = int(p.get("n_states", 40))

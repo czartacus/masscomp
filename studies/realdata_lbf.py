@@ -16,7 +16,7 @@ from masscomp.simulate import Dataset, sample_theta
 from masscomp.marglik import join_path
 from masscomp.data import load_cldf
 from studies.common import N_PROCS
-from studies.realdata_probe import build_forest, leaf_langs
+from studies.realdata_probe import build_forest, leaf_langs, require_extended_inventory
 
 FAMILIES = {"ibero": (("spa", "por"), "cat"), "italo": (("ita", "fra"), "ron"), "germanic": (("deu", "nld"), "eng"),
             "nordic": (("swe", "dan"), "nor"), "slavic": (("rus", "ukr"), "pol"), "finnic": (("fin", "krl"), "ekk"),
@@ -64,6 +64,7 @@ def _estimate(args):
 
 
 def lbf(p):
+    require_extended_inventory()
     data = p.get("data", "data/northeuralex_sel.csv"); n = int(p.get("n", 50)); seed = int(p.get("seed", 1))
     f1, f2 = p["fam1"], p["fam2"]
     K = int(p.get("K", 16)); sweeps = int(p.get("sweeps", 600)); burn = int(p.get("burn", 200)); warmup = int(p.get("warmup", 800))
