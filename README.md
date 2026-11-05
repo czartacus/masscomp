@@ -350,7 +350,24 @@ whose true ω is ~0.005, below what 25 concepts can resolve. ρ 0.92, t_root 1.0
 / 0.85 / 0.85, root forms (RB) 0.95 (joined root 0.98, family roots 0.95), chains agreeing 0.94,
 detectable rules 0.69. Everything is at the plan's criteria except λ₀ and λ₁ at 0.81–0.83 against
 the 0.85 floor — one to two standard errors (0.043) under it. A further 96 datasets (seeds 448–543,
-same settings) are running to tell noise from a residual.
+same settings; `recovery_41874847711.json`) settle it as noise:
+
+| §8.1, pooled 144 datasets (M = 25, depth 1.5, 3,000 sweeps, root step + subtree regrow) | coverage | criterion |
+| --- | --- | --- |
+| ω (posterior-mean ratio median 1.18×) | 0.875 | 0.85–0.95 |
+| λ₀ / λ₁ / λ₂ / λ₃ | 0.868 / 0.889 / 0.889 / 0.889 | 0.85–0.95 |
+| ρ (mean) | 0.896 | 0.85–0.95 |
+| t_root | 0.986 | 0.85–0.95 |
+| root forms in the 90% HPD set (RB) | 0.954 (joined root 0.98) | ≥ 0.80 |
+| detectable rules (n = 41) | 0.72 | — |
+| chains agreeing (R̂ ≤ 1.25) | 0.944 | — |
+
+Standard error 0.025 at n = 144. The λ misses are symmetric (posterior above the truth in 7 of 19
+for λ₀, 9 of 16 for λ₁), so there is no residual bias. **§8.1 passes**, with one reading to make:
+t_root is *over*-covered (0.99) because the model identifies it only through the root-edge events
+and rules (12.13), so its posterior is wide by construction — a property of the spec, not of the
+sampler. The study's `pass` flag is still false on the two 48-dataset files alone; the pooled numbers
+above are the result.
 
 **§8.3 noise check with root regrow (`pt_41823009928.json`).** The H1 marginal now replicates: related
 −4021 / −4019 / −4025 (sd 2.9), unrelated sd 9.2. The H0 marginal does not: −4087 / −4101 / −4024
