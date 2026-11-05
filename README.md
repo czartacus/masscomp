@@ -829,17 +829,18 @@ parameter. The bounded variants — context rules at the default budget of three
 without context, and both — are in the cloud; the first cells (`diag_42092082810.json`, all basic
 vocabulary, two-sided ladder, cooled / heated):
 
-| pair | 3 rules (above) | 10 rules | 3 rules + context |
-|---|---|---|---|
-| Ibero – Slavic | +19.1 (+29.0, +9.2) | **+35.5** (+47.8, +23.2) | — |
-| Ibero – Germanic | +24.1 (+31.0, +17.1) | — | +10.1 (+10.1, +10.1) |
-| Germanic – Slavic | −7.1 (−5.1, −9.1) | −0.0 (+2.8, −2.8) | — |
-| Ibero – Finnic (control) | +7.5 (+15.5, −0.6) | +2.6 (+8.3, −3.2) | +1.0 (−0.4, +2.3) |
-| Germanic – Finnic (control) | −9.2 (−8.9, −9.4) | −6.3 (−6.3, −6.2) | — |
+| pair | 3 rules (above) | 10 rules | 3 rules + context | 10 rules + context |
+|---|---|---|---|---|
+| Ibero – Germanic | +24.1 (+31.0, +17.1) | **+34.7** (+47.8, +21.7) | +10.1 (+10.1, +10.1) | — |
+| Ibero – Slavic | +19.1 (+29.0, +9.2) | **+35.5** (+47.8, +23.2) | +20.7 (+30.9, +10.4) | — |
+| Germanic – Slavic | −7.1 (−5.1, −9.1) | −0.0 (+2.8, −2.8) | — | — |
+| Ibero – Finnic (control) | +7.5 (+15.5, −0.6) | +2.6 (+8.3, −3.2) | +1.0 (−0.4, +2.3) | +2.8 (−1.5, +7.2) |
+| Germanic – Finnic (control) | −9.2 (−8.9, −9.4) | −6.3 (−6.3, −6.2) | −6.2 (−7.0, −5.3) | — |
 
-Ten rules per edge, a bounded budget, is the setting that moves the right pairs: Ibero–Slavic
-nearly doubles, Germanic–Slavic rises from −7 to 0, and the controls do not move (the Finnic
-look-alikes fall from +7.5 to +2.6). The remaining cells go in the table when in.
+Ten rules per edge, a bounded budget, is the setting that moves the right pairs: both Ibero-Romance
+pairs at PIE depth rise to +35 (brackets +22…+48), Germanic–Slavic from −7 to 0, and the controls
+stay where they were (+3 and −6; the Finnic look-alikes fall from +7.5 to +2.6). Context rules at
+the small budget do nothing by themselves. The remaining cells go in the table when in.
 
 **Latin inside the Romance tree (`diag_42057315383.json`: `romlat` = (((spa, por), cat), lat), all
 basic vocabulary, two-sided ladder, two seeds).** Romance+Latin against Germanic +11.2 (+14.6, +7.7)
