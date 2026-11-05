@@ -499,9 +499,41 @@ Why the simple form first: the Romance degeneracy argument above is about the *l
 innovation cost (3.7 nats per segment makes "replace" dear and "short root + insertions" cheap);
 a unigram over the daughters' own segment frequencies brings a typical 5-segment form from −19 to
 about −13 nats, which is the correction that matters, and it does so without any claim about which
-sequences are words. The Geweke restart battery under two random non-flat G's (`MASSCOMP_G=random:3`,
-`random:11`; eight cells, full and latent-move modes) and the Romance probe with G fitted to the
-daughters' other concepts are in the cloud; results below when in.
+sequences are words.
+
+**Geweke under a random non-flat G (`diag_41993479282.json`).** Eight restart cells under
+`MASSCOMP_G=random:3` and `random:11` (full sampler on two seeds and 12,000 draws each; latent moves
+on two seeds × ω from the prior and at 0.5; regrow at 0.3; 20,000 draws): max |z| 2.60 over ~100
+statistics, the 2.6 on the 2.6%-rare borrow fraction. The lattice is exact under a unigram × length G.
+
+**Romance probe with the corrected kernels (`diag_41995697698.json`, 2 chains × 1,500 sweeps,
+extended inventory).** Three settings, two or three seeds, n = 50 and 100 concepts; the score is the
+normalised edit distance (NED) of the sampled joined root to Classical Latin, against the NED of the
+daughters themselves (the model has not seen Latin):
+
+| G | λ | n, seed | NED root / daughters | NED root / daughters, cognate subset | root length ÷ Latin | t_root (2 chains) | root edges inherited (ibero / italo) |
+|---|---|---|---|---|---|---|---|
+| fitted | free | 100, s3 | **0.61** / 0.68 | **0.36** / 0.46 | 0.95 | 0.36 / 0.25 | 0.78 / 0.61 |
+| fitted | free | 50, s1 | 0.70 / 0.71 | 0.42 / 0.47 | 0.99 | 0.12 / 0.15 | 0.92 / 0.87 |
+| fitted | free | 50, s2 | **0.64** / 0.69 | **0.39** / 0.50 | 0.99 | 0.32 / 0.27 | 0.82 / 0.75 |
+| fitted | pinned (sd 0.02) | 50, s1 | 0.70 / 0.71 | 0.38 / 0.47 | 0.76 | 0.26 / 1.92 | 0.81 / 0.75 |
+| fitted | pinned | 50, s2 | 0.70 / 0.69 | 0.49 / 0.50 | 0.84 | 4.38 / 4.11 | 0.12 / 0.02 |
+| flat | free | 50, s1 | 0.78 / 0.71 | 0.56 / 0.47 | 0.76 | 0.90 / 1.30 | 0.78 / 0.34 |
+| flat | pinned | 50, s1 | 0.74 / 0.71 | 0.44 / 0.47 | 0.65 | 0.31 / 0.62 | 0.89 / 0.71 |
+| flat | free | 50, s2 | 0.73 / 0.69 | 0.54 / 0.50 | 0.82 | 0.96 / 0.34 | 0.83 / 0.25 |
+
+With G fitted to the daughters' other concepts and λ free, the joined root is closer to Latin than
+any daughter is (by 0.05–0.07 NED overall, 0.05–0.11 on the cognate subset), of the right length, and
+reached by inheritance on 75–92% of the family-root edges, with the two chains agreeing on t_root
+(0.12–0.36) and on λ (4.4 / 5.6–7.2 / −1.3 / 7.2–7.5). Under the flat G the root is *farther* from
+Latin than the daughters, 18–35% too short, and the Italo-Romance root edge is replaced two times in
+three (the flat G makes "a new short word" cheap). Pinning λ at the plan's prior means is worse on
+every column and on seed 2 disconnects the joined root altogether (t_root 4.2, root edges 2–12%
+inherited). The fitted G with λ free is therefore the setting for real data from here; the learned
+λ₂ < 0 (deletion cheaper than keeping a segment) is the model's way of absorbing the daughters'
+irregular losses and is what produces union roots such as `oktombre` (Romanian's analogical *m*
+kept because five deletions are cheaper than one insertion); directional costs are the remedy, not
+a wider prior.
 
 ### Rule budget and left-context rules (2026-11-05)
 
@@ -518,11 +550,45 @@ proposing from the context-free tables; the proposal density of every lattice mo
 is now the lattice's own density (`logprob_lattice`) and the target the exact edge terms, so the
 moves are Metropolis-Hastings steps that remain exact Gibbs steps whenever no conditioned rule is
 present. Mismatch counts for the data-informed rule birth carry the left context. Cost: +11% per
-sweep on the depth-0.25 benchmark with the switch on. The Geweke restart battery with the switch on
-(and with κ = 10, and under a random G) is in the cloud; numbers below when in. Right context is not
-built: the lattice resolves a dependency on the preceding segment at emission time, and a dependency
+sweep on the depth-0.25 benchmark with the switch on. **Geweke restart battery with the switch on
+(`diag_41998075254.json`)**: seven cells (full sampler on two seeds, with κ = 10 under `random:3`,
+the rule move alone on two seeds and κ = 10, latent moves with ω from the prior and at 0.5; 12,000–
+20,000 draws) — max |z| 1.67–2.60 on six of them; the seventh (full mode, seed 1) has +3.52 on the
+borrow fraction (0.026 vs 0.025) with ω at +2.79 and the inherit fraction at −2.53, one correlated
+excursion of the rare statistic that the README records on earlier batteries too, while the same
+move set with borrowing made common (ω = 0.5, where the fraction is measured precisely) passes at 1.46.
+A rerun of that cell with 20,000 draws and a fourth seed is in the cloud; numbers here when in.
+Right context is not built: the lattice resolves a dependency on the preceding segment at emission time, and a dependency
 on the following one would need a state the lattice does not carry; a mirrored transducer (right
 context = left context of the reversed strings) is the way to add it if the probes call for it.
+
+### Real-data relationship tests and the evidence atlas (2026-11-05)
+
+`studies/realdata_lbf.py` asks the tier-1 question of the prototype on NorthEuraLex: nine fixed
+3-leaf families (`FAMILIES`: Ibero- and Italo-Romance, West Germanic, Nordic, Slavic, Finnic, Saami,
+Turkic, Mongolic; daughter edges 0.3, binary) joined pairwise at a root of length t_root ~ Gamma(2, 1),
+n random concepts with a single-word form in all six languages, G fitted to the six languages'
+other concepts, the join-path estimator (K = 16 × 600 sweeps, two replicates). `join_path` now
+records a trace: the power variable per concept at every stone (`join_delta_by_concept`), so the
+thermodynamic integral decomposes exactly into per-concept contributions (`ti_concept`, summing to
+`ti_total`; the stepping-stone total is the reported LBF), and at α = 1 the event fractions per edge,
+borrow routes, t_root, ω, λ and the sampled joined-root and family-root forms. `studies/explorer.py`
+turns a battery into one self-contained page (the *evidence atlas*: a map with the tested pairs as
+arcs weighted by LBF, the null band from the known-unrelated pairs, a per-pair dossier with the
+annotated tree, the per-concept attribution bars and sequence logos of the reconstructed forms).
+
+What the development runs (n = 20, K = 6 × 120, one replicate) already show, and what it means for
+the design: the concepts carrying the cross-family evidence for Germanic–Nordic are *december*,
+*connect*, *cup* and *sharpen*, i.e. Latin loans and Middle Low German loans in every one of the six
+languages — a pairwise test on the full 1,016-concept list credits shared contact vocabulary as
+inheritance, and would eventually draw a Hungarian–German arc. The remedy the comparative method
+uses is the one applied here: `concepts=basic` restricts the draw to the Swadesh-100 ∪ Leipzig-Jakarta
+items (135 mapped onto NorthEuraLex; 125–135 available per pair), the vocabulary borrowed least. The
+full-list battery (11 pairs: three known related within a family, three Indo-European pairs at
+Proto-Indo-European depth, five known unrelated; plus two flat-G controls) and the same 11 pairs on
+basic vocabulary are in the cloud; both are reported here when in, and the atlas is rebuilt from
+them. The donor families themselves (Latin is in the data) are the second remedy — in the forest,
+"shared from Latin" becomes a borrowing path the model can take — and are next.
 
 ### Pre-v3 notes (kept for the record)
 
