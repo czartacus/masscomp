@@ -546,7 +546,11 @@ inherited). The fitted G with λ free is therefore the setting for real data fro
 λ₂ < 0 (deletion cheaper than keeping a segment) is the model's way of absorbing the daughters'
 irregular losses and is what produces union roots such as `oktombre` (Romanian's analogical *m*
 kept because five deletions are cheaper than one insertion); directional costs are the remedy, not
-a wider prior.
+a wider prior. As a first, cheap test of that reading, `MASSCOMP_LAM_MIN="-,-,0,-"` (diag knob
+`lam_min=-+-+0+-`) truncates the prior on λ₂ at zero — deletion can be free but not cheaper than
+keeping a segment — as a truncated normal (density renormalised; the random-walk move rejects
+proposals below the bound; prior draws by rejection, so seeded datasets are unchanged when no bound
+is set). The three fitted-G probe cells are rerun under it; numbers below when in.
 
 ### Rule budget and left-context rules (2026-11-05)
 

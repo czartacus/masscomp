@@ -756,6 +756,9 @@ class Sampler:
             step = np.array([0.08, 0.2, 0.3, 0.08]) * (1.0 + 5.0 * (1.0 - self.beta))
         old = st.theta.lam.copy()
         st.theta.lam = old + self.rng.normal(0, 1, size=4) * step
+        if np.any(st.theta.lam < ev.LAM_MIN):             # outside the truncated prior: reject without the recompute
+            self.acc["lam"][1] += 1; st.theta.lam = old
+            return
         d = self._try_global(ev.log_prior_lam(st.theta.lam) - ev.log_prior_lam(old))
         self.acc["lam"][1] += 1
         if d is not None:

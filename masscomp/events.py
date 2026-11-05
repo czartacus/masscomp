@@ -11,6 +11,11 @@ LOG_G_LEN = -math.log(MAX_LEN - MIN_LEN + 1)
 # ---- priors -----------------------------------------------------------------------
 LAM_MU = np.array([4.5, 3.0, 2.0, 6.0])   # identity bonus, feature distance, deletion, insertion
 LAM_SD = float(__import__("os").environ.get("MASSCOMP_LAM_SD", "1.0"))   # real-data probes: a tight prior pins lambda (see README, 4 Nov)
+# Optional lower bounds that truncate the normal prior per component (MASSCOMP_LAM_MIN="-,-,0,-" keeps deletion from
+# becoming cheaper than keeping a segment, the "union root" degeneracy of the Romance probe, README 5 Nov); "-" = none.
+LAM_MIN = np.array([float("-inf") if x.strip() in ("-", "") else float(x)
+                    for x in __import__("os").environ.get("MASSCOMP_LAM_MIN", "-,-,-,-").split(",")])
+assert LAM_MIN.shape == (4,)
 SIGMA2_U = 16.0                           # u_e[s,s'] ~ N(0, t_e * SIGMA2_U); slab sd 4*sqrt(t).
 # With sd 1 (the plan's value) a prior-drawn rule almost never changes a substitution probability
 # by more than a few percent (identity sits at logit ~6, a one-feature neighbour at ~ -0.3), so
@@ -213,7 +218,14 @@ def sample_u(t, rng):
 
 
 def log_prior_lam(lam):
-    return float(stats.norm.logpdf(lam, LAM_MU, LAM_SD).sum())
+    """Independent normals, truncated below at LAM_MIN where a bound is set (density renormalised)."""
+    lam = np.asarray(lam, dtype=float)
+    if np.any(lam < LAM_MIN):
+        return float("-inf")
+    lp = stats.norm.logpdf(lam, LAM_MU, LAM_SD)
+    if np.any(np.isfinite(LAM_MIN)):
+        lp = lp - stats.norm.logsf(LAM_MIN, LAM_MU, LAM_SD)   # log(1 - Phi) = 0 where there is no bound
+    return float(lp.sum())
 
 
 def log_prior_rho(rho):

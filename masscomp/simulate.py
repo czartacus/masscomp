@@ -29,6 +29,9 @@ class Dataset:
 
 def sample_theta(forest, M, rng):
     lam = rng.normal(ev.LAM_MU, ev.LAM_SD)
+    for i in range(4):                                   # truncated components by rejection (no draw when unbounded,
+        while lam[i] < ev.LAM_MIN[i]:                    # so the random stream of every seeded dataset is unchanged)
+            lam[i] = rng.normal(ev.LAM_MU[i], ev.LAM_SD)
     u = {e: ev.sample_u(forest.length[e], rng) for e in forest.edges}
     rho = rng.gamma(ev.RHO_A, 1 / ev.RHO_RATE, size=M)
     omega = float(rng.gamma(ev.OMEGA_A, 1 / ev.OMEGA_RATE))

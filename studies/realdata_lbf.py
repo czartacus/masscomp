@@ -113,7 +113,8 @@ def lbf(p):
     leaves = {L: {c: to_str(forms_by[L][c]) for c in chosen} for L in langs}
     return dict(concepts=chosen, tree=tree, leaf_forms=leaves, config=dict(fam1=f1, fam2=f2, families=families, n=M, seed=seed, K=K, sweeps=sweeps, burn=burn, warmup=warmup, power=power,
                             reps=reps, g=g_mode, len_edge=len_edge, init="prior" if init_prior else "copy", inventory_size=N_SEG,
-                            lam_sd=ev.LAM_SD, u_context=ev.U_CONTEXT, u_rules=ev.U_RULES, u_per_t=ev.U_PER_T, concepts=concept_set, pool=len(pool),
+                            lam_sd=ev.LAM_SD, lam_min=[None if not np.isfinite(x) else float(x) for x in ev.LAM_MIN],
+                            u_context=ev.U_CONTEXT, u_rules=ev.U_RULES, u_per_t=ev.U_PER_T, concepts=concept_set, pool=len(pool),
                             donors=donors, dropped_for_donors=dropped),
                 known="related" if key in RELATED else "unrelated", deep=key in DEEP, common_concepts=len(common),
                 lbf_mean=float(np.mean(vals)), lbf_sd=float(np.std(vals)) if reps > 1 else None, estimates=ests, secs=time.time() - t0)
