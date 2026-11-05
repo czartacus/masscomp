@@ -826,7 +826,30 @@ edge at 200–400 rules, and H1 fits anything — the cooled replicate of an *un
 on every cell, Germanic–Slavic at +22 / −33. Nothing can be read from it except that the plan's
 scaling of the rule prior with edge length (§3.5) is unsafe on an edge whose length is itself a free
 parameter. The bounded variants — context rules at the default budget of three, ten rules per edge
-without context, and both — are in the cloud. (`diag_42043900602.json`, the same cells on the "top" ladder, is
+without context, and both — are in the cloud; the first cells (`diag_42092082810.json`, all basic
+vocabulary, two-sided ladder, cooled / heated):
+
+| pair | 3 rules (above) | 10 rules | 3 rules + context |
+|---|---|---|---|
+| Ibero – Slavic | +19.1 (+29.0, +9.2) | **+35.5** (+47.8, +23.2) | — |
+| Ibero – Germanic | +24.1 (+31.0, +17.1) | — | +10.1 (+10.1, +10.1) |
+| Germanic – Slavic | −7.1 (−5.1, −9.1) | −0.0 (+2.8, −2.8) | — |
+| Ibero – Finnic (control) | +7.5 (+15.5, −0.6) | +2.6 (+8.3, −3.2) | +1.0 (−0.4, +2.3) |
+| Germanic – Finnic (control) | −9.2 (−8.9, −9.4) | −6.3 (−6.3, −6.2) | — |
+
+Ten rules per edge, a bounded budget, is the setting that moves the right pairs: Ibero–Slavic
+nearly doubles, Germanic–Slavic rises from −7 to 0, and the controls do not move (the Finnic
+look-alikes fall from +7.5 to +2.6). The remaining cells go in the table when in.
+
+**Latin inside the Romance tree (`diag_42057315383.json`: `romlat` = (((spa, por), cat), lat), all
+basic vocabulary, two-sided ladder, two seeds).** Romance+Latin against Germanic +11.2 (+14.6, +7.7)
+and +20.4 (+25.5, +15.2); against Slavic +30.9 (+56.7, +5.1); the controls Romance+Latin–Finnic −5.7
+and −6.5 and –Turkic −4.3 and −5.1. Against the same pairs without Latin (+24.1 and +19.1) this is
+no gain for Germanic and a wide-bracketed gain for Slavic: an attested older stage pulls the family
+root toward Latin, but with Latin as a fourth leaf at the same depth as the modern languages the
+daughters pay for their distance from it, and the join still has to see *nox* ~ *noč* with a
+three-rule transducer. The two κ = 30 cells of this battery (brackets of 80–100 nats) are the
+overfitting of the paragraph above and are ignored. (`diag_42043900602.json`, the same cells on the "top" ladder, is
 dominated by its bottom stone — Ibero–Turkic −116 and −147 on two draws — and is kept only as the
 record of why the ladder changed.)
 
