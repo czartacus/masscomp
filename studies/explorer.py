@@ -67,9 +67,20 @@ def build(pairs, out_path, note=""):
                              t_root_sd=t.get("t_root_sd_at1"), omega=t.get("omega_at1"), lam=t.get("lam_at1"), events=t.get("events_at1"),
                              borrow=t.get("borrow_from_at1"), root_forms=t.get("root_forms_at1"), fam_forms=t.get("fam_forms_at1")))
         recs.append(dict(fam1=c["fam1"], fam2=c["fam2"], known=r["known"], deep=r["deep"], g=c["g"], n=c["n"], K=c["K"], sweeps=c["sweeps"],
-                         cset=c.get("concepts", "all"), pool=c.get("pool"),
+                         cset=c.get("concepts", "all"), pool=c.get("pool"), seed=c.get("seed"), donors=[d for d, _ in (c.get("donors") or [])],
                          lbf=r["lbf_mean"], lbf_sd=r["lbf_sd"], estimates=ests, concepts=r.get("concepts"), leaf_forms=r.get("leaf_forms"),
                          tree=r.get("tree"), secs=r.get("secs"), source=r.get("source")))
+    # several runs of one pair on one concept set (other seeds = other draws of the words, other ladders): the lowest
+    # seed is the record the dossier shows, the others ride along as `draws` so the page can show the spread
+    groups = {}
+    for rec in recs:
+        groups.setdefault((rec["cset"], tuple(sorted((rec["fam1"], rec["fam2"]))), rec["g"], tuple(rec["donors"])), []).append(rec)
+    recs = []
+    for key, rs in groups.items():
+        rs.sort(key=lambda x: ((x["seed"] or 0), -x["K"]))
+        main = rs[0]
+        main["draws"] = [dict(seed=x["seed"], K=x["K"], n=x["n"], lbf=x["lbf"], lbf_sd=x["lbf_sd"], reps=len(x["estimates"])) for x in rs]
+        recs.append(main)
     data = dict(generated=datetime.date.today().isoformat(), note=note, languages={k: v for k, v in langs.items()}, families=fams, pairs=recs)
     html = TEMPLATE.replace("__DATA__", json.dumps(data, separators=(",", ":"))).replace("__LAND__", json.dumps(land, separators=(",", ":")))
     os.makedirs(os.path.dirname(out_path) or ".", exist_ok=True)
@@ -335,7 +346,8 @@ function highlightMap() {
 function showTip(ev, p) {
   const t = document.getElementById("tip");
   const r = document.querySelector("#map").getBoundingClientRect();
-  t.innerHTML = `<b>${pairName(p)}</b><br>log BF ${fmt(p.lbf)}${p.lbf_sd != null ? " ± " + p.lbf_sd.toFixed(1) + " (replicates)" : ""}<br><span class="muted">${p.known === "related" ? (p.deep ? "known related, Indo-European depth" : "known related") : "known unrelated"} · ${p.n} ${setLabel(p.cset || "all").toLowerCase()} concepts · G ${p.g}</span>`;
+  const drawsTxt = (p.draws || []).length > 1 ? `<br><span class="muted">other draws of the words: ${p.draws.slice(1).map(d => fmt(d.lbf)).join(", ")}</span>` : "";
+  t.innerHTML = `<b>${pairName(p)}</b><br>log BF ${fmt(p.lbf)}${p.lbf_sd != null ? " ± " + p.lbf_sd.toFixed(1) + " (replicates)" : ""}<br><span class="muted">${p.known === "related" ? (p.deep ? "known related, Indo-European depth" : "known related") : "known unrelated"} · ${p.n} ${setLabel(p.cset || "all").toLowerCase()} concepts · G ${p.g}</span>${drawsTxt}`;
   t.hidden = false;
   const x = ev.clientX - r.left + 14, y = ev.clientY - r.top + 14;
   t.style.left = Math.min(x, r.width - 310) + "px"; t.style.top = y + "px";
@@ -346,7 +358,8 @@ function hideTip() { document.getElementById("tip").hidden = true; }
 function drawLine() {
   const svg = d3.select("#line"); svg.selectAll("*").remove();
   const W = 1140, H = 140, m = { l: 30, r: 30 };
-  const ext = d3.extent(PAIRS, p => p.lbf); const pad = Math.max(2, (ext[1] - ext[0]) * 0.08);
+  const allVals = PAIRS.flatMap(p => [p.lbf, ...((p.draws || []).map(d => d.lbf)), ...(counterpart(p) ? [counterpart(p).lbf] : [])]);
+  const ext = d3.extent(allVals); const pad = Math.max(2, (ext[1] - ext[0]) * 0.08);
   const x = d3.scaleLinear().domain([Math.min(ext[0] - pad, -2), Math.max(ext[1] + pad, 2)]).range([m.l, W - m.r]);
   if (tau != null) {
     svg.append("rect").attr("x", x(lo)).attr("y", 20).attr("width", Math.max(2, x(hi) - x(lo))).attr("height", 78).attr("fill", css("--band"));
@@ -369,6 +382,11 @@ function drawLine() {
   const rowY = [-14, 22, -28, 36], rowLast = [-1e9, -1e9, -1e9, -1e9], minGap = 64;
   sorted.forEach((p, i) => {
     const gx = g.append("g").datum(p).attr("class", "pair").attr("transform", `translate(${x(p.lbf)},50)`).on("click", (ev, d) => select(d)).on("mousemove", (ev, d) => showTipLine(ev, d)).on("mouseleave", hideTip);
+    for (const dr of (p.draws || []).slice(1)) {                       // other draws of the words: ticks on the line, joined to the main marker
+      g.append("line").attr("x1", x(p.lbf)).attr("x2", x(dr.lbf)).attr("y1", 50).attr("y2", 50).attr("stroke", arcColor(p)).attr("stroke-opacity", 0.35).attr("stroke-width", 1);
+      g.append("line").attr("x1", x(dr.lbf)).attr("x2", x(dr.lbf)).attr("y1", 44).attr("y2", 56).attr("stroke", arcColor(p)).attr("stroke-width", 2)
+        .append("title").text(`${pairName(p)}, another draw of the words (seed ${dr.seed}, K = ${dr.K}): ${fmt(dr.lbf)}`);
+    }
     gx.append("circle").attr("r", state.sel === p ? 7 : 5).attr("fill", arcColor(p)).attr("stroke", state.sel === p ? css("--ink") : css("--panel")).attr("stroke-width", 1.5);
     if (p.deep) gx.append("circle").attr("r", 9).attr("fill", "none").attr("stroke", arcColor(p)).attr("stroke-dasharray", "1 3");
     let row = rowY.findIndex((_, r) => x(p.lbf) - rowLast[r] >= minGap); if (row < 0) row = i % rowY.length; rowLast[row] = x(p.lbf);
@@ -403,6 +421,7 @@ function drawDossier() {
   document.getElementById("stat").innerHTML = `
     <div><div class="big ${cls}">${fmt(p.lbf)}</div><small>log Bayes factor, ${pairName(p)}${p.lbf_sd != null ? ` · replicates ± ${p.lbf_sd.toFixed(1)}` : ""}</small></div>
     <div><div style="font-family:var(--display);font-size:1.3rem">${verdict}</div><small>${p.known === "related" ? (p.deep ? "known to be related, at Indo-European depth" : "known to be related") : "known to be unrelated"} · ${p.n} concepts · G ${p.g === "fit" ? "fitted to the daughters" : "flat"}</small></div>
+    ${(p.draws || []).length > 1 ? `<div><div class="big" style="font-size:1.6rem">${p.draws.slice(1).map(d => fmt(d.lbf)).join(" · ")}</div><small>the same pair on ${p.draws.length - 1 > 1 ? "other draws" : "another draw"} of ${p.n} words (seed ${p.draws.slice(1).map(d => d.seed).join(", ")}; K = ${p.draws.slice(1).map(d => d.K).join(", ")})</small></div>` : ""}
     ${q ? `<div><div class="big ${qcls}" style="font-size:1.6rem">${fmt(q.lbf)}</div><small>the same pair on ${setLabel(q.cset || "all").toLowerCase()}${q.lbf_sd != null ? ` · ± ${q.lbf_sd.toFixed(1)}` : ""}</small></div>` : ""}
     ${tr != null ? `<div><div class="big" style="font-size:1.6rem">${tr.toFixed(2)}</div><small>t<sub>root</sub>, length of the join edges (posterior mean)</small></div>` : ""}
     ${om != null ? `<div><div class="big" style="font-size:1.6rem">${om.toFixed(3)}</div><small>&omega;, borrowing rate</small></div>` : ""}`;

@@ -678,9 +678,31 @@ of the two PIE-depth pairs marginally (+7.6 against a null band whose six member
 −29.4, with replicate sds of 1–13) and misses the other, which is about what the simulator's
 horizon (12.3) led us to expect; on the full list it "detects" both with borrowed vocabulary. Basic
 vocabulary is the protocol from here, and the attribution trace is the audit that makes a positive
-result readable. The donor families (Latin is in the data) are the second remedy — in the forest,
-"shared from Latin" becomes a borrowing path the model can take — and their battery is in the
-cloud.
+result readable.
+
+**Two more draws of the 50 words, at K = 24 (`diag_42027079408.json`, single replicates).** The
+draw of the words matters as much as the estimator at this depth:
+
+| pair | seed 1, K = 16 (2 reps) | seed 2, K = 24 | seed 3, K = 24 | mean ± sd over draws |
+|---|---|---|---|---|
+| Germanic – Nordic | +89.3 | +113.6 | +95.6 | +99.5 ± 10.3 |
+| Ibero – Italo-Romance | +70.4 | +91.6 | +77.1 | +79.7 ± 8.8 |
+| Finnic – Saami | +45.5 | +55.9 | +33.1 | +44.8 ± 9.3 |
+| Ibero – Germanic (PIE depth) | +7.6 | +3.3 | −5.1 | +1.9 ± 5.3 |
+| Ibero – Slavic (PIE depth) | −17.5 | −5.2 | +10.0 | −4.2 ± 11.2 |
+| six unrelated pairs | −6.7 … −29.4 | −3.0 … −25.9 | −2.9 … −28.8 | all 17 estimates ≤ −2.9 |
+
+The within-family pairs are far above the band on every draw; the two PIE-depth pairs straddle it,
+and the words that carry them when they are positive are cognates each time (*wind, salt, thou,
+name, star, nose* for Germanic; *salt, new, seed, white, nose, I, thou* for Slavic — *blanco* ~
+*bělъ* is the same root under two formations). So with 50 basic words the prototype's signal at
+Proto-Indo-European depth is real and of the same size as the draw-to-draw variation: at the
+detection threshold, not past it. The test that settles whether more words settle it — every
+available basic-vocabulary item (125–135 per pair) for the three PIE-depth pairs among these
+families (Ibero–Germanic, Ibero–Slavic, Germanic–Slavic) and four unrelated controls, two
+replicates at K = 24 — is in the cloud, as is the corrected Latin-donor battery (donor families are
+separate trees in the forest; see 12.22 in the spec for the first battery's asymmetry and its
+fix).
 
 ### Pre-v3 notes (kept for the record)
 
