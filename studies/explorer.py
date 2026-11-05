@@ -65,6 +65,7 @@ def build(pairs, out_path, note=""):
                              t_root_sd=t.get("t_root_sd_at1"), omega=t.get("omega_at1"), lam=t.get("lam_at1"), events=t.get("events_at1"),
                              borrow=t.get("borrow_from_at1"), root_forms=t.get("root_forms_at1"), fam_forms=t.get("fam_forms_at1")))
         recs.append(dict(fam1=c["fam1"], fam2=c["fam2"], known=r["known"], deep=r["deep"], g=c["g"], n=c["n"], K=c["K"], sweeps=c["sweeps"],
+                         cset=c.get("concepts", "all"), pool=c.get("pool"),
                          lbf=r["lbf_mean"], lbf_sd=r["lbf_sd"], estimates=ests, concepts=r.get("concepts"), leaf_forms=r.get("leaf_forms"),
                          tree=r.get("tree"), secs=r.get("secs"), source=r.get("source")))
     data = dict(generated=datetime.date.today().isoformat(), note=note, languages={k: v for k, v in langs.items()}, families=fams, pairs=recs)
@@ -138,6 +139,14 @@ svg text { font-family: var(--ui); fill: var(--ink); }
 select, button { font: inherit; color: var(--ink); background: var(--panel); border: 1px solid var(--line); border-radius: 4px; padding: 5px 8px; }
 button { cursor: pointer; } button:hover { border-color: var(--ink); }
 select:focus-visible, button:focus-visible, .arc:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+.seg { margin-left: auto; display: inline-flex; border: 1px solid var(--line); border-radius: 6px; overflow: hidden; background: var(--panel); font-size: 0.82rem; max-width: 100%; }
+.seg button { border: 0; border-radius: 0; padding: 6px 10px; background: transparent; color: var(--muted); }
+.seg button + button { border-left: 1px solid var(--line); }
+.seg button[aria-selected="true"] { background: var(--ink); color: var(--panel); }
+.seg small { display: block; font-size: 0.7rem; opacity: 0.8; }
+@media (max-width: 640px) { .seg { margin-left: 0; } }
+.line .ghost { fill: none; stroke: var(--muted); stroke-width: 1.2; }
+.line .ghost-link { stroke: var(--muted); stroke-width: 1; stroke-opacity: 0.45; }
 .bars .lab { font-size: 12px; fill: var(--ink); }
 .bars .val { font-size: 11px; fill: var(--muted); font-variant-numeric: tabular-nums; }
 .bars .leaf { font-family: var(--display); font-size: 12.5px; fill: var(--muted); }
@@ -173,6 +182,7 @@ select:focus-visible, button:focus-visible, .arc:focus-visible { outline: 2px so
   <section class="panel map-wrap">
     <div class="legend" id="legend">
       <span><i></i>evidence for a shared ancestor</span><span><i class="ag"></i>evidence against</span><span><i class="nl"></i>inside the unrelated band</span><span><i class="dp"></i>related only at Indo-European depth</span>
+      <div class="seg" id="setsel" role="tablist" aria-label="Concept set" hidden></div>
     </div>
     <svg id="map" viewBox="0 0 1140 520" role="img" aria-label="Map of tested family pairs"></svg>
     <div class="tip" id="tip" hidden></div>
@@ -226,17 +236,44 @@ const fmt = (x, d = 1) => (x == null ? "–" : (x > 0 ? "+" : "") + x.toFixed(d)
 const famLabel = (f) => DATA.families[f] ? DATA.families[f].label : f;
 const pairName = (p) => `${famLabel(p.fam1)} – ${famLabel(p.fam2)}`;
 
-// prefer the fitted-G run for a pair; keep flat runs as controls
+// one table per concept set (the full list, basic vocabulary); within a set prefer the fitted-G run for a pair and keep flat runs as controls
+const pairKey = (p) => [p.fam1, p.fam2].sort().join("|");
+const SET_LABEL = { all: ["Full list", "1,016 concepts"], basic: ["Basic vocabulary", "Swadesh + Leipzig-Jakarta"] };
+const setLabel = (s) => (SET_LABEL[s] || [s, ""])[0];
 const byKey = {};
 for (const p of DATA.pairs) {
-  const k = [p.fam1, p.fam2].sort().join("|");
-  if (!byKey[k] || (p.g === "fit" && byKey[k].g !== "fit")) byKey[k] = p;
+  const s = p.cset || "all", k = pairKey(p);
+  byKey[s] = byKey[s] || {};
+  if (!byKey[s][k] || (p.g === "fit" && byKey[s][k].g !== "fit")) byKey[s][k] = p;
 }
-const PAIRS = Object.values(byKey).sort((a, b) => b.lbf - a.lbf);
-const unrelated = PAIRS.filter(p => p.known === "unrelated").map(p => p.lbf);
-const tau = unrelated.length ? d3.quantile(unrelated.slice().sort(d3.ascending), 0.99) : null;
-const lo = unrelated.length ? d3.min(unrelated) : null;
-const state = { sel: PAIRS.length ? PAIRS[0] : null };
+const SETS = Object.keys(byKey).sort((a, b) => (a === "all" ? -1 : b === "all" ? 1 : a.localeCompare(b)));
+const pairsOf = (s) => Object.values(byKey[s] || {}).sort((a, b) => b.lbf - a.lbf);
+const bandOf = (s) => {
+  const un = pairsOf(s).filter(p => p.known === "unrelated").map(p => p.lbf);
+  return { unrelated: un, tau: un.length ? d3.quantile(un.slice().sort(d3.ascending), 0.99) : null, lo: un.length ? d3.min(un) : null };
+};
+const state = { set: SETS[0], sel: null };
+let PAIRS = pairsOf(state.set), BAND = bandOf(state.set), unrelated = BAND.unrelated, tau = BAND.tau, lo = BAND.lo;
+state.sel = PAIRS.length ? PAIRS[0] : null;
+const counterpart = (p) => { for (const s of SETS) if (s !== state.set && byKey[s][pairKey(p)]) return byKey[s][pairKey(p)]; return null; };
+
+function setSet(s) {
+  if (!byKey[s]) return;
+  const k = state.sel ? pairKey(state.sel) : null;
+  state.set = s; PAIRS = pairsOf(s); BAND = bandOf(s); unrelated = BAND.unrelated; tau = BAND.tau; lo = BAND.lo;
+  state.sel = (k && byKey[s][k]) || (PAIRS.length ? PAIRS[0] : null);
+  drawSetSwitch(); drawMap(); pairSelect(); drawLine(); drawDossier();
+}
+function drawSetSwitch() {
+  const el = document.getElementById("setsel"); el.innerHTML = "";
+  if (SETS.length < 2) { el.hidden = true; return; }
+  el.hidden = false;
+  for (const s of SETS) {
+    const b = document.createElement("button"); b.type = "button"; b.setAttribute("role", "tab"); b.setAttribute("aria-selected", String(s === state.set));
+    const [name, sub] = SET_LABEL[s] || [s, ""];
+    b.innerHTML = `${name}<small>${sub}</small>`; b.onclick = () => setSet(s); el.appendChild(b);
+  }
+}
 
 function arcClass(p) { if (tau != null && p.lbf <= tau) return "null"; return p.lbf > 0 ? "for" : "against"; }
 function arcColor(p) { const c = arcClass(p); return c === "null" ? css("--null") : (c === "for" ? css("--for") : css("--against")); }
@@ -295,7 +332,7 @@ function highlightMap() {
 function showTip(ev, p) {
   const t = document.getElementById("tip");
   const r = document.querySelector("#map").getBoundingClientRect();
-  t.innerHTML = `<b>${pairName(p)}</b><br>log BF ${fmt(p.lbf)}${p.lbf_sd != null ? " ± " + p.lbf_sd.toFixed(1) + " (replicates)" : ""}<br><span class="muted">${p.known === "related" ? (p.deep ? "known related, Indo-European depth" : "known related") : "known unrelated"} · ${p.n} concepts · G ${p.g}</span>`;
+  t.innerHTML = `<b>${pairName(p)}</b><br>log BF ${fmt(p.lbf)}${p.lbf_sd != null ? " ± " + p.lbf_sd.toFixed(1) + " (replicates)" : ""}<br><span class="muted">${p.known === "related" ? (p.deep ? "known related, Indo-European depth" : "known related") : "known unrelated"} · ${p.n} ${setLabel(p.cset || "all").toLowerCase()} concepts · G ${p.g}</span>`;
   t.hidden = false;
   const x = ev.clientX - r.left + 14, y = ev.clientY - r.top + 14;
   t.style.left = Math.min(x, r.width - 310) + "px"; t.style.top = y + "px";
@@ -315,6 +352,14 @@ function drawLine() {
   svg.append("g").attr("class", "axis").attr("transform", `translate(0,82)`).call(d3.axisBottom(x).ticks(10));
   svg.append("text").attr("x", W - m.r).attr("y", 112).attr("text-anchor", "end").attr("fill", css("--muted")).style("font-size", "11px").text("log Bayes factor, shared ancestor vs separate (nats)");
   svg.append("line").attr("x1", x(0)).attr("x2", x(0)).attr("y1", 20).attr("y2", 82).attr("stroke", css("--line"));
+  // the same pair on the other concept set: a hollow marker joined to the active one, so the shift reads directly
+  let ghosts = 0;
+  const gg = svg.append("g");
+  for (const p of PAIRS) {
+    const q = counterpart(p); if (!q) continue; ghosts++;
+    gg.append("line").attr("class", "ghost-link").attr("x1", x(q.lbf)).attr("x2", x(p.lbf)).attr("y1", 50).attr("y2", 50);
+    gg.append("circle").attr("class", "ghost").attr("cx", x(q.lbf)).attr("cy", 50).attr("r", 3.5).append("title").text(`${pairName(p)} on ${setLabel(q.cset || "all").toLowerCase()}: ${fmt(q.lbf)}`);
+  }
   // stagger labels
   const sorted = PAIRS.slice().sort((a, b) => a.lbf - b.lbf);
   const g = svg.append("g");
@@ -325,7 +370,9 @@ function drawLine() {
     const up = i % 2 === 0;
     gx.append("text").attr("class", "plab").attr("y", up ? -14 : 22).attr("text-anchor", "middle").text(`${famLabel(p.fam1).slice(0, 5)}–${famLabel(p.fam2).slice(0, 5)}`);
   });
-  document.getElementById("bandnote").textContent = tau != null ? `Noise band: ${unrelated.length} known-unrelated pairs span ${fmt(lo)} to ${fmt(d3.max(unrelated))} nats (99th percentile ${fmt(tau)}).` : "";
+  const other = SETS.find(s => s !== state.set);
+  document.getElementById("bandnote").textContent = (tau != null ? `Noise band: ${unrelated.length} known-unrelated pairs span ${fmt(lo)} to ${fmt(d3.max(unrelated))} nats (99th percentile ${fmt(tau)}).` : "")
+    + (ghosts ? ` Hollow markers: the same pair on ${setLabel(other).toLowerCase()}.` : "");
 }
 function showTipLine(ev, p) { const t = document.getElementById("tip"); const r = document.querySelector("#map").getBoundingClientRect(); showTip(ev, p); t.style.top = (ev.clientY - r.top + 14) + "px"; }
 
@@ -347,13 +394,16 @@ function drawDossier() {
   const ests = p.estimates;
   const tr = meanOf(ests.map(e => e.t_root).filter(v => v != null));
   const om = meanOf(ests.map(e => e.omega).filter(v => v != null));
+  const q = counterpart(p);
+  const qcls = q ? (() => { const b = bandOf(q.cset || "all"); return b.tau != null && q.lbf <= b.tau ? "null" : (q.lbf > 0 ? "for" : "against"); })() : "";
   document.getElementById("stat").innerHTML = `
     <div><div class="big ${cls}">${fmt(p.lbf)}</div><small>log Bayes factor, ${pairName(p)}${p.lbf_sd != null ? ` · replicates ± ${p.lbf_sd.toFixed(1)}` : ""}</small></div>
     <div><div style="font-family:var(--display);font-size:1.3rem">${verdict}</div><small>${p.known === "related" ? (p.deep ? "known to be related, at Indo-European depth" : "known to be related") : "known to be unrelated"} · ${p.n} concepts · G ${p.g === "fit" ? "fitted to the daughters" : "flat"}</small></div>
+    ${q ? `<div><div class="big ${qcls}" style="font-size:1.6rem">${fmt(q.lbf)}</div><small>the same pair on ${setLabel(q.cset || "all").toLowerCase()}${q.lbf_sd != null ? ` · ± ${q.lbf_sd.toFixed(1)}` : ""}</small></div>` : ""}
     ${tr != null ? `<div><div class="big" style="font-size:1.6rem">${tr.toFixed(2)}</div><small>t<sub>root</sub>, length of the join edges (posterior mean)</small></div>` : ""}
     ${om != null ? `<div><div class="big" style="font-size:1.6rem">${om.toFixed(3)}</div><small>&omega;, borrowing rate</small></div>` : ""}`;
   drawTree(p); drawBars(p); drawLogos(p);
-  document.getElementById("footnote").textContent = `${pairName(p)}: ${p.K} stones × ${p.sweeps} sweeps per estimate, ${ests.length} replicate${ests.length > 1 ? "s" : ""}; ${p.source || ""}`;
+  document.getElementById("footnote").textContent = `${pairName(p)}: ${p.n} concepts drawn from ${p.pool ? p.pool + " available on " : ""}${setLabel(p.cset || "all").toLowerCase()}; ${p.K} stones × ${p.sweeps} sweeps per estimate, ${ests.length} replicate${ests.length > 1 ? "s" : ""}; ${p.source || ""}`;
 }
 
 // tree: nodes from the stored forest (parent array), horizontal, root at left
@@ -502,7 +552,7 @@ function drawLogos(p) {
 function boot() {
   if (!PAIRS.length) { document.getElementById("stat").textContent = "No results yet."; return; }
   if (DATA.note) { const n = document.getElementById("note"); n.textContent = DATA.note; n.hidden = false; }
-  drawMap(); pairSelect(); drawLine(); drawDossier();
+  drawSetSwitch(); drawMap(); pairSelect(); drawLine(); drawDossier();
   window.addEventListener("resize", () => {});
 }
 boot();
