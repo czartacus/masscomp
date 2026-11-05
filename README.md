@@ -700,9 +700,43 @@ Proto-Indo-European depth is real and of the same size as the draw-to-draw varia
 detection threshold, not past it. The test that settles whether more words settle it — every
 available basic-vocabulary item (125–135 per pair) for the three PIE-depth pairs among these
 families (Ibero–Germanic, Ibero–Slavic, Germanic–Slavic) and four unrelated controls, two
-replicates at K = 24 — is in the cloud, as is the corrected Latin-donor battery (donor families are
-separate trees in the forest; see 12.22 in the spec for the first battery's asymmetry and its
-fix).
+replicates at K = 24 — is in the cloud.
+
+**Latin as a donor family (`diag_42032981698.json`; K = 16, two replicates, 50 words).** Donor
+families are separate trees in the forest, never joined, that every node can borrow from
+(`donors=latin`; the concept draw is kept identical to the run without donors). The first battery was
+withdrawn: borrowing from a donor on the root edges was available to H1 and not to H0 (whose family
+roots were plain G draws), so every pair containing Ibero-Romance inflated — +60 for Ibero–Mongolic,
+with half of the Ibero root forms "borrowed from Latin" at α = 1 — and the join path now keeps
+donor borrowing at full strength at every α, so both hypotheses share it and only inheritance from
+the joined root (and root-level contact between the two tested families) is measured. On the
+corrected path, basic vocabulary, the same draw as above:
+
+| pair | without Latin | with Latin as donor |
+|---|---|---|
+| Germanic – Nordic | +89.3 | +98.7 (+86.8, +110.7) |
+| Ibero – Italo-Romance | +70.4 | **+13.7** (+12.9, +14.5) |
+| Finnic – Saami | +45.5 | +32.4 (+0.4, +64.5) |
+| Ibero – Germanic (PIE depth) | +7.6 | −1.2 (+0.4, −2.8) |
+| Ibero – Slavic (PIE depth) | −17.5 | −5.1 (−4.8, −5.3) |
+| Ibero – Finnic | −10.0 | −7.5 |
+| Ibero – Mongolic | −29.4 | −5.7 |
+| Germanic – Finnic | −18.5 | −12.3 |
+| Turkic – Mongolic | −7.4 | −8.6 |
+| Ibero – Turkic | −8.8 | −3.8 |
+| Finnic – Turkic | −6.7 | −25.5 (−52.5, +1.5) |
+
+Two readings. Ibero–Italo-Romance falls from +70 to +14 (and from +40 to +10 on the full list):
+with Latin in the forest, "both branches took the word from Latin" explains most of what "both
+inherited it from Proto-Romance" explained before, because Latin *is* the ancestor and the model has
+no way to prefer descent over contact when the source is the same form — what survives is the
+shared innovation (*fiʎo*, not *filius*). That is the adversarial case for donors: a donor that is
+the ancestor removes the evidence, as it should under this model's definition of the hypotheses;
+the right structure for Latin is in the tree, as an attested older stage (the `romlat` family, in
+the cloud). Second, several donor cells have replicate sds of 12–32 nats where the same pairs
+without donors had 1–13 (Finnic–Saami +0.4 / +64.5, Finnic–Turkic −52.5 / +1.5), on pairs where
+Latin is irrelevant; the merged traces will say whether that is the estimator's bottom stones or
+the sampler, and until then the donor numbers are indicative, not protocol.
 
 ### Pre-v3 notes (kept for the record)
 
