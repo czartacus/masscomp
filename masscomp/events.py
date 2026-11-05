@@ -17,7 +17,19 @@ SIGMA2_U = 16.0                           # u_e[s,s'] ~ N(0, t_e * SIGMA2_U); sl
 # no prior-drawn rule is audible in the data and the u layer cannot be tested. Sound laws are
 # near-categorical: a slab wide enough to reach logit parity with identity is the right prior.
 N_U_SLOTS = N_SEG * (N_OUT - 1) + N_SEG   # off-diagonal sub/del entries + insertion entries
-PI_U = 3.0 / N_U_SLOTS                    # each slot present with this prob (expected 3 per edge)
+# Rule budget: each slot present w.p. pi_u(t). The plan's prior expects 3 rules per edge whatever its
+# length (MASSCOMP_U_RULES, default 3). MASSCOMP_U_PER_T=<kappa> makes it kappa * t_e rules per edge
+# instead (a real edge carries dozens; the budget should scale with time like the slab variance does).
+U_RULES = float(os.environ.get("MASSCOMP_U_RULES", "3"))
+U_PER_T = float(os.environ.get("MASSCOMP_U_PER_T", "0"))
+PI_U = U_RULES / N_U_SLOTS                 # the length-free default, kept for callers that need a number
+
+
+def pi_u(t):
+    """Inclusion probability of one rule slot on an edge of length t."""
+    if U_PER_T > 0:
+        return min(0.5, U_PER_T * t / N_U_SLOTS)
+    return PI_U
 RHO_A, RHO_RATE = 2.0, 2.0
 OMEGA_A, OMEGA_RATE = 1.0, 10.0
 TROOT_A, TROOT_RATE = 2.0, 1.0
@@ -165,9 +177,9 @@ U_SLOTS = u_slots()
 
 
 def log_prior_u(u, t):
-    """Sparse spike-and-slab: each slot present w.p. PI_U, value N(0, t*SIGMA2_U)."""
-    k = len(u)
-    lp = k * math.log(PI_U) + (N_U_SLOTS - k) * math.log1p(-PI_U)
+    """Sparse spike-and-slab: each slot present w.p. pi_u(t), value N(0, t*SIGMA2_U)."""
+    k = len(u); p = pi_u(t)
+    lp = k * math.log(p) + (N_U_SLOTS - k) * math.log1p(-p)
     var = t * SIGMA2_U
     for w in u.values():
         lp += -0.5 * w * w / var - 0.5 * math.log(2 * math.pi * var)
@@ -176,8 +188,9 @@ def log_prior_u(u, t):
 
 def sample_u(t, rng):
     u = {}
+    p = pi_u(t)
     for slot in U_SLOTS:
-        if rng.random() < PI_U:
+        if rng.random() < p:
             u[slot] = float(rng.normal(0, math.sqrt(t * SIGMA2_U)))
     return u
 
