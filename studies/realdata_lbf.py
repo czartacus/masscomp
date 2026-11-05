@@ -19,17 +19,20 @@ from studies.common import N_PROCS
 from studies.realdata_probe import build_forest, leaf_langs, require_extended_inventory
 
 FAMILIES = {"ibero": (("spa", "por"), "cat"), "italo": (("ita", "fra"), "ron"), "germanic": (("deu", "nld"), "eng"),
+            "romlat": ((("spa", "por"), "cat"), "lat"),          # Ibero-Romance with Latin as an attested older stage in the tree
             "nordic": (("swe", "dan"), "nor"), "slavic": (("rus", "ukr"), "pol"), "finnic": (("fin", "krl"), "ekk"),
             "saami": (("sme", "smn"), "sma"), "turkic": (("tur", "azj"), "kaz"), "mongolic": (("khk", "bua"), "xal")}
 # donor families: separate trees in the forest under both hypotheses, never joined, so that "shared from Latin" is a
 # borrowing path the model can take instead of evidence for a common ancestor; a bare language name is a root with one leaf
 DONORS = {"latin": "lat", "hungarian": "hun", "basque": "eus", "livonian": "liv"}
 # what is known (for the report only; the model never sees it)
-RELATED = {frozenset(p) for p in [("ibero", "italo"), ("germanic", "nordic"), ("finnic", "saami"),
+RELATED = {frozenset(p) for p in [("ibero", "italo"), ("germanic", "nordic"), ("finnic", "saami"), ("romlat", "italo"),
                                   ("ibero", "germanic"), ("ibero", "nordic"), ("ibero", "slavic"), ("italo", "germanic"), ("italo", "nordic"),
-                                  ("italo", "slavic"), ("germanic", "slavic"), ("nordic", "slavic")]}
+                                  ("italo", "slavic"), ("germanic", "slavic"), ("nordic", "slavic"),
+                                  ("romlat", "germanic"), ("romlat", "nordic"), ("romlat", "slavic")]}
 DEEP = {frozenset(p) for p in [("ibero", "germanic"), ("ibero", "nordic"), ("ibero", "slavic"), ("italo", "germanic"), ("italo", "nordic"),
-                               ("italo", "slavic"), ("germanic", "slavic"), ("nordic", "slavic")]}
+                               ("italo", "slavic"), ("germanic", "slavic"), ("nordic", "slavic"),
+                               ("romlat", "germanic"), ("romlat", "nordic"), ("romlat", "slavic")]}
 
 # Basic vocabulary: the Swadesh 100-item list and the Leipzig-Jakarta list (Tadmor 2009), mapped onto the NorthEuraLex
 # concepts in data/northeuralex_sel.csv (identifier = NorthEuraLex concept number + gloss). Items with no NorthEuraLex
