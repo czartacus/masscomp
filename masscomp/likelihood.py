@@ -92,17 +92,22 @@ class State:
     def join_delta(self):
         """The join path's power variable: sum over the root edges and concepts of log term - log G(child)
         for inherit / borrow events (0 for replace); d/d alpha of the log target."""
-        tot = 0.0
+        return float(self.join_delta_by_concept().sum())
+
+    def join_delta_by_concept(self):
+        """join_delta split by concept (an (M,) array): the thermodynamic-integration view of the join
+        path, LBF = int_0^1 E_alpha[Delta] d alpha, then attributes the evidence concept by concept."""
+        out = np.zeros(self.M)
         for e in self.root_edges:
             p = self.f.parent[e]
             for c in range(self.M):
                 k = self.event[(e, c)]
                 yc = self.y[(e, c)]
                 if k == ev.INHERIT:
-                    tot += self.ep[e].logprob(self.y[(p, c)], yc) - ev.log_G(yc)
+                    out[c] += self.ep[e].logprob(self.y[(p, c)], yc) - ev.log_G(yc)
                 elif k == ev.BORROW:
-                    tot += self.adapt.logprob(self.y[(self.donor[(e, c)], c)], yc) - ev.log_G(yc)
-        return tot
+                    out[c] += self.adapt.logprob(self.y[(self.donor[(e, c)], c)], yc) - ev.log_G(yc)
+        return out
 
     def recompute_all(self):
         self.t_param = self.log_param_prior()

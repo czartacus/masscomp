@@ -1,0 +1,32 @@
+ID,Name,Latitude,Longitude,Family,Subfamily
+fin,Finnish,61.00,24.45,Uralic,Finnic
+krl,North Karelian,65.17,30.87,Uralic,Finnic
+ekk,Estonian,59.25,24.75,Uralic,Finnic
+liv,Livonian,57.57,22.03,Uralic,Finnic
+sma,Southern Sami,64.25,12.60,Uralic,Saami
+sme,Northern Sami,68.72,22.11,Uralic,Saami
+smn,Inari Sami,69.42,27.87,Uralic,Saami
+hun,Hungarian,46.91,19.66,Uralic,Hungarian
+pol,Polish,51.84,18.63,Indo-European,Balto-Slavic
+ukr,Ukrainian,50.25,28.65,Indo-European,Balto-Slavic
+rus,Russian,57.60,39.80,Indo-European,Balto-Slavic
+nor,Norwegian (Bokmål),59.92,10.71,Indo-European,Germanic
+swe,Swedish,59.80,17.39,Indo-European,Germanic
+dan,Danish,55.60,12.50,Indo-European,Germanic
+deu,German,52.27,10.50,Indo-European,Germanic
+nld,Dutch,52.00,5.00,Indo-European,Germanic
+eng,English,53.00,-1.00,Indo-European,Germanic
+lat,Latin,41.90,12.45,Indo-European,Italic
+fra,French,48.00,2.00,Indo-European,Italic
+cat,Catalan,41.45,1.57,Indo-European,Italic
+spa,Spanish,42.25,-3.70,Indo-European,Italic
+por,Portuguese,39.91,-8.10,Indo-European,Italic
+ita,Italian,43.05,12.65,Indo-European,Italic
+ron,Romanian,46.39,24.23,Indo-European,Italic
+tur,Turkish,39.87,32.87,Turkic,West Oghuz
+azj,North Azerbaijani,40.40,49.60,Turkic,West Oghuz
+kaz,Kazakh,49.80,73.15,Turkic,Kipchak
+khk,Khalkha Mongolian,48.32,106.29,Mongolic-Khitan,Eastern Mongolic
+bua,Buryat,51.83,107.60,Mongolic-Khitan,Eastern Mongolic
+xal,Kalmyk,46.57,45.32,Mongolic-Khitan,Eastern Mongolic
+eus,Basque,43.28,-1.32,Basque,Basque

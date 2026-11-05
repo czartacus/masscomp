@@ -32,9 +32,14 @@ def _estimate(args):
     ds, th, seed, K, sweeps, burn, thin, warmup, power, init_prior, g_tables = args
     ev.set_G(*g_tables)
     t0 = time.time()
-    val, terms, s = join_path(ds, th, seed, K=K, n_sweeps=sweeps, burn=burn, thin=thin, warmup=warmup, power=power, init_from_prior=init_prior)
+    trace = {}
+    val, terms, s = join_path(ds, th, seed, K=K, n_sweeps=sweeps, burn=burn, thin=thin, warmup=warmup, power=power, init_from_prior=init_prior,
+                              trace=trace)
+    from masscomp.data import to_str
+    for key in ("root_forms_at1", "fam_forms_at1"):
+        trace[key] = {k: [[to_str(form), round(p_, 3)] for form, p_ in v] for k, v in trace.get(key, {}).items()}
     return dict(lbf=float(val), terms=[float(t) for t in terms], secs=time.time() - t0, t_root_end=float(s.st.theta.t_root),
-                omega_end=float(s.st.theta.omega), lam_end=[round(float(x), 2) for x in s.st.theta.lam])
+                omega_end=float(s.st.theta.omega), lam_end=[round(float(x), 2) for x in s.st.theta.lam], trace=trace)
 
 
 def lbf(p):
@@ -70,7 +75,11 @@ def lbf(p):
         ests = [_estimate(j) for j in jobs]
     vals = [e["lbf"] for e in ests]
     key = frozenset((f1, f2))
-    return dict(config=dict(fam1=f1, fam2=f2, families=families, n=M, seed=seed, K=K, sweeps=sweeps, burn=burn, warmup=warmup, power=power,
+    from masscomp.data import to_str
+    tree = dict(parent=list(f.parent), length=[float(x) for x in f.length], family=list(f.family), leaves=list(f.leaves),
+                names={str(k): v for k, v in f.names.items()})
+    leaves = {L: {c: to_str(forms_by[L][c]) for c in chosen} for L in langs}
+    return dict(concepts=chosen, tree=tree, leaf_forms=leaves, config=dict(fam1=f1, fam2=f2, families=families, n=M, seed=seed, K=K, sweeps=sweeps, burn=burn, warmup=warmup, power=power,
                             reps=reps, g=g_mode, len_edge=len_edge, init="prior" if init_prior else "copy", inventory_size=N_SEG,
                             lam_sd=ev.LAM_SD, u_context=ev.U_CONTEXT, u_rules=ev.U_RULES, u_per_t=ev.U_PER_T),
                 known="related" if key in RELATED else "unrelated", deep=key in DEEP, common_concepts=len(common),

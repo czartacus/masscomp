@@ -6,6 +6,7 @@ with the expectation over samples drawn at power posterior beta_k, chained.
 """
 import math
 import numpy as np
+from . import events as ev
 from .mcmc import Sampler
 
 
@@ -249,7 +250,7 @@ def stepping_stone_pt(ds, theta0, seed, K=24, n_sweeps=2000, burn=500, thin=5, p
 
 
 def join_path(ds, theta0, seed, K=16, n_sweeps=1000, burn=300, thin=5, power=2.0, warmup=None, verbose=False,
-              direction="down", init_from_prior=True, spacing="top", **sweep_kw):
+              direction="down", init_from_prior=True, spacing="top", trace=None, **sweep_kw):
     """Log Bayes factor H1 : H0 by a stepping stone along the JOIN rather than along the likelihood.
 
     The target at join temperature alpha keeps the whole model except that the inherit / borrow terms of
@@ -262,7 +263,12 @@ def join_path(ds, theta0, seed, K=16, n_sweeps=1000, burn=300, thin=5, power=2.0
     of terms, replicate sd 20-60 nats at M = 25) and needs its two marginals estimated separately, the
     power variable here is small and the within-family posterior - the part that mixes slowly - is at
     full strength at every stone. One chain, cooled from alpha = 1 to 0 (direction "down") after a warm-up
-    at alpha = 1, or heated from 0 ("up"). Returns (lbf, per-stone terms, sampler)."""
+    at alpha = 1, or heated from 0 ("up"). Returns (lbf, per-stone terms, sampler).
+
+    trace: a dict to fill with what a results explorer needs: the per-concept mean of the power variable
+    at every stone (delta_c, K x M) and at alpha = 1 (the second half of the warm-up), its thermodynamic-
+    integration attribution of the LBF to concepts (ti_concept, summing to ti_total), and the alpha = 1
+    posterior summaries - event fractions per edge, t_root, omega, lam, the sampled root forms."""
     rng = np.random.default_rng(seed)
     # Delta grows with alpha (the join terms matter most near alpha = 1), so the stones are dense at the
     # top by default: alpha_k = 1 - (1 - k/K)^power; spacing="bottom" is the likelihood path's (k/K)^power
@@ -270,24 +276,34 @@ def join_path(ds, theta0, seed, K=16, n_sweeps=1000, burn=300, thin=5, power=2.0
     s = Sampler(ds, theta0.copy(), rng, beta=1.0, init_from_prior=init_from_prior)
     assert s.st.joined, "join_path needs the joined (H1) forest"
     terms = [None] * K
+    M = s.st.M
+    at1 = None
     if direction == "down":
-        for _ in range(warmup if warmup is not None else 2 * n_sweeps):
+        n_w = warmup if warmup is not None else 2 * n_sweeps
+        if trace is not None:
+            at1 = _Alpha1Record(s)
+        for i in range(n_w):
             s.sweep(**sweep_kw)
+            if at1 is not None and i >= n_w // 2 and (i - n_w // 2) % thin == 0:
+                at1.add()
         order = range(K - 1, -1, -1)
     else:
         s.st.alpha = 0.0; s.st.recompute_all()
         for _ in range(warmup if warmup is not None else 2 * n_sweeps):
             s.sweep(**sweep_kw)
         order = range(K)
+    dc_mean = np.zeros((K + 1, M)); dc_sd = np.zeros((K + 1, M))
     for k in order:
         s.st.alpha = alphas[k]; s.st.recompute_all()
         d = alphas[k + 1] - alphas[k]
-        ds_ = []
+        ds_ = []; dcs = []
         for i in range(n_sweeps):
             s.sweep(**sweep_kw)
             if i >= burn and (i - burn) % thin == 0:
-                ds_.append(s.st.join_delta())
-        ds_ = np.array(ds_)
+                dc = s.st.join_delta_by_concept()
+                ds_.append(float(dc.sum())); dcs.append(dc)
+        ds_ = np.array(ds_); dcs = np.array(dcs)
+        dc_mean[k] = dcs.mean(axis=0); dc_sd[k] = dcs.std(axis=0)
         m = ds_.max()
         w = np.exp(d * (ds_ - m))
         terms[k] = d * m + math.log(w.mean())
@@ -295,4 +311,62 @@ def join_path(ds, theta0, seed, K=16, n_sweeps=1000, burn=300, thin=5, power=2.0
             print(f"  stone {k:2d} alpha={alphas[k]:.4f} mean delta={ds_.mean():.2f} sd={ds_.std():.2f} term={terms[k]:.3f} "
                   f"ess={w.sum() ** 2 / (w ** 2).sum():.1f}", flush=True)
     s.st.alpha = 1.0; s.st.recompute_all()
+    if trace is not None:
+        if at1 is not None and at1.n:
+            dc_mean[K] = at1.dc_sum / at1.n
+        else:
+            dc_mean[K] = dc_mean[K - 1]
+        # trapezoid over the stones: the TI attribution of the evidence to concepts
+        ti = np.zeros(M)
+        for k in range(K):
+            ti += (alphas[k + 1] - alphas[k]) * 0.5 * (dc_mean[k] + dc_mean[k + 1])
+        trace.update(alphas=[float(a) for a in alphas], delta_c=dc_mean.tolist(), delta_c_sd=dc_sd.tolist(),
+                     ti_concept=ti.tolist(), ti_total=float(ti.sum()), ss_total=float(sum(terms)))
+        if at1 is not None:
+            trace.update(at1.summary())
     return float(sum(terms)), terms, s
+
+
+class _Alpha1Record:
+    """Posterior summaries at alpha = 1 (the H1 fit) collected during the warm-up of join_path."""
+
+    def __init__(self, s):
+        self.s = s; st = s.st; f = st.f
+        self.n = 0; self.dc_sum = np.zeros(st.M)
+        self.edges = list(f.edges)
+        self.ev_counts = {e: np.zeros(3) for e in self.edges}
+        self.borrow_from = {}
+        self.t_root = []; self.omega = []; self.lam = []
+        self.root_forms = {c: {} for c in range(st.M)}
+        self.fam_forms = {(v, c): {} for v in f.children[f.roots[0]] for c in range(st.M)}
+
+    def add(self):
+        st = self.s.st; f = st.f
+        self.n += 1
+        self.dc_sum += st.join_delta_by_concept()
+        for e in self.edges:
+            for c in range(st.M):
+                k = st.event[(e, c)]
+                self.ev_counts[e][k] += 1
+                if k == ev.BORROW:
+                    key = (e, st.donor[(e, c)])
+                    self.borrow_from[key] = self.borrow_from.get(key, 0) + 1
+        self.t_root.append(st.theta.t_root); self.omega.append(st.theta.omega); self.lam.append(st.theta.lam.copy())
+        R = f.roots[0]
+        for c in range(st.M):
+            y = st.y[(R, c)]; d = self.root_forms[c]; d[y] = d.get(y, 0) + 1
+            for v in f.children[R]:
+                y = st.y[(v, c)]; d = self.fam_forms[(v, c)]; d[y] = d.get(y, 0) + 1
+
+    def summary(self):
+        st = self.s.st; f = st.f; n = max(self.n, 1)
+        top = lambda d: sorted(((list(k), v / n) for k, v in d.items()), key=lambda kv: -kv[1])[:8]
+        return dict(n_at1=self.n,
+                    events_at1={str(e): dict(name=f.names.get(e, str(e)), inherit=float(self.ev_counts[e][0] / (n * st.M)),
+                                             replace=float(self.ev_counts[e][1] / (n * st.M)), borrow=float(self.ev_counts[e][2] / (n * st.M)))
+                                for e in self.edges},
+                    borrow_from_at1={f"{e}<-{d}": v / (n * st.M) for (e, d), v in self.borrow_from.items()},
+                    t_root_at1=float(np.mean(self.t_root)), t_root_sd_at1=float(np.std(self.t_root)),
+                    omega_at1=float(np.mean(self.omega)), lam_at1=[float(x) for x in np.mean(self.lam, axis=0)],
+                    root_forms_at1={str(c): top(self.root_forms[c]) for c in range(st.M)},
+                    fam_forms_at1={f"{v}:{c}": top(self.fam_forms[(v, c)]) for (v, c) in self.fam_forms})
