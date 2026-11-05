@@ -419,6 +419,19 @@ depth. **§8.3 passes on the join-path estimator**, at the depths the simulator'
 (12.3), with the caveat that the related signal fades fast: a fifth of the related pairs at depth
 1.0 sit below +2 nats.
 
+**The longer ladder (`lbfj_41991819908.json`: K = 24, 600 sweeps per stone, the first ten datasets
+of each depth, two replicates; 2.6 h per estimate against 0.6).** Replicate sd falls from a median of
+3.3 / 4.1 nats (related, depths 0.25 / 1.0) and 3.7 / 1.7 (unrelated) at K = 16 to 1.0 / 1.3 and
+0.5 / 0.6, and the single-replicate misses go with it: no unrelated replicate above +2.4 (K = 16 had
++11.0, +3.6, +2.6 on the same datasets), so **single replicates separate at K = 24: power 0.90 at
+depth 0.25 and 1.00 at depth 1.0** (τ = +2.4 / +0.1) where K = 16 single replicates gave 0.57 / 0.65.
+Per-dataset means agree with the K = 16 grid to 3–4 nats on average, so the shorter ladder was noisy
+rather than biased. One related dataset (2106: +32.7 / +11.0 at K = 24, +26.3 / +7.4 at K = 16) is
+bimodal on both ladders and sets the max replicate sd (15); nothing in the ladder fixes a posterior
+with two basins. Protocol from here: K = 24 single replicates, or K = 16 in pairs when a replicate sd
+is wanted. Related pairs below +2 nats: 2 of 20 at depth 0.25 (datasets 2107 and 2108 whose signal
+is small on both ladders), none at depth 1.0.
+
 **Geweke restart battery (`diag_41818729390.json`, `diag_41827548303.json`).** Sixteen cells, 12,000–
 20,000 fresh exact draws each, three sweeps per draw: latent moves on four θ draws with ω from the
 prior and at 0.5, each parameter move alone, the full sampler on two draws, the subtree regrow at
