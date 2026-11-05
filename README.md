@@ -550,7 +550,15 @@ a wider prior. As a first, cheap test of that reading, `MASSCOMP_LAM_MIN="-,-,0,
 `lam_min=-+-+0+-`) truncates the prior on λ₂ at zero — deletion can be free but not cheaper than
 keeping a segment — as a truncated normal (density renormalised; the random-walk move rejects
 proposals below the bound; prior draws by rejection, so seeded datasets are unchanged when no bound
-is set). The three fitted-G probe cells are rerun under it; numbers below when in.
+is set). The three fitted-G probe cells under it (`diag_42020677180.json`): λ₂ sits on the bound in
+every chain (the posterior wants it negative), λ₁ rises to 6.7–8.4 to compensate, and the roots move
+a little toward Latin — NED 0.600 / 0.686 / 0.639 against 0.611 / 0.695 / 0.643 free, and on the
+cognate subset 0.308 / 0.418 / 0.376 against 0.356 / 0.423 / 0.386 — while getting 5–10% shorter
+(length ratio 0.92 / 0.89 / 0.93). Union roots do not disappear: *twig* goes from `ramora` to
+`ramor` (Romanian's *-r* kept; `ramo` is the next form), because once deletion costs the identity
+bonus rather than less, a per-edge rule that deletes the segment on each daughter edge takes over.
+A mild gain, not a cure: the asymmetry has to be in the direction of change (loss cheaper than gain,
+lenition cheaper than fortition), not in the level of λ₂.
 
 ### Rule budget and left-context rules (2026-11-05)
 
@@ -574,7 +582,9 @@ the rule move alone on two seeds and κ = 10, latent moves with ω from the prio
 borrow fraction (0.026 vs 0.025) with ω at +2.79 and the inherit fraction at −2.53, one correlated
 excursion of the rare statistic that the README records on earlier batteries too, while the same
 move set with borrowing made common (ω = 0.5, where the fraction is measured precisely) passes at 1.46.
-A rerun of that cell with 20,000 draws and a fourth seed is in the cloud; numbers here when in.
+The rerun of that cell with 20,000 draws gives max |z| 2.16 (the borrow fraction again, at +2.2),
+and a fourth seed 1.97 (`diag_42017443023.json`): the 3.52 was the rare statistic's tail. The
+context-rule sampler passes.
 Right context is not built: the lattice resolves a dependency on the preceding segment at emission time, and a dependency
 on the following one would need a state the lattice does not carry; a mirrored transducer (right
 context = left context of the reversed strings) is the way to add it if the probes call for it.
