@@ -754,7 +754,7 @@ class Sampler:
         if step is None:
             # per-component scales from measured posterior sds (deletion/insertion rates are
             # weakly identified), widened at low beta where the prior is much broader
-            step = np.array([0.08, 0.2, 0.3, 0.08]) * (1.0 + 5.0 * (1.0 - self.beta))
+            step = np.array([0.08, 0.2, 0.3, 0.08, 0.15][:len(st.theta.lam)]) * (1.0 + 5.0 * (1.0 - self.beta))
         old = st.theta.lam.copy()
         st.theta.lam = old + self.rng.normal(0, 1, size=len(old)) * step
         if np.any(st.theta.lam < ev.LAM_MIN):             # outside the truncated prior: reject without the recompute

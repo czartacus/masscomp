@@ -81,3 +81,24 @@ print("ok")
 """
     r = _run({"MASSCOMP_DIRECTIONAL": "1"}, code)
     assert r.returncode == 0 and "ok" in r.stdout, r.stderr[-2000:]
+
+
+def test_directional_sampler_runs():
+    """The sampler sweeps with five lambda components (the lambda move's step vector, prior, tables)."""
+    code = """
+import numpy as np
+from masscomp.simulate import simulate, sample_theta
+from masscomp.tree import benchmark_a
+from masscomp.mcmc import Sampler
+f = benchmark_a(related=True, t_root=0.25)
+rng = np.random.default_rng(5)
+th = sample_theta(f, 6, rng)
+ds = simulate(f, th, 6, rng)
+s = Sampler(ds, th.copy(), np.random.default_rng(1))
+for _ in range(3):
+    s.sweep()
+assert s.st.theta.lam.shape == (5,) and s.acc["lam"][1] >= 3
+print("ok")
+"""
+    r = _run({"MASSCOMP_DIRECTIONAL": "1"}, code)
+    assert r.returncode == 0 and "ok" in r.stdout, r.stderr[-2000:]
