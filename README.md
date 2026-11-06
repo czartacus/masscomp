@@ -1080,6 +1080,12 @@ results arrive in `results/cloud/diag_<run>.json` (`git pull` first); job logs c
 and `RULES` lines. Conditioned rules: add `u_env_rules=<n>` (off by default). Keep the README, the
 spec (12.x findings) and the atlas current; commit and push everything.
 
+**Dispatched 6 Nov, 22:40:** Day 1 noise band + insiders at five rules + K = 32 check = `diag` run
+42305651447 (13 cells); Day 2 §8.3 at the protocol = `study` run 42306267254 (lbfj, 40 jobs); Day 2
+simulated newcomer = `study` run 42306299369 (lbfj3, 20 jobs, `studies/lbfj3.py`). Still running from
+6 Nov: 42300145304 (newcomer re-runs, conditioned-rule newcomer), 42246673476 (pairs under conditioned
+rules).
+
 **Day 1 (7 Nov) — the newcomer statistic and its null.** (a) Read `diag` run 42300145304 (three
 timed-out newcomer cells re-run shorter; Finnic and Slavic as newcomers to Ibero + Germanic *with*
 conditioned rules). Decision rule: conditioned rules stay in the protocol only if the Finnic newcomer
