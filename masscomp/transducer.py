@@ -242,7 +242,7 @@ class EdgeParams:
                     if row is not None:
                         m = row.max(); lsp[i] = row - (m + np.log(np.exp(row - m).sum()))
         tabs = (lsp, lip)
-        if len(self._pos_cache) < 50000:
+        if len(self._pos_cache) < 2000:                     # ~8 KB per entry; cleared with the memo tables
             self._pos_cache[y1] = tabs
         return tabs
 
