@@ -905,9 +905,24 @@ The directional weight is drawn after the plan's four, so seeded datasets keep t
 
 **λ₃ truncated at 4.5 by default** (plan 12.12): 6.7% of the prior's mass, the insertion rates that
 let simulated words grow without bound; datasets whose λ₃ fell below are redrawn (rejection), every
-other seeded dataset is unchanged. The Geweke battery under both switches, the §8.1 recovery under
-the rate–time coupling, the Romance probe and the protocol pairs (replica exchange, 130 basic
-words, ten rules) are in the cloud; numbers below when in.
+other seeded dataset is unchanged.
+
+**Geweke under the switches (`diag_42189539865.json`, `diag_42193994219.json`).** Rate–time: full
+sampler on three seeds (12,000–20,000 restart draws) max |z| 2.82 / 1.84 / 1.61 and, rerun at
+20,000 draws, 2.78 / 1.61; latent moves with borrowing common 0.65. Seed 1 puts a 2.8 on a λ
+component each time but on a different one (λ₀ then λ₁, with the sign flipping), which is noise,
+not a biased move; the t_root move's rebuild of the root-edge tables under the coupling is correct.
+Directional: full sampler 1.34 / 1.96, both switches 2.32, latents 0.59. Both pass.
+
+**The Romance probe under the coupling (`diag_42189558636.json`).** With n = 100 both chains settle
+at t_root 0.07–0.08 — the Ibero- and Italo-Romance roots a short step from the joined root, 89–92% of
+root edges inherited — and the root sits at NED 0.636 from Latin against 0.611 without the
+coupling (cognate subset 0.376 against 0.356): no gain for the reconstruction. With n = 50, three
+chains of four fall into the other basin, t_root 6.3–6.9 with every root edge "replaced": under the
+coupling a long join edge makes the root-edge transducer nearly uniform, so nothing is inherited
+through it and the event prior then prefers the edge longer still. The coupling therefore makes the
+two basins of the joined root (12.14) farther apart for a plain chain — what the join-path estimator
+sees of that is in the protocol pairs below.
 
 ### Pre-v3 notes (kept for the record)
 
