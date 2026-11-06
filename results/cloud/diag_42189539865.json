@@ -1,0 +1,520 @@
+{
+ "study": "diag",
+ "digest": [
+  {
+   "spec": "kind=geweke,n=12000,m=2,seed=1,mode=full,sweeps=3,geweke_restart=1,directional=1",
+   "max_abs_z": null,
+   "moves": null,
+   "secs": 263.75801944732666
+  },
+  {
+   "spec": "kind=geweke,n=12000,m=2,seed=1,mode=full,sweeps=3,geweke_restart=1,rate_time=1",
+   "max_abs_z": 2.82,
+   "moves": "successive-conditional done (1737s)   moves: y=65940/607774 ffbs=76628/77756 jffbs=4756/104847 regrow=98989/132075 joint=89162/1150331 lam=28285/36000 u=2406905/3760142 rho=56194/72000 omega=31863/36000 troot=27009/36000",
+   "secs": 1738.4838733673096
+  },
+  {
+   "spec": "kind=geweke,n=12000,m=2,seed=2,mode=full,sweeps=3,geweke_restart=1,directional=1",
+   "max_abs_z": null,
+   "moves": null,
+   "secs": 181.80644607543945
+  },
+  {
+   "spec": "kind=geweke,n=12000,m=2,seed=2,mode=full,sweeps=3,geweke_restart=1,rate_time=1",
+   "max_abs_z": 1.84,
+   "moves": "successive-conditional done (1839s)   moves: y=65809/607144 ffbs=75983/77073 jffbs=4730/104240 regrow=98688/131548 joint=90626/1150477 lam=28312/36000 u=2409891/3759316 rho=56399/72000 omega=31736/36000 troot=26964/36000",
+   "secs": 1841.0640187263489
+  },
+  {
+   "spec": "kind=geweke,n=12000,m=2,seed=3,mode=full,sweeps=3,geweke_restart=1,rate_time=1,directional=1",
+   "max_abs_z": null,
+   "moves": null,
+   "secs": 270.37637972831726
+  },
+  {
+   "spec": "kind=geweke,n=20000,m=2,seed=1,mode=latents,sweeps=3,geweke_restart=1,geweke_omega=0.5,rate_time=1",
+   "max_abs_z": 0.65,
+   "moves": "successive-conditional done (1386s)   moves: y=116802/1055157 ffbs=173465/184140 jffbs=18436/173865 regrow=178490/254601 joint=150390/1919989",
+   "secs": 1388.0704402923584
+  }
+ ],
+ "cells": [
+  {
+   "study": "diag",
+   "kind": "geweke",
+   "spec": "kind=geweke,n=12000,m=2,seed=1,mode=full,sweeps=3,geweke_restart=1,directional=1",
+   "params": {
+    "kind": "geweke",
+    "n": "12000",
+    "m": "2",
+    "seed": "1",
+    "mode": "full",
+    "sweeps": "3",
+    "geweke_restart": "1",
+    "directional": "1"
+   },
+   "env": {
+    "MASSCOMP_GEWEKE_RESTART": "1",
+    "MASSCOMP_DIRECTIONAL": "1"
+   },
+   "git": "f7d4d8a",
+   "secs": 263.75801944732666,
+   "result": {
+    "stats": [],
+    "moves": null,
+    "max_abs_z": null,
+    "returncode": 1,
+    "stdout": "marginal-conditional done (255s)\n",
+    "stderr": "Traceback (most recent call last):\n  File \"/home/runner/work/masscomp/masscomp/studies/geweke.py\", line 166, in <module>\n    s.sweep(clamp_latents=(MODE == \"params\"), clamp_params=(MODE == \"latents\"))\n  File \"/home/runner/work/masscomp/masscomp/masscomp/mcmc.py\", line 1184, in sweep\n    self.move_lam()\n  File \"/home/runner/work/masscomp/masscomp/masscomp/mcmc.py\", line 759, in move_lam\n    st.theta.lam = old + self.rng.normal(0, 1, size=len(old)) * step\n                         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^~~~~~\nValueError: operands could not be broadcast together with shapes (5,) (4,) \n"
+   }
+  },
+  {
+   "study": "diag",
+   "kind": "geweke",
+   "spec": "kind=geweke,n=12000,m=2,seed=1,mode=full,sweeps=3,geweke_restart=1,rate_time=1",
+   "params": {
+    "kind": "geweke",
+    "n": "12000",
+    "m": "2",
+    "seed": "1",
+    "mode": "full",
+    "sweeps": "3",
+    "geweke_restart": "1",
+    "rate_time": "1"
+   },
+   "env": {
+    "MASSCOMP_GEWEKE_RESTART": "1",
+    "MASSCOMP_RATE_TIME": "1"
+   },
+   "git": "f7d4d8a",
+   "secs": 1738.4838733673096,
+   "result": {
+    "stats": [
+     {
+      "stat": "omega",
+      "mc": 0.1,
+      "sc": 0.1,
+      "z": 0.03,
+      "ess": 12000
+     },
+     {
+      "stat": "rho_mean",
+      "mc": 1.001,
+      "sc": 1.003,
+      "z": -0.36,
+      "ess": 12000
+     },
+     {
+      "stat": "lam0",
+      "mc": 4.516,
+      "sc": 4.48,
+      "z": 2.82,
+      "ess": 12000
+     },
+     {
+      "stat": "lam1",
+      "mc": 2.985,
+      "sc": 2.993,
+      "z": -0.63,
+      "ess": 12000
+     },
+     {
+      "stat": "lam2",
+      "mc": 1.987,
+      "sc": 2.019,
+      "z": -2.48,
+      "ess": 12000
+     },
+     {
+      "stat": "lam3",
+      "mc": 6.142,
+      "sc": 6.145,
+      "z": -0.25,
+      "ess": 12000
+     },
+     {
+      "stat": "t_root",
+      "mc": 1.99,
+      "sc": 2.0,
+      "z": -0.54,
+      "ess": 12000
+     },
+     {
+      "stat": "n_u",
+      "mc": 53.935,
+      "sc": 54.086,
+      "z": -1.59,
+      "ess": 12000
+     },
+     {
+      "stat": "sum_u2",
+      "mc": 412.538,
+      "sc": 411.975,
+      "z": 0.2,
+      "ess": 12000
+     },
+     {
+      "stat": "int_len",
+      "mc": 4.313,
+      "sc": 4.32,
+      "z": -0.62,
+      "ess": 12000
+     },
+     {
+      "stat": "leaf_len",
+      "mc": 4.491,
+      "sc": 4.5,
+      "z": -0.83,
+      "ess": 12000
+     },
+     {
+      "stat": "f_inherit",
+      "mc": 0.7,
+      "sc": 0.699,
+      "z": 0.25,
+      "ess": 12000
+     },
+     {
+      "stat": "f_replace",
+      "mc": 0.275,
+      "sc": 0.275,
+      "z": -0.09,
+      "ess": 12000
+     },
+     {
+      "stat": "f_borrow",
+      "mc": 0.025,
+      "sc": 0.026,
+      "z": -0.55,
+      "ess": 12000
+     }
+    ],
+    "moves": "successive-conditional done (1737s)   moves: y=65940/607774 ffbs=76628/77756 jffbs=4756/104847 regrow=98989/132075 joint=89162/1150331 lam=28285/36000 u=2406905/3760142 rho=56194/72000 omega=31863/36000 troot=27009/36000",
+    "max_abs_z": 2.82,
+    "returncode": 0,
+    "stdout": "marginal-conditional done (254s)\nsuccessive-conditional done (1737s)   moves: y=65940/607774 ffbs=76628/77756 jffbs=4756/104847 regrow=98989/132075 joint=89162/1150331 lam=28285/36000 u=2406905/3760142 rho=56194/72000 omega=31863/36000 troot=27009/36000\nstat          mc mean    sc mean       z  ess_sc\nomega           0.100      0.100    0.03   12000\nrho_mean        1.001      1.003   -0.36   12000\nlam0            4.516      4.480    2.82   12000\nlam1            2.985      2.993   -0.63   12000\nlam2            1.987      2.019   -2.48   12000\nlam3            6.142      6.145   -0.25   12000\nt_root          1.990      2.000   -0.54   12000\nn_u            53.935     54.086   -1.59   12000\nsum_u2        412.538    411.975    0.20   12000\nint_len         4.313      4.320   -0.62   12000\nleaf_len        4.491      4.500   -0.83   12000\nf_inherit       0.700      0.699    0.25   12000\nf_replace       0.275      0.275   -0.09   12000\nf_borrow        0.025      0.026   -0.55   12000\n(1737s)\n",
+    "stderr": ""
+   }
+  },
+  {
+   "study": "diag",
+   "kind": "geweke",
+   "spec": "kind=geweke,n=12000,m=2,seed=2,mode=full,sweeps=3,geweke_restart=1,directional=1",
+   "params": {
+    "kind": "geweke",
+    "n": "12000",
+    "m": "2",
+    "seed": "2",
+    "mode": "full",
+    "sweeps": "3",
+    "geweke_restart": "1",
+    "directional": "1"
+   },
+   "env": {
+    "MASSCOMP_GEWEKE_RESTART": "1",
+    "MASSCOMP_DIRECTIONAL": "1"
+   },
+   "git": "f7d4d8a",
+   "secs": 181.80644607543945,
+   "result": {
+    "stats": [],
+    "moves": null,
+    "max_abs_z": null,
+    "returncode": 1,
+    "stdout": "marginal-conditional done (175s)\n",
+    "stderr": "Traceback (most recent call last):\n  File \"/home/runner/work/masscomp/masscomp/studies/geweke.py\", line 166, in <module>\n    s.sweep(clamp_latents=(MODE == \"params\"), clamp_params=(MODE == \"latents\"))\n  File \"/home/runner/work/masscomp/masscomp/masscomp/mcmc.py\", line 1184, in sweep\n    self.move_lam()\n  File \"/home/runner/work/masscomp/masscomp/masscomp/mcmc.py\", line 759, in move_lam\n    st.theta.lam = old + self.rng.normal(0, 1, size=len(old)) * step\n                         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^~~~~~\nValueError: operands could not be broadcast together with shapes (5,) (4,) \n"
+   }
+  },
+  {
+   "study": "diag",
+   "kind": "geweke",
+   "spec": "kind=geweke,n=12000,m=2,seed=2,mode=full,sweeps=3,geweke_restart=1,rate_time=1",
+   "params": {
+    "kind": "geweke",
+    "n": "12000",
+    "m": "2",
+    "seed": "2",
+    "mode": "full",
+    "sweeps": "3",
+    "geweke_restart": "1",
+    "rate_time": "1"
+   },
+   "env": {
+    "MASSCOMP_GEWEKE_RESTART": "1",
+    "MASSCOMP_RATE_TIME": "1"
+   },
+   "git": "f7d4d8a",
+   "secs": 1841.0640187263489,
+   "result": {
+    "stats": [
+     {
+      "stat": "omega",
+      "mc": 0.099,
+      "sc": 0.1,
+      "z": -1.25,
+      "ess": 12000
+     },
+     {
+      "stat": "rho_mean",
+      "mc": 1.007,
+      "sc": 1.004,
+      "z": 0.41,
+      "ess": 12000
+     },
+     {
+      "stat": "lam0",
+      "mc": 4.501,
+      "sc": 4.525,
+      "z": -1.84,
+      "ess": 12000
+     },
+     {
+      "stat": "lam1",
+      "mc": 3.005,
+      "sc": 2.989,
+      "z": 1.26,
+      "ess": 12000
+     },
+     {
+      "stat": "lam2",
+      "mc": 1.995,
+      "sc": 2.001,
+      "z": -0.52,
+      "ess": 12000
+     },
+     {
+      "stat": "lam3",
+      "mc": 6.137,
+      "sc": 6.15,
+      "z": -1.09,
+      "ess": 12000
+     },
+     {
+      "stat": "t_root",
+      "mc": 2.01,
+      "sc": 2.005,
+      "z": 0.25,
+      "ess": 12000
+     },
+     {
+      "stat": "n_u",
+      "mc": 53.922,
+      "sc": 53.883,
+      "z": 0.41,
+      "ess": 12000
+     },
+     {
+      "stat": "sum_u2",
+      "mc": 413.585,
+      "sc": 412.688,
+      "z": 0.31,
+      "ess": 12000
+     },
+     {
+      "stat": "int_len",
+      "mc": 4.335,
+      "sc": 4.326,
+      "z": 0.84,
+      "ess": 12000
+     },
+     {
+      "stat": "leaf_len",
+      "mc": 4.514,
+      "sc": 4.498,
+      "z": 1.37,
+      "ess": 12000
+     },
+     {
+      "stat": "f_inherit",
+      "mc": 0.699,
+      "sc": 0.698,
+      "z": 0.67,
+      "ess": 12000
+     },
+     {
+      "stat": "f_replace",
+      "mc": 0.276,
+      "sc": 0.277,
+      "z": -0.38,
+      "ess": 12000
+     },
+     {
+      "stat": "f_borrow",
+      "mc": 0.025,
+      "sc": 0.026,
+      "z": -0.97,
+      "ess": 12000
+     }
+    ],
+    "moves": "successive-conditional done (1839s)   moves: y=65809/607144 ffbs=75983/77073 jffbs=4730/104240 regrow=98688/131548 joint=90626/1150477 lam=28312/36000 u=2409891/3759316 rho=56399/72000 omega=31736/36000 troot=26964/36000",
+    "max_abs_z": 1.84,
+    "returncode": 0,
+    "stdout": "marginal-conditional done (266s)\nsuccessive-conditional done (1839s)   moves: y=65809/607144 ffbs=75983/77073 jffbs=4730/104240 regrow=98688/131548 joint=90626/1150477 lam=28312/36000 u=2409891/3759316 rho=56399/72000 omega=31736/36000 troot=26964/36000\nstat          mc mean    sc mean       z  ess_sc\nomega           0.099      0.100   -1.25   12000\nrho_mean        1.007      1.004    0.41   12000\nlam0            4.501      4.525   -1.84   12000\nlam1            3.005      2.989    1.26   12000\nlam2            1.995      2.001   -0.52   12000\nlam3            6.137      6.150   -1.09   12000\nt_root          2.010      2.005    0.25   12000\nn_u            53.922     53.883    0.41   12000\nsum_u2        413.585    412.688    0.31   12000\nint_len         4.335      4.326    0.84   12000\nleaf_len        4.514      4.498    1.37   12000\nf_inherit       0.699      0.698    0.67   12000\nf_replace       0.276      0.277   -0.38   12000\nf_borrow        0.025      0.026   -0.97   12000\n(1839s)\n",
+    "stderr": ""
+   }
+  },
+  {
+   "study": "diag",
+   "kind": "geweke",
+   "spec": "kind=geweke,n=12000,m=2,seed=3,mode=full,sweeps=3,geweke_restart=1,rate_time=1,directional=1",
+   "params": {
+    "kind": "geweke",
+    "n": "12000",
+    "m": "2",
+    "seed": "3",
+    "mode": "full",
+    "sweeps": "3",
+    "geweke_restart": "1",
+    "rate_time": "1",
+    "directional": "1"
+   },
+   "env": {
+    "MASSCOMP_GEWEKE_RESTART": "1",
+    "MASSCOMP_RATE_TIME": "1",
+    "MASSCOMP_DIRECTIONAL": "1"
+   },
+   "git": "f7d4d8a",
+   "secs": 270.37637972831726,
+   "result": {
+    "stats": [],
+    "moves": null,
+    "max_abs_z": null,
+    "returncode": 1,
+    "stdout": "marginal-conditional done (262s)\n",
+    "stderr": "Traceback (most recent call last):\n  File \"/home/runner/work/masscomp/masscomp/studies/geweke.py\", line 166, in <module>\n    s.sweep(clamp_latents=(MODE == \"params\"), clamp_params=(MODE == \"latents\"))\n  File \"/home/runner/work/masscomp/masscomp/masscomp/mcmc.py\", line 1184, in sweep\n    self.move_lam()\n  File \"/home/runner/work/masscomp/masscomp/masscomp/mcmc.py\", line 759, in move_lam\n    st.theta.lam = old + self.rng.normal(0, 1, size=len(old)) * step\n                         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^~~~~~\nValueError: operands could not be broadcast together with shapes (5,) (4,) \n"
+   }
+  },
+  {
+   "study": "diag",
+   "kind": "geweke",
+   "spec": "kind=geweke,n=20000,m=2,seed=1,mode=latents,sweeps=3,geweke_restart=1,geweke_omega=0.5,rate_time=1",
+   "params": {
+    "kind": "geweke",
+    "n": "20000",
+    "m": "2",
+    "seed": "1",
+    "mode": "latents",
+    "sweeps": "3",
+    "geweke_restart": "1",
+    "geweke_omega": "0.5",
+    "rate_time": "1"
+   },
+   "env": {
+    "MASSCOMP_GEWEKE_RESTART": "1",
+    "MASSCOMP_GEWEKE_OMEGA": "0.5",
+    "MASSCOMP_RATE_TIME": "1"
+   },
+   "git": "f7d4d8a",
+   "secs": 1388.0704402923584,
+   "result": {
+    "stats": [
+     {
+      "stat": "omega",
+      "mc": 0.5,
+      "sc": 0.5,
+      "z": NaN,
+      "ess": 20000
+     },
+     {
+      "stat": "rho_mean",
+      "mc": 0.938,
+      "sc": 0.938,
+      "z": 0.0,
+      "ess": 20000
+     },
+     {
+      "stat": "lam0",
+      "mc": 3.366,
+      "sc": 3.366,
+      "z": 0.0,
+      "ess": 20000
+     },
+     {
+      "stat": "lam1",
+      "mc": 2.933,
+      "sc": 2.933,
+      "z": NaN,
+      "ess": 20000
+     },
+     {
+      "stat": "lam2",
+      "mc": 1.992,
+      "sc": 1.992,
+      "z": 0.0,
+      "ess": 20000
+     },
+     {
+      "stat": "lam3",
+      "mc": 7.0,
+      "sc": 7.0,
+      "z": NaN,
+      "ess": 20000
+     },
+     {
+      "stat": "t_root",
+      "mc": 1.0,
+      "sc": 1.0,
+      "z": NaN,
+      "ess": 20000
+     },
+     {
+      "stat": "n_u",
+      "mc": 52.0,
+      "sc": 52.0,
+      "z": NaN,
+      "ess": 20000
+     },
+     {
+      "stat": "sum_u2",
+      "mc": 173.446,
+      "sc": 173.446,
+      "z": NaN,
+      "ess": 20000
+     },
+     {
+      "stat": "int_len",
+      "mc": 4.082,
+      "sc": 4.081,
+      "z": 0.14,
+      "ess": 20000
+     },
+     {
+      "stat": "leaf_len",
+      "mc": 4.119,
+      "sc": 4.114,
+      "z": 0.65,
+      "ess": 20000
+     },
+     {
+      "stat": "f_inherit",
+      "mc": 0.629,
+      "sc": 0.629,
+      "z": -0.09,
+      "ess": 20000
+     },
+     {
+      "stat": "f_replace",
+      "mc": 0.253,
+      "sc": 0.253,
+      "z": 0.14,
+      "ess": 20000
+     },
+     {
+      "stat": "f_borrow",
+      "mc": 0.118,
+      "sc": 0.118,
+      "z": -0.05,
+      "ess": 20000
+     }
+    ],
+    "moves": "successive-conditional done (1386s)   moves: y=116802/1055157 ffbs=173465/184140 jffbs=18436/173865 regrow=178490/254601 joint=150390/1919989",
+    "max_abs_z": 0.65,
+    "returncode": 0,
+    "stdout": "marginal-conditional done (99s)\nsuccessive-conditional done (1386s)   moves: y=116802/1055157 ffbs=173465/184140 jffbs=18436/173865 regrow=178490/254601 joint=150390/1919989\nstat          mc mean    sc mean       z  ess_sc\nomega           0.500      0.500     nan   20000\nrho_mean        0.938      0.938    0.00   20000\nlam0            3.366      3.366    0.00   20000\nlam1            2.933      2.933     nan   20000\nlam2            1.992      1.992    0.00   20000\nlam3            7.000      7.000     nan   20000\nt_root          1.000      1.000     nan   20000\nn_u            52.000     52.000     nan   20000\nsum_u2        173.446    173.446     nan   20000\nint_len         4.082      4.081    0.14   20000\nleaf_len        4.119      4.114    0.65   20000\nf_inherit       0.629      0.629   -0.09   20000\nf_replace       0.253      0.253    0.14   20000\nf_borrow        0.118      0.118   -0.05   20000\n(1387s)\n",
+    "stderr": "/home/runner/work/masscomp/masscomp/studies/geweke.py:193: RuntimeWarning: invalid value encountered in scalar divide\n  z = (a.mean() - b.mean()) / np.sqrt(a.var() / len(a) + b.var() / e)\n"
+   }
+  }
+ ],
+ "label": "geweke_rate_time_directional",
+ "run_id": "42189539865"
+}
