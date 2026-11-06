@@ -6,12 +6,18 @@ Datasets and seeds are the same as studies/lbf.py (seed = seed0 + 1000 * int(10 
 two estimators can be compared cell by cell. `reps` runs independent replicates of every estimate (the
 estimator-noise check); with MASSCOMP_PROCS > 1 the replicates and the two kinds run in parallel.
 Rows: depth, seed, kind, rep, lbf, secs, terms. Written to results/lbfj_<seed0>.json (study "lbfj";
-merge.py treats it as an lbf study)."""
+merge.py treats it as an lbf study).
+Environment: MASSCOMP_SPACING = top (the plan's one-sided ladder) | bottom | both (the protocol's two-sided
+ladder); MASSCOMP_ESTIMATOR = ss (stepping stone, marglik.join_path) | re (replica exchange,
+marglik.join_path_re); MASSCOMP_U_RULES / MASSCOMP_SIM_U_RULES the sampler's and the generator's rule
+budgets (see masscomp/simulate.py)."""
 import sys, time, os, json as _json
 import numpy as np
 from masscomp.simulate import simulate_matched_pair, sample_theta, Dataset
 from masscomp.tree import benchmark_a
-from masscomp.marglik import join_path
+from masscomp.marglik import join_path, join_path_re
+from masscomp import events as ev
+from masscomp.simulate import SIM_U_RULES
 from studies.common import save, N_PROCS
 
 N = int(sys.argv[1]) if len(sys.argv) > 1 else 20
@@ -23,6 +29,8 @@ BURN = int(sys.argv[6]) if len(sys.argv) > 6 else 200
 WARMUP = int(sys.argv[7]) if len(sys.argv) > 7 else 800
 POWER = float(sys.argv[8]) if len(sys.argv) > 8 else 2.0
 REPS = [int(r) for r in (sys.argv[9] if len(sys.argv) > 9 else "1").split(",")]
+SPACING = os.environ.get("MASSCOMP_SPACING", "top")
+ESTIMATOR = os.environ.get("MASSCOMP_ESTIMATOR", "ss")
 TAG = f"lbfj_{SEED0}"
 M = 25
 
@@ -33,7 +41,12 @@ def _estimate(args):
     dsh = Dataset(f1, ds.M, ds.leaf_forms)                       # both kinds are fitted on the joined forest
     th = sample_theta(f1, ds.M, np.random.default_rng(seed + 7919 * rep))
     t0 = time.time()
-    val, terms, s = join_path(dsh, th, seed * 10 + rep, K=K, n_sweeps=SWEEPS, burn=BURN, thin=4, warmup=WARMUP, power=POWER)
+    if ESTIMATOR == "re":
+        val, terms, s = join_path_re(dsh, th, seed * 10 + rep, K=K, n_sweeps=SWEEPS, burn=BURN, thin=4, warmup=WARMUP,
+                                     power=POWER, spacing=SPACING)       # s: the replica at alpha = 1
+    else:
+        val, terms, s = join_path(dsh, th, seed * 10 + rep, K=K, n_sweeps=SWEEPS, burn=BURN, thin=4, warmup=WARMUP, power=POWER,
+                                  spacing=SPACING)
     return f"{seed}:{label}:r{rep}", dict(total=float(val), terms=[float(t) for t in terms], secs=time.time() - t0,
                                         t_root_end=float(s.st.theta.t_root))
 
@@ -45,7 +58,8 @@ rows = _old.get("rows", []); partial = _old.get("estimates", {})
 
 def _save():
     save(TAG, {"study": "lbfj", "rows": rows, "estimates": partial, "K": K, "sweeps": SWEEPS, "burn": BURN, "warmup": WARMUP,
-               "power": POWER, "estimator": "join_path"})
+               "power": POWER, "estimator": "join_path_re" if ESTIMATOR == "re" else "join_path", "spacing": SPACING,
+               "u_rules": ev.U_RULES, "sim_u_rules": SIM_U_RULES or ev.U_RULES})
 
 
 for depth in DEPTHS:

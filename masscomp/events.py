@@ -209,9 +209,11 @@ def log_prior_u(u, t):
     return lp
 
 
-def sample_u(t, rng):
+def sample_u(t, rng, p=None):
+    """Draw a rule set from the prior; `p` overrides the inclusion probability (the simulator's own
+    budget, MASSCOMP_SIM_U_RULES, so a study can fit with a larger budget than the data were made with)."""
     u = {}
-    p = pi_u(t)
+    p = pi_u(t) if p is None else p
     if not U_CONTEXT:                 # the plan's slots, drawn exactly as before (seeded datasets unchanged)
         for slot in U_SLOTS:
             if rng.random() < p:

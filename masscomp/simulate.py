@@ -1,10 +1,18 @@
 """Forward simulator (plan §4)."""
+import os
 from dataclasses import dataclass, field
 import numpy as np
 from .segments import N_SEG
 from .tree import benchmark_a
 from .transducer import EdgeParams
 from . import events as ev
+
+# The simulator's rule budget: by default the sampler's (MASSCOMP_U_RULES), so simulated data and
+# fitted prior agree; MASSCOMP_SIM_U_RULES pins the generator's budget separately, so that a study
+# can fit the plan's seeded datasets (3 rules per edge) with the protocol's larger budget. The
+# context-free draw consumes one uniform per slot whatever the budget, so the datasets of a seed
+# are bit-identical across sampler budgets.
+SIM_U_RULES = float(os.environ.get("MASSCOMP_SIM_U_RULES", "0"))
 
 
 @dataclass
@@ -37,7 +45,8 @@ def sample_theta(forest, M, rng):
         while extra < ev.LAM_MIN[4]:
             extra = rng.normal(ev.LAM_MU[4], ev.LAM_SD)
         lam = np.append(lam, extra)
-    u = {e: ev.sample_u(forest.length[e], rng) for e in forest.edges}
+    p_sim = SIM_U_RULES / ev.N_U_SLOTS if SIM_U_RULES > 0 else None
+    u = {e: ev.sample_u(forest.length[e], rng, p=p_sim) for e in forest.edges}
     rho = rng.gamma(ev.RHO_A, 1 / ev.RHO_RATE, size=M)
     omega = float(rng.gamma(ev.OMEGA_A, 1 / ev.OMEGA_RATE))
     t_root = float(rng.gamma(ev.TROOT_A, 1 / ev.TROOT_RATE))
