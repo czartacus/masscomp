@@ -172,5 +172,12 @@ if __name__ == "__main__":
         print(result["summary"])
         for i, e in enumerate(result["estimates"]):          # per-stone terms, bottom first, so a job log carries the split
             print(f"STONES rep{i} {e.get('trace', {}).get('direction', 'down')}: " + " ".join(f"{t:+.2f}" for t in e["terms"]))
+        for i, e in enumerate(result["estimates"]):          # the rules of the H1 fit (inclusion >= 0.5), per edge
+            by_edge = {}
+            for r in e.get("trace", {}).get("rules_at1", []):
+                if r["freq"] >= 0.5:
+                    by_edge.setdefault(r["edge"], []).append(r)
+            for edge, rs in by_edge.items():
+                print(f"RULES rep{i} {edge:<10} " + "; ".join(f"{r['rule']} ({r['freq']:.2f}, {r['w']:+.1f})" for r in rs[:12]) + (" ..." if len(rs) > 12 else ""))
     else:
         print(f"{result['secs_per_sweep']*1000:.0f} ms/sweep; ESS/s:", {k: round(v, 3) for k, v in result["ess_per_sec"].items()}, "root change rate", result["root_change_rate"])

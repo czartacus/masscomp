@@ -468,11 +468,15 @@ class _Alpha1Record:
         self.t_root = []; self.omega = []; self.lam = []
         self.root_forms = {c: {} for c in range(st.M)}
         self.fam_forms = {(v, c): {} for v in f.children[f.join_root] for c in range(st.M)}
+        self.rules = {}                                   # (edge, slot) -> [inclusion count, weight sum]
 
     def add(self):
         st = self.s.st; f = st.f
         self.n += 1
         self.dc_sum += st.join_delta_by_concept()
+        for e, d in st.theta.u.items():
+            for slot, w in d.items():
+                r = self.rules.setdefault((e, slot), [0, 0.0]); r[0] += 1; r[1] += w
         for e in self.edges:
             for c in range(st.M):
                 k = st.event[(e, c)]
@@ -498,4 +502,26 @@ class _Alpha1Record:
                     t_root_at1=float(np.mean(self.t_root)), t_root_sd_at1=float(np.std(self.t_root)),
                     omega_at1=float(np.mean(self.omega)), lam_at1=[float(x) for x in np.mean(self.lam, axis=0)],
                     root_forms_at1={str(c): top(self.root_forms[c]) for c in range(st.M)},
-                    fam_forms_at1={f"{v}:{c}": top(self.fam_forms[(v, c)]) for (v, c) in self.fam_forms})
+                    fam_forms_at1={f"{v}:{c}": top(self.fam_forms[(v, c)]) for (v, c) in self.fam_forms},
+                    rules_at1=self.rule_rows())
+
+    def rule_rows(self, min_freq=0.25, min_w=1.0):
+        """The rules with posterior inclusion >= min_freq and |mean weight| >= min_w at alpha = 1 (a rule
+        with a weight near 0 is present under the prior but inert): edge name, the rule in linguists'
+        notation (t → d / V_V), inclusion frequency, mean weight, whether conditioned; sorted by
+        edge and by freq * |w|."""
+        f = self.s.st.f; n = max(self.n, 1)
+        rows = [dict(edge=f.names.get(e, str(e)), rule=rule_str(slot), freq=round(c / n, 2), w=round(wsum / c, 2), conditioned=len(slot) == 3)
+                for (e, slot), (c, wsum) in self.rules.items() if c / n >= min_freq and abs(wsum / c) >= min_w]
+        rows.sort(key=lambda r: (r["edge"], -r["freq"] * abs(r["w"])))
+        return rows
+
+
+def rule_str(slot):
+    """A rule slot as a linguist would write it: 't → d / V_V', 'Ø → s / _#', 'k → Ø'."""
+    from .segments import SEGMENTS, EPS, ENV_NAMES
+    if slot[0] == "ins":
+        head = f"Ø → {SEGMENTS[slot[1]]}"
+    else:
+        head = f"{SEGMENTS[slot[0]]} → {'Ø' if slot[1] == EPS else SEGMENTS[slot[1]]}"
+    return head + (f" / {ENV_NAMES[slot[2]]}" if len(slot) == 3 else "")

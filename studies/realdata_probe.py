@@ -214,11 +214,11 @@ def probe(p):
                     r = rules.setdefault((e, slot), [0, 0.0]); r[0] += 1; r[1] += w
     rule_rows = []
     for (e, slot), (n_in, wsum) in rules.items():
-        if n_in / n_snap < 0.5:
+        if n_in / n_snap < 0.5 or abs(wsum / n_in) < 1.0:            # inert rules (weight near 0) are prior furniture
             continue
         rule_rows.append(dict(edge=f.names.get(e, str(e)), rule=rule_str(slot), freq=round(n_in / n_snap, 2), w=round(wsum / n_in, 2),
                               conditioned=len(slot) == 3))
-    rule_rows.sort(key=lambda r: (r["edge"], -r["freq"], -abs(r["w"])))
+    rule_rows.sort(key=lambda r: (r["edge"], -r["freq"] * abs(r["w"])))
     # RB reconstructions from the first chain
     marg = rb_marginals(ds, chains[0], [R] + fam_roots, n_states, seed)
     concepts = []
@@ -260,49 +260,4 @@ def probe(p):
     return res
 
 
-def rule_str(slot):
-    """A rule slot as a linguist would write it: 't → d / V_V', 'Ø → s / _#', 'k → Ø'."""
-    from masscomp.segments import SEGMENTS, EPS, ENV_NAMES
-    if slot[0] == "ins":
-        head = f"Ø → {SEGMENTS[slot[1]]}"
-    else:
-        head = f"{SEGMENTS[slot[0]]} → {'Ø' if slot[1] == EPS else SEGMENTS[slot[1]]}"
-    return head + (f" / {ENV_NAMES[slot[2]]}" if len(slot) == 3 else "")
-
-
-def summary_lines(res):
-    L = []
-    g = res["G"]; c = res["config"]
-    L.append(f"G={g['mode']} n={c['n']} seed={c['seed']} sweeps={c['sweeps']}x{c['chains']} lam_sd={c['lam_sd']} inventory={c['inventory_size']} ({res['secs']:.0f}s)")
-    for i, pc in enumerate(res["per_chain"]):
-        evs = " ".join(f"{k}:{v['inherit']:.2f}/{v['replace']:.2f}/{v['borrow']:.2f}" for k, v in pc["events"].items())
-        L.append(f"chain {i}: t_root {pc['t_root']:.2f} omega {pc['omega']:.3f} lam {pc['lam']} n_u {pc['n_u']:.0f} root_len {pc['root_len']:.2f} "
-                 f"fam_root_len {pc['fam_root_len']:.2f} ll {pc['log_lik']:.0f} ({pc['secs']:.0f}s) events inherit/replace/borrow {evs}")
-    L.append(f"latin_len {res['latin_len']:.2f}; root/latin {res['root_len_ratio']:.2f}; fam/latin {res['fam_root_len_ratio']:.2f}; "
-             f"root mode == latin {res['root_mode_is_latin']:.2f}; mean log p(latin | root) {res['mean_logp_latin_root']:.1f} vs mode {res['mean_logp_mode_root']:.1f}")
-    L.append("normalised edit distance of the modal form to Latin: " + ", ".join(f"{k} {v:.3f}" for k, v in res["ned"].items()))
-    if res["ned_cognate"]:
-        L.append("  same on the concepts whose daughters are within 0.6 of Latin: " + ", ".join(f"{k} {v:.3f}" if k != "n" else f"n {v}" for k, v in res["ned_cognate"].items()))
-    if res.get("rules"):
-        L.append("rules with posterior inclusion >= 0.5 (freq, mean weight):")
-        by_edge = {}
-        for r in res["rules"]:
-            by_edge.setdefault(r["edge"], []).append(r)
-        for e, rs in by_edge.items():
-            L.append(f"  {e:<8} " + "; ".join(f"{r['rule']} ({r['freq']:.2f}, {r['w']:+.1f})" for r in rs[:14]) + (" ..." if len(rs) > 14 else ""))
-    for r in res["concepts"]:
-        L.append(f"  {r['concept']:<16} {r['latin']:<10} root {r['root']['top']} lp(lat) {r['root']['logp_latin']} ned {r['root']['ned']} | "
-                 f"ibero {r.get('ibero', {}).get('top', [])[:2]} | italo {r.get('italo', {}).get('top', [])[:2]} | leaves ned {r['leaf_ned']}")
-    return L
-
-
-if __name__ == "__main__":
-    spec = sys.argv[1] if len(sys.argv) > 1 else ""
-    p = dict(kv.split("=", 1) for kv in spec.split(",") if kv)
-    res = probe(p)
-    tag = p.get("tag", f"realdata_{p.get('g', 'flat')}_{p.get('seed', 1)}")
-    os.makedirs("results/realdata", exist_ok=True)
-    json.dump(res, open(f"results/realdata/{tag}.json", "w"), indent=1)
-    lines = summary_lines(res)
-    open(f"results/realdata/{tag}.txt", "w").write("\n".join(lines) + "\n")
-    print("\n".join(lines))
+from masscomp.marglik import rule_str  # noqa: E402
