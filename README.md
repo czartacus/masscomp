@@ -924,6 +924,50 @@ through it and the event prior then prefers the edge longer still. The coupling 
 two basins of the joined root (12.14) farther apart for a plain chain — what the join-path estimator
 sees of that is in the protocol pairs below.
 
+### Replica exchange validated; the coupling and the directional cost on the protocol pairs (2026-11-06, afternoon)
+
+**Replica exchange on the protocol pairs (`diag_42188677489.json`; basic vocabulary, ten context-free
+rules per edge, K = 24 two-sided cubic, 600 + 200 rounds, two independent runs each).**
+
+| pair | known | RE estimate (two runs) | single-chain bracket of record |
+|---|---|---|---|
+| Ibero-Romance–Slavic | related, deep | **+33.8** (+43.4, +24.1) | +35 (+23 … +48) |
+| Ibero-Romance–Germanic | related, deep | **+18.4** (+23.6, +13.2) | +35 (+22 … +48) |
+| Germanic–Slavic | related, deep | **−1.0** (+1.1, −3.1) | 0 (±3) |
+| Ibero-Romance–Finnic | unrelated | **+18.9** (+9.6, +28.1) | +3 |
+| Germanic–Finnic | unrelated | **−6.5** (−7.8, −5.3) | −6 |
+| Finnic–Saami (50 words, three rules) | related | **+60.2** (+65.2, +55.3); seed 2 +41.8 (+58.0, +25.5) | +46 / +86 |
+
+Exchange removes the hysteresis but not the spread: runs of the same pair still differ by 10–30 nats,
+and the swap acceptance in the transition (stones 14–19, α ≈ 0.8–0.95) falls to 0.01–0.2 on the
+wide-spread runs (0.5 elsewhere), so the ladder is still too sparse there; K = 32 or an adaptive
+spacing in the transition is the next refinement. The finding that matters is the control:
+Ibero-Romance–Finnic rises from +3 (single chains) to +19 under exchange, with the H1 fit looking
+exactly like a related pair's (t_root 2.3–2.7, ω ≈ 0): thorough sampling at the H1 end finds the
+rule-rich explanations of chance resemblances that short chains never reached. With ten
+context-free rules per root edge a control can match a real deep pair. The null calibration at three
+and five rules (`diag` run 42205508814) measures what budget keeps the controls down; the structural
+answer is the conditioned rules of branch `env-rules` (below), which make a real conditioned change
+cheaper than a leaky unconditioned one without making coincidences cheaper.
+
+**Rate–time coupling on the protocol pairs (`diag_42189568166.json`, same protocol, `rate_time=1`).**
+Ibero–Slavic +9.6 (+8.5, +10.8; t_root ≈ 2), Ibero–Germanic −0.5 (−3.7, +2.6), Germanic–Slavic −7.8
+(−8.7, −6.9), Ibero–Finnic −5.5 (−3.9, −7.2), Germanic–Finnic −11.4 (−10.0, −12.8). Every pair falls
+by 20–25 nats, the related ones and the chance control alike, and the H1 fits of the deep pairs and
+the controls sit at t_root 8–11 — the disconnected basin, where a long join edge makes the root-edge
+transducer nearly uniform, nothing is inherited through it and the event prior prefers the edge
+longer still. The coupling is a uniform tax on any rule-rich fit, not a discriminator. **§8.1
+recovery under the coupling (`recovery_42189549196.json`, 48 datasets):** t_root coverage 0.88
+against 0.98–1.00 for the plain model (`recovery_41853059272`, `41874847711`), detectable-rule
+coverage 0.53 against 0.69–0.73, root-set coverage 0.60 against 0.66–0.68; the posterior mean of
+t_root sits at 2.0 for a truth of 1.5 in both, so the coupling does not identify the join depth
+better either. **Verdict: the switch stays off.** The coupling as specified (coefficient 1 on
+log t, T_REF = 0.3) is the memoryless-substitution picture of sound change; regular sound change is
+few types of change applied to many words, which the rule layer carries, and the coupling only
+dilutes it. The directional cost's protocol cells (`diag` run 42193469558) are read below when
+they land; the Geweke batteries show both switches are implemented correctly, so they remain
+available as options.
+
 ### Pre-v3 notes (kept for the record)
 
 #### §8.3 LBF separation — blocked on estimator noise
