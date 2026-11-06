@@ -967,6 +967,34 @@ few types of change applied to many words, which the rule layer carries, and the
 dilutes it. The directional cost's protocol cells (`diag` run 42193469558) are read below when
 they land; the Geweke batteries show both switches are implemented correctly, so they remain
 available as options.
+### The rule budget, calibrated under replica exchange (2026-11-06, evening; `diag_42205508814.json`)
+
+Basic vocabulary, two-sided cubic ladder K = 24, two exchange runs per cell (shown as the mean and
+the two runs); ten-rule entries from the validation table above.
+
+| pair | known | 3 rules | 5 rules | 10 rules |
+|---|---|---|---|---|
+| Ibero-Romance–Slavic | related, deep | +39.4 (+37, +42) | **+30.0** (+24, +36) | +33.8 (+43, +24) |
+| Ibero-Romance–Germanic | related, deep | +34.7 (+21, +48) | **+23.7** (+21, +27) | +18.4 (+13, +24) |
+| Germanic–Slavic | related, deep | −2.7 (0, −6) | **−5.2** | −1.0 (+1, −3) |
+| Ibero-Romance–Finnic | unrelated | +6.9 (+14, −1) | **+2.1** (+2, +3) | +18.9 (+10, +28) |
+| Slavic–Finnic | unrelated | +1.7 (−1, +4) | **+1.1** | +5.4 (+2, +8) |
+| Germanic–Finnic | unrelated | −6.6 | **−5.5** | −6.5 |
+| Ibero-Romance–Turkic | unrelated | −5.2 | (running) | +1.6 (−1, +5) |
+| Turkic–Mongolic | contested | +45.1 (+20, +70) | +17.0 (+9, +25) | +20.0 (+14, +26) |
+
+**Five context-free rules per edge is the budget of record for pairs.** At five every control sits
+at or below +2.1 and the two detectable Indo-European pairs at +24 and +30 with replicate spreads of
+3–6 nats; at ten the Ibero–Finnic control reaches +19 (chance three-word correspondences dressed as
+rules); at three the related pairs are higher but a replicate of the same control reaches +14 and
+the spreads are 14–50 nats (the sparse ladder's transition problem, worse when fewer rules make the
+locking sharper). Germanic–Slavic is undetected at every budget: the Grimm's-law pair needs the
+conditioned machinery or more words. Turkic–Mongolic is not a control: the factor is +17 to +45 at
+every budget, and the joined-root hypothesis covers ancient contact between the two ancestors as well
+as descent, so the method says the two basic vocabularies are not independent and no more — the
+Altaic question stated, not settled; it is labelled `contested` in the study and leaves the atlas's
+null band.
+
 ### Environment-conditioned rules (2026-11-06, branch `env-rules`)
 
 **Why.** The replica-exchange runs showed what context-free rules cost: with ten of them per edge a
