@@ -32,6 +32,10 @@ class State:
         self.joined = self.f.join_root is not None
         self.root_edges = list(self.f.children[self.f.join_root]) if self.joined else []
         self.root_edge_set = set(self.root_edges)
+        # the root edges the join temperature acts on: all of them by default (H1 = every family joined
+        # against H0 = every family separate); a subset makes the path measure the evidence that those
+        # families join the others, which stay joined at full strength at every alpha (marglik.join_path)
+        self.mix_edges = set(self.root_edges)
         # nodes of donor trees (roots other than the join root and their descendants): a root-edge
         # borrowing from one of them is contact with an outside family, which H0 allows as much as H1
         # does, so the join temperature leaves it at full strength (see edge_terms)
@@ -88,7 +92,7 @@ class State:
                 return -1e30, 0.0
             lp_ev += -math.log(len(self.cands[e]))      # donor choice is part of the event prior
             form = self.adapt.logprob(self.y[(dd, c)], yc)
-        if self.alpha != 1.0 and e in self.root_edge_set and (k == ev.INHERIT or (k == ev.BORROW and dd not in self.external)):
+        if self.alpha != 1.0 and e in self.mix_edges and (k == ev.INHERIT or (k == ev.BORROW and dd not in self.external)):
             # the join path: inheritance from the joined root, and borrowing from the sister family at
             # root level, are what H1 adds; at alpha = 0 both collapse to G(child). Borrowing from a donor
             # family stays at full strength at every alpha, so H0 and H1 have the same access to it.
@@ -107,6 +111,8 @@ class State:
         path, LBF = int_0^1 E_alpha[Delta] d alpha, then attributes the evidence concept by concept."""
         out = np.zeros(self.M)
         for e in self.root_edges:
+            if e not in self.mix_edges:
+                continue
             p = self.f.parent[e]
             for c in range(self.M):
                 k = self.event[(e, c)]

@@ -106,3 +106,8 @@ def test_join_path_toy():
     ests_re = [join_path_re(ds, theta, seed=seed, K=12, n_sweeps=400, burn=100, thin=2, power=2.0, spacing="top", clamp_params=True, clamp_u=True)[0]
                for seed in (0, 1)]
     assert abs(np.mean(ests_re) - exact) < 0.5, (ests_re, exact)
+    # mixing every root edge explicitly is the default path: identical with the same seed
+    all_edges = list(ds.forest.children[ds.forest.join_root])
+    same = join_path_re(ds, theta, seed=0, K=12, n_sweeps=400, burn=100, thin=2, power=2.0, spacing="top", clamp_params=True, clamp_u=True,
+                        mix_edges=all_edges)[0]
+    assert abs(same - ests_re[0]) < 1e-9, (same, ests_re[0])

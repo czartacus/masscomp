@@ -5,7 +5,9 @@ joined at a root whose edges carry t_root (prior Gamma(2, 1)); n random concepts
 in all six languages; G flat or fitted to the six languages' other concepts.
 Usage: PYTHONPATH=. MASSCOMP_INVENTORY=extended python studies/realdata_lbf.py fam1=ibero,fam2=finnic,n=50,...
   keys: fam1, fam2 (or fams=ibero+germanic+slavic: three or more families joined at one root - the mass
-        comparison proper, H1 = all joined against H0 = all separate), n (50), seed (1), K (16), sweeps (600), burn (200), warmup (800), power (2), reps (1),
+        comparison proper, H1 = all joined against H0 = all separate; with mix=slavic the path mixes only
+        that family's root edge, so the estimate is the evidence that Slavic joins the others, which stay
+        joined: the question for one more family), n (50), seed (1), K (16), sweeps (600), burn (200), warmup (800), power (2), reps (1),
         g (flat|fit), len_edge (0.3), thin (4), init (copy|prior), concepts (all|basic: Swadesh-100 + Leipzig-Jakarta),
         donors (none, or DONORS names joined by +: separate trees that are never joined but can be borrowed from),
         spacing (top|both: where the ladder is dense; "both" keeps the bottom stone's power variable in range), power (2),
@@ -61,17 +63,17 @@ BASIC = """640_i 641_thou 642_he 643_we 637_this 638_that 647_who 646_what 620_n
 
 
 def _estimate(args):
-    ds, th, seed, K, sweeps, burn, thin, warmup, power, init_prior, g_tables, spacing, direction, ess_min, boost, estimator = args
+    ds, th, seed, K, sweeps, burn, thin, warmup, power, init_prior, g_tables, spacing, direction, ess_min, boost, estimator, mix_edges = args
     ev.set_G(*g_tables)
     t0 = time.time()
     trace = {}
     if estimator == "re":
         val, terms, s = join_path_re(ds, th, seed, K=K, n_sweeps=sweeps, burn=burn, thin=thin, warmup=warmup, power=power,
-                                     init_from_prior=init_prior, trace=trace, spacing=spacing)
+                                     init_from_prior=init_prior, trace=trace, spacing=spacing, mix_edges=mix_edges)
         trace["direction"] = "re"
     else:
         val, terms, s = join_path(ds, th, seed, K=K, n_sweeps=sweeps, burn=burn, thin=thin, warmup=warmup, power=power, init_from_prior=init_prior,
-                                  trace=trace, spacing=spacing, direction=direction, ess_min=ess_min, boost=boost)
+                                  trace=trace, spacing=spacing, direction=direction, ess_min=ess_min, boost=boost, mix_edges=mix_edges)
         trace["direction"] = direction
     from masscomp.data import to_str
     for key in ("root_forms_at1", "fam_forms_at1"):
@@ -91,6 +93,8 @@ def lbf(p):
     direction = p.get("direction", "down"); ess_min = float(p.get("ess_min", 0)); boost = int(p.get("boost", 1))
     estimator = p.get("estimator", "ss")
     concept_set = p.get("concepts", "all")                      # all | basic (BASIC above)
+    mix = p.get("mix", "").replace("+", ",").split(",") if p.get("mix") else []   # families whose root edges the path mixes
+    assert all(m in fams for m in mix), (mix, fams)                 # (the others stay joined): the evidence that they join
     donors = [(d, DONORS[d]) for d in p.get("donors", "").replace("+", ",").split(",") if d]
     families = [(fm, FAMILIES[fm]) for fm in fams]
     fam_langs = leaf_langs(families); donor_langs = leaf_langs(donors); langs = fam_langs + donor_langs
@@ -113,13 +117,14 @@ def lbf(p):
         ev.reset_G()
     f = build_forest(families, len_edge, donors=donors)
     name2v = {v: k for k, v in f.names.items()}
+    mix_edges = [name2v[m] for m in mix] if mix else None
     M = len(chosen)
     ds = Dataset(f, M, {(name2v[L], ci): forms_by[L][c] for L in langs for ci, c in enumerate(chosen)})
     jobs = []
     for r in range(reps):
         th = sample_theta(f, M, np.random.default_rng(seed * 100 + r))
         jobs.append((ds, th, seed * 1000 + r, K, sweeps, burn, thin, warmup, power, init_prior, (ev.G_LEN_RAW.copy(), ev.G_SEG.copy()), spacing,
-                     ("down" if r % 2 == 0 else "up") if direction == "alt" else direction, ess_min, boost, estimator))
+                     ("down" if r % 2 == 0 else "up") if direction == "alt" else direction, ess_min, boost, estimator, mix_edges))
     t0 = time.time()
     if N_PROCS > 1 and reps > 1:
         from concurrent.futures import ProcessPoolExecutor
@@ -141,14 +146,14 @@ def lbf(p):
                             rate_time=RATE_TIME, t_ref=T_REF, directional=DIRECTIONAL,
                             u_context=ev.U_CONTEXT, u_rules=ev.U_RULES, u_per_t=ev.U_PER_T, concepts=concept_set, pool=len(pool),
                             donors=donors, dropped_for_donors=dropped, spacing=spacing, direction=direction, ess_min=ess_min, boost=boost,
-                            estimator=estimator),
+                            estimator=estimator, mix=mix),
                 known=known, deep=any(k in DEEP for k in pairs), common_concepts=len(common),
                 lbf_mean=float(np.mean(vals)), lbf_sd=float(np.std(vals)) if reps > 1 else None, estimates=ests, secs=time.time() - t0)
 
 
 def summary_line(r):
     c = r["config"]
-    return (f"{'-'.join(c.get('fams', [c['fam1'], c['fam2']]))} ({r['known']}{', deep' if r['deep'] else ''}) G={c['g']} n={c['n']}/{c.get('pool', '?')} {c.get('concepts', 'all')}"
+    return (f"{'-'.join(c.get('fams', [c['fam1'], c['fam2']]))}{' mix=' + '+'.join(c['mix']) if c.get('mix') else ''} ({r['known']}{', deep' if r['deep'] else ''}) G={c['g']} n={c['n']}/{c.get('pool', '?')} {c.get('concepts', 'all')}"
             f"{' donors ' + '+'.join(d for d, _ in c['donors']) if c.get('donors') else ''} K={c['K']}x{c['sweeps']}"
             f"{' ' + c['spacing'] + '^' + str(c['power']).rstrip('0').rstrip('.') if c.get('spacing', 'top') != 'top' or c.get('power', 2) != 2 else ''}"
             f"{' RE' if c.get('estimator') == 're' else ''}: "
