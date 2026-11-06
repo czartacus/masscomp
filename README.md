@@ -870,6 +870,45 @@ overfitting of the paragraph above and are ignored. (`diag_42043900602.json`, th
 dominated by its bottom stone — Ibero–Turkic −116 and −147 on two draws — and is kept only as the
 record of why the ladder changed.)
 
+### Replica exchange, rate–time coupling, directional costs (2026-11-06)
+
+**Replica exchange along the join path (`marglik.join_path_re`, `estimator=re`).** The K + 1 stones
+run as coupled chains, one per α, and after every round of sweeps neighbouring chains exchange
+states by Metropolis: the target at α is b(x)·exp(α Δ(x)) with Δ the join power variable, so a swap
+of the states at α_k and α_{k+1} is accepted with probability min(1, exp(−(α_{k+1} − α_k)(Δ_{k+1} −
+Δ_k))). This is the remedy for the hysteresis of a single chain walked along the ladder: a locked
+state flows down, a free one up, and each stone samples both modes in their posterior proportion.
+Exact on the two-family toy (`tests/test_join_path.py`); on Finnic–Saami (50 basic words, K = 24
+two-sided cubic, 150 sweeps per round) two independent runs give +59.8 and +49.6 where single
+chains cooled and heated gave +46 / +86 and, with three times the sweeps, +71 / +24. Swap
+acceptance runs 0.1–0.4 through the transition (α ≈ 0.85–0.9) and 0.5–1.0 elsewhere; a denser
+ladder there (K = 32) is the next refinement. Cost: (K + 1) sweeps per round, one warm-up at α = 1
+from which every replica starts, ~600 MB per estimate for the 25 replicas (their transducer memo
+tables are cleared every 50 rounds).
+
+**Rate–time coupling (`MASSCOMP_RATE_TIME=1`, `MASSCOMP_T_REF`, default 0.3).** The plan's
+transducer changes segments at the same rate on every edge (spec 12.13): only the event hazards
+and the rule prior see t_e. With the switch on, every change logit — substitution, deletion,
+insertion — gains log(t_e / T_REF), so that for short edges P(change) grows in proportion to the
+edge length and for long ones it saturates through the softmax: a continuous-time substitution
+process in the log-linear form, with the tables unchanged at t_e = T_REF (the daughters' depth in
+the real-data forests, so a fitted λ keeps its meaning). The t_root move rebuilds the root-edge
+tables and recomputes their form terms, which is what makes t_root identified by the amount of
+change rather than only by the events. Off, nothing changes.
+
+**Directional cost (`MASSCOMP_DIRECTIONAL=1`).** A fifth weight λ₄ ~ N(1, 1) truncated at 0 on the
+consonantal strength *gained* by a substitution (`segments.STRENGTH`: voiceless stop 7, voiced stop
+6, voiceless fricative 5, voiced fricative 4, nasal 3, liquid 2, glide 1, vowel 0; `FORTITION[s, s′]
+= max(0, STRENGTH[s′] − STRENGTH[s])`), so that b → p costs λ₄ more than p → b and a root that is the
+union of its daughters' segments stops being the cheapest story. Lenition and loss gain nothing.
+The directional weight is drawn after the plan's four, so seeded datasets keep their first four.
+
+**λ₃ truncated at 4.5 by default** (plan 12.12): 6.7% of the prior's mass, the insertion rates that
+let simulated words grow without bound; datasets whose λ₃ fell below are redrawn (rejection), every
+other seeded dataset is unchanged. The Geweke battery under both switches, the §8.1 recovery under
+the rate–time coupling, the Romance probe and the protocol pairs (replica exchange, 130 basic
+words, ten rules) are in the cloud; numbers below when in.
+
 ### Pre-v3 notes (kept for the record)
 
 #### §8.3 LBF separation — blocked on estimator noise
