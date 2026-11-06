@@ -355,7 +355,7 @@ function showTip(ev, p) {
   const t = document.getElementById("tip");
   const r = document.querySelector("#map").getBoundingClientRect();
   const drawsTxt = (p.draws || []).length > 1 ? `<br><span class="muted">other draws of the words: ${p.draws.slice(1).map(d => fmt(d.lbf)).join(", ")}</span>` : "";
-  t.innerHTML = `<b>${pairName(p)}</b><br>log BF ${fmt(p.lbf)}${p.lbf_sd != null ? " ± " + p.lbf_sd.toFixed(1) + " (replicates)" : ""}<br><span class="muted">${p.known === "related" ? (p.deep ? "known related, Indo-European depth" : "known related") : "known unrelated"} · ${p.n} ${setLabel(p.cset || "all").toLowerCase()} concepts · G ${p.g}</span>${drawsTxt}`;
+  t.innerHTML = `<b>${pairName(p)}</b><br>log BF ${fmt(p.lbf)}${p.lbf_sd != null ? " ± " + p.lbf_sd.toFixed(1) + " (replicates)" : ""}<br><span class="muted">${p.known === "related" ? (p.deep ? "known related, Indo-European depth" : "known related") : (p.known === "contested" ? "contested (the Altaic question)" : "known unrelated")} · ${p.n} ${setLabel(p.cset || "all").toLowerCase()} concepts · G ${p.g}</span>${drawsTxt}`;
   t.hidden = false;
   const x = ev.clientX - r.left + 14, y = ev.clientY - r.top + 14;
   t.style.left = Math.min(x, r.width - 310) + "px"; t.style.top = y + "px";
@@ -428,7 +428,7 @@ function drawDossier() {
   const qcls = q ? (() => { const b = bandOf(q.cset || "all"); return b.hi != null && q.lbf <= b.hi ? "null" : (q.lbf > 0 ? "for" : "against"); })() : "";
   document.getElementById("stat").innerHTML = `
     <div><div class="big ${cls}">${fmt(p.lbf)}</div><small>log Bayes factor, ${pairName(p)}${p.lbf_sd != null ? ` · replicates ± ${p.lbf_sd.toFixed(1)}` : ""}</small></div>
-    <div><div style="font-family:var(--display);font-size:1.3rem">${verdict}</div><small>${p.known === "related" ? (p.deep ? "known to be related, at Indo-European depth" : "known to be related") : "known to be unrelated"} · ${p.n} concepts · G ${p.g === "fit" ? "fitted to the daughters" : "flat"}</small></div>
+    <div><div style="font-family:var(--display);font-size:1.3rem">${verdict}</div><small>${p.known === "related" ? (p.deep ? "known to be related, at Indo-European depth" : "known to be related") : (p.known === "contested" ? "contested: the Altaic question, where descent and ancient contact cannot be told apart here" : "known to be unrelated")} · ${p.n} concepts · G ${p.g === "fit" ? "fitted to the daughters" : "flat"}</small></div>
     ${(p.draws || []).length > 1 ? `<div><div class="big" style="font-size:1.6rem">${p.draws.slice(1).map(d => fmt(d.lbf)).join(" · ")}</div><small>the same pair on ${p.draws.length - 1 > 1 ? "other draws" : "another draw"} of ${p.n} words (seed ${p.draws.slice(1).map(d => d.seed).join(", ")}; K = ${p.draws.slice(1).map(d => d.K).join(", ")})</small></div>` : ""}
     ${q ? `<div><div class="big ${qcls}" style="font-size:1.6rem">${fmt(q.lbf)}</div><small>the same pair on ${setLabel(q.cset || "all").toLowerCase()}${q.lbf_sd != null ? ` · ± ${q.lbf_sd.toFixed(1)}` : ""}</small></div>` : ""}
     ${tr != null ? `<div><div class="big" style="font-size:1.6rem">${tr.toFixed(2)}</div><small>t<sub>root</sub>, length of the join edges (posterior mean)</small></div>` : ""}

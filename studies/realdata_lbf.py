@@ -43,6 +43,10 @@ RELATED = {frozenset(p) for p in [("ibero", "italo"), ("germanic", "nordic"), ("
 DEEP = {frozenset(p) for p in [("ibero", "germanic"), ("ibero", "nordic"), ("ibero", "slavic"), ("italo", "germanic"), ("italo", "nordic"),
                                ("italo", "slavic"), ("germanic", "slavic"), ("nordic", "slavic"),
                                ("romlat", "germanic"), ("romlat", "nordic"), ("romlat", "slavic")]}
+# pairs whose relationship is an open question (the Altaic hypothesis): neither a control nor a known
+# relationship, and a positive factor here cannot separate common descent from ancient contact between
+# the two ancestors, which the joined-root hypothesis also covers
+CONTESTED = {frozenset(p) for p in [("turkic", "mongolic")]}
 
 # Basic vocabulary: the Swadesh 100-item list and the Leipzig-Jakarta list (Tadmor 2009), mapped onto the NorthEuraLex
 # concepts in data/northeuralex_sel.csv (identifier = NorthEuraLex concept number + gloss). Items with no NorthEuraLex
@@ -136,6 +140,8 @@ def lbf(p):
     pairs = [frozenset((a, b)) for i, a in enumerate(fams) for b in fams[i + 1:]]
     n_rel = sum(k in RELATED for k in pairs)
     known = "related" if n_rel == len(pairs) else ("unrelated" if n_rel == 0 else "mixed")
+    if any(k in CONTESTED for k in pairs):
+        known = "contested"
     from masscomp.data import to_str
     tree = dict(parent=list(f.parent), length=[float(x) for x in f.length], family=list(f.family), leaves=list(f.leaves),
                 names={str(k): v for k, v in f.names.items()})
