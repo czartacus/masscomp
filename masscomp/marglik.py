@@ -251,7 +251,7 @@ def stepping_stone_pt(ds, theta0, seed, K=24, n_sweeps=2000, burn=500, thin=5, p
 
 def join_path(ds, theta0, seed, K=16, n_sweeps=1000, burn=300, thin=5, power=2.0, warmup=None, verbose=False,
               direction="down", init_from_prior=True, spacing="top", trace=None, ess_min=0.0, max_extend=2, boost=1, boost_range=(0.7, 0.98),
-              **sweep_kw):
+              mix_edges=None, **sweep_kw):
     """Log Bayes factor H1 : H0 by a stepping stone along the JOIN rather than along the likelihood.
 
     The target at join temperature alpha keeps the whole model except that the inherit / borrow terms of
@@ -269,7 +269,10 @@ def join_path(ds, theta0, seed, K=16, n_sweeps=1000, burn=300, thin=5, power=2.0
     trace: a dict to fill with what a results explorer needs: the per-concept mean of the power variable
     at every stone (delta_c, K x M) and at alpha = 1 (the second half of the warm-up), its thermodynamic-
     integration attribution of the LBF to concepts (ti_concept, summing to ti_total), and the alpha = 1
-    posterior summaries - event fractions per edge, t_root, omega, lam, the sampled root forms."""
+    posterior summaries - event fractions per edge, t_root, omega, lam, the sampled root forms.
+    mix_edges: the root edges (family-root node ids) the join temperature acts on; default all. With a
+    subset, the other families stay joined at full strength at every alpha and the estimate is the
+    evidence that the mixed families join them (the mass comparison's question for one more family)."""
     rng = np.random.default_rng(seed)
     # Delta grows with alpha (the join terms matter most near alpha = 1), so the stones are dense at the
     # top by default: alpha_k = 1 - (1 - k/K)^power; spacing="bottom" is the likelihood path's (k/K)^power
@@ -279,6 +282,8 @@ def join_path(ds, theta0, seed, K=16, n_sweeps=1000, burn=300, thin=5, power=2.0
     alphas = join_ladder(K, power, spacing)
     s = Sampler(ds, theta0.copy(), rng, beta=1.0, init_from_prior=init_from_prior)
     assert s.st.joined, "join_path needs the joined (H1) forest"
+    if mix_edges is not None:
+        s.st.mix_edges = set(mix_edges); s.st.recompute_all()
     terms = [None] * K
     M = s.st.M
     at1 = None
@@ -367,7 +372,7 @@ def join_ladder(K, power=2.0, spacing="top"):
 
 
 def join_path_re(ds, theta0, seed, K=24, n_sweeps=600, burn=200, thin=4, power=3.0, warmup=None, verbose=False,
-                 init_from_prior=False, spacing="both", trace=None, cache_clear=50, **sweep_kw):
+                 init_from_prior=False, spacing="both", trace=None, cache_clear=50, mix_edges=None, **sweep_kw):
     """The join path with replica exchange: the K + 1 stones run as coupled chains, one per alpha, and
     neighbouring chains exchange states by Metropolis after every round of sweeps.
 
@@ -386,6 +391,8 @@ def join_path_re(ds, theta0, seed, K=24, n_sweeps=600, burn=200, thin=4, power=3
     alphas = join_ladder(K, power, spacing)
     s = Sampler(ds, theta0.copy(), rng, beta=1.0, init_from_prior=init_from_prior)
     assert s.st.joined, "join_path_re needs the joined (H1) forest"
+    if mix_edges is not None:
+        s.st.mix_edges = set(mix_edges); s.st.recompute_all()       # alpha = 1 here, so only the delta changes
     M = s.st.M
     for _ in range(warmup if warmup is not None else 2 * n_sweeps):
         s.sweep(**sweep_kw)
@@ -395,6 +402,8 @@ def join_path_re(ds, theta0, seed, K=24, n_sweeps=600, burn=200, thin=4, power=3
     for k in range(K + 1):
         st = s.st
         rk = Sampler(ds, st.theta.copy(), np.random.default_rng(seeds[k]), beta=1.0, init=(dict(st.y), dict(st.event), dict(st.donor)))
+        if mix_edges is not None:
+            rk.st.mix_edges = set(mix_edges)
         rk.st.alpha = alphas[k]; rk.st.recompute_all()
         reps.append(rk)
     at1 = _Alpha1Record(reps[K]) if trace is not None else None
