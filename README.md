@@ -1032,13 +1032,13 @@ Many rules sit at inclusion 0.50, i.e. in one chain of two: 1,500 sweeps do not 
 posterior, and longer runs or more chains are needed before a list is final. Cost: +11% per sweep at
 three conditioned rules per edge, +21% at ten (25-concept benchmark).
 
-**Geweke under the switch (`diag_42221963790.json`, three rules of each kind):** full sampler seed 2
-max |z| 1.58, latent moves with borrowing common 1.21; seed 1 full puts −3.18 on t_root (1.97 vs 2.03
-over 12,000 restart draws) with every other statistic within 2.1 — the seed that has thrown a ~3 on
-earlier batteries too; its rerun at 20,000 draws, a third seed and a parameter-moves cell at ten + ten
-rules are in `diag` run 42236296266. The switch stays off by default (`MASSCOMP_U_ENV_RULES=0`), so
-every number above is unchanged; the real-data protocol pairs and controls under conditioned rules are
-the next battery.
+**Geweke under the switch (`diag_42221963790.json`, `diag_42236296266.json`):** full sampler at three
+rules of each kind, seeds 1–3: max |z| 1.58 (seed 1 at 20,000 restart draws; its 12,000-draw run had
+put −3.18 on t_root, the tail of the seed that has thrown a ~3 on earlier batteries — at 20,000 draws
+t_root is at 0.03), 1.58, 0.75; latent moves with borrowing common 1.21; the parameter moves alone at
+ten + ten rules 1.62. The sampler with conditioned rules targets the posterior. The switch stays off by
+default (`MASSCOMP_U_ENV_RULES=0`), so every number above is unchanged; the real-data protocol pairs
+and controls under conditioned rules are `diag` run 42246673476.
 
 ### Pre-v3 notes (kept for the record)
 
