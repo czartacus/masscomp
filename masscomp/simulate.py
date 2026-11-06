@@ -119,3 +119,19 @@ def simulate_matched_pair(depth, M, seed):
     th0 = th.copy(); th0.u = {e: th.u[e] for e in f0.edges}
     unrelated = simulate(f0, th0, M, np.random.default_rng(seed + 2))
     return related, unrelated
+
+
+def simulate_newcomer(depth, M, seed):
+    """The simulated newcomer test (the mass comparison's §8.3): three benchmark-A families with the same
+    within-family parameters; in the insider dataset all three descend from one root at depth `depth`, in the
+    outsider dataset families 0 and 1 do and family 2 is unrelated to them. Both are fitted on the forest
+    with all three joined, mixing only family 2's root edge (node 18): the evidence that family 2 joins."""
+    from .tree import benchmark_n
+    rng = np.random.default_rng(seed)
+    f3 = benchmark_n(3, (0, 1, 2), t_root=depth)
+    th = sample_theta(f3, M, rng); th.t_root = depth
+    insider = simulate(f3, th, M, np.random.default_rng(seed + 1))
+    f2 = benchmark_n(3, (0, 1), t_root=depth)
+    th0 = th.copy(); th0.u = {e: th.u[e] for e in f2.edges}
+    outsider = simulate(f2, th0, M, np.random.default_rng(seed + 2))
+    return insider, outsider

@@ -97,6 +97,28 @@ def benchmark_a(related=False, t_root=1.5):
     return Forest(parent, length, family, leaves, names=names)
 
 
+def benchmark_n(n_fams=3, joined=(0, 1, 2), t_root=1.5):
+    """n_fams benchmark-A families (nodes 9k .. 9k+8 for family k); the families in `joined` hang under one
+    joining root R (appended last) with root edges of length t_root, the others are separate trees. Node
+    ids do not depend on `joined`, so datasets made on one such forest can be fitted on another."""
+    parent, length, family, leaves, names = [], [], [], [], {}
+    for fam in range(n_fams):
+        off = len(parent)
+        for v in range(9):
+            parent.append(off + _FAMILY_PARENT[v] if v in _FAMILY_PARENT else -1)
+            length.append(_FAMILY_LEN.get(v, 0.0))
+            family.append(fam)
+        for i, lv in enumerate(_FAMILY_LEAVES):
+            leaves.append(off + lv); names[off + lv] = f"F{fam}L{i+1}"
+        names[off] = f"F{fam}"
+    if joined:
+        R = len(parent)
+        parent.append(-1); length.append(0.0); family.append(-1)
+        for fam in joined:
+            parent[9 * fam] = R; length[9 * fam] = t_root
+    return Forest(parent, length, family, leaves, names=names)
+
+
 def with_root_length(forest, t_root):
     """Return a copy of a joined forest with the root edges set to t_root."""
     length = list(forest.length)
