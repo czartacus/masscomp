@@ -980,7 +980,7 @@ the two runs); ten-rule entries from the validation table above.
 | Ibero-Romance–Finnic | unrelated | +6.9 (+14, −1) | **+2.1** (+2, +3) | +18.9 (+10, +28) |
 | Slavic–Finnic | unrelated | +1.7 (−1, +4) | **+1.1** | +5.4 (+2, +8) |
 | Germanic–Finnic | unrelated | −6.6 | **−5.5** | −6.5 |
-| Ibero-Romance–Turkic | unrelated | −5.2 | (running) | +1.6 (−1, +5) |
+| Ibero-Romance–Turkic | unrelated | −5.2 | **−0.9** (+1, −2) | +1.6 (−1, +5) |
 | Turkic–Mongolic | contested | +45.1 (+20, +70) | +17.0 (+9, +25) | +20.0 (+14, +26) |
 
 **Five context-free rules per edge is the budget of record for pairs.** At five every control sits
