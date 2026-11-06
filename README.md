@@ -924,6 +924,58 @@ through it and the event prior then prefers the edge longer still. The coupling 
 two basins of the joined root (12.14) farther apart for a plain chain — what the join-path estimator
 sees of that is in the protocol pairs below.
 
+### Environment-conditioned rules (2026-11-06, branch `env-rules`)
+
+**Why.** The replica-exchange runs showed what context-free rules cost: with ten of them per edge a
+control pair with look-alikes (Ibero-Romance–Finnic) rose to +19 while Ibero-Romance–Germanic needed a
+loose transducer to reach +18. A context-free rule has to be leaky — "k → h on this branch" is charged
+for every k that stayed — so a real conditioned change (lenition between vowels, palatalisation before
+front vowels, final devoicing) pays for only part of its evidence, while a three-word coincidence pays
+in full. The comparative method's power is conditioned regularity; the model carried only the
+unconditioned half. The earlier test of left-context rules (above) was not a fair one either: it
+spread a single budget over 41× the slots, so every context-free rule also became 3.7 nats dearer and
+the whole model got stricter — which is all that result shows.
+
+**What the data say.** Aligning NorthEuraLex Latin to its daughters (feature-weighted edit alignment,
+counts of s → o by environment on the Latin side; `scratchpad/envs/scope2.py`): intervocalic lenition is
+present and branch-specific — Latin t → ð between vowels 18 times in Spanish (9 kept), k → ɣ 13 (9),
+p → β 8 (6); Portuguese 19 / 8, 12 / 10, 10 / 9; Italian 0 / 40, 0 / 24, 2 / 18 — final-s loss is the
+strongest conditioned pattern of all (159 words to 10 exceptions in Spanish), and Italian shows k → tʃ
+before vowels (24 cases) where Spanish does not. On the 131-word basic list these drop to 1–3 cases
+per rule: conditioned rules earn their cost on the fuller lists, which is where loanwords live too —
+the trade-off the donor mechanism is for.
+
+**The model.** Ten natural-class environments (`segments.ENV_NAMES`: `#_` initial, `_#` final, `V_`
+after a vowel, `_V` before one, `V_V` between vowels, `C_` / `_C` after / before a consonant, `_Vfront`,
+`_Vhigh`, `N_` after a nasal), read off the input segments either side of a position; several can hold
+at once, so a position's environment is a bitmask (`ENV_MASK[prev, next]`). A conditioned rule
+`(s, o, env)` / `("ins", o, env)` adds its weight only where the environment holds. The two kinds of
+rule have separate budgets (`MASSCOMP_U_RULES` context-free, `MASSCOMP_U_ENV_RULES` conditioned,
+default 0 = the plan's model), so the inclusion cost of a conditioned rule is log(16,400 / budget)
+against log(1,640 / budget) for a free one: exactly log 10 ≈ 2.3 nats more, the price of naming the
+environment, and no exception penalty. "k → h everywhere" therefore loses to "k → h before front
+vowels" as soon as the unconditioned statement has three or four exceptions — the judgement a
+historical linguist makes, as arithmetic. The transducer keeps conditioned rules sparse and builds
+per-position tables for one input form on demand (`EdgeParams.pos_tables`, memoised per form), which
+a position-indexed edit DP (`_dp_pos`) reads; `derive`, `sample` and the brute-force check cover the
+new slots; the alignment lattice still proposes from the context-free tables and the moves correct
+by Metropolis-Hastings as before; the data-informed rule birth counts a mismatch for every
+environment that holds at its position. The single-segment left-context mechanism is replaced.
+Tests (`tests/test_env_rules.py`): environments, conditioning and normalisation, DP against brute
+force, derive against rebuild, sampling against logprob, the prior's two budgets, and a planted
+intervocalic t → d in eight words the sampler recovers with weight > 2 from a rule-free start.
+
+**First look (local, 300 sweeps × 2 chains, Romance, 100 words, ten free + ten conditioned rules).**
+The rules with posterior inclusion ≥ 0.5 are ones a Romanist would recognise: Catalan final-r loss
+(`r → Ø / _#`), Portuguese `o → u / _#` and `e → ɨ / C_`, Romanian `a → ɨ / C_`, Spanish `Ø → j /
+_Vfront` (diphthongisation) and `s → θ`, Italian final-vowel paragoge (`Ø → e / _#`), Portuguese
+`n → Ø / _C` and `s → ʃ / V_`. Lenition is not among them: without Latin in the tree the model can
+reconstruct the Ibero-Romance ancestor with the lenited consonants, so the test that counts is the
+200-word probe with and without conditioned rules (reconstruction distance to Latin, the rules on
+the ibero and italo edges) and the Geweke battery under the switch — both dispatched on the branch
+(`diag` runs 42221963790, 42221968104). The real-data protocol pairs under conditioned rules follow
+once those pass.
+
 ### Pre-v3 notes (kept for the record)
 
 #### §8.3 LBF separation — blocked on estimator noise
