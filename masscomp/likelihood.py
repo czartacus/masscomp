@@ -53,7 +53,7 @@ class State:
 
     # ---- parameter-dependent tables ------------------------------------------------
     def rebuild_edge_params(self):
-        self.ep = {e: EdgeParams(self.theta.lam, self.theta.u.get(e, {})) for e in self.f.edges}
+        self.ep = {e: EdgeParams(self.theta.lam, self.theta.u.get(e, {}), t=self.f.length[e]) for e in self.f.edges}
         self.adapt = EdgeParams(self.theta.lam, {})
 
     def rebuild_event_probs(self, edges=None):

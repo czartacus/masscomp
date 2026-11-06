@@ -9,13 +9,19 @@ MIN_LEN, MAX_LEN = 2, 6
 LOG_G_LEN = -math.log(MAX_LEN - MIN_LEN + 1)
 
 # ---- priors -----------------------------------------------------------------------
-LAM_MU = np.array([4.5, 3.0, 2.0, 6.0])   # identity bonus, feature distance, deletion, insertion
+# lambda: identity bonus, feature distance, deletion, insertion; with MASSCOMP_DIRECTIONAL=1 a fifth weight on
+# the consonantal strength gained by a substitution (transducer.DIRECTIONAL), prior N(1, 1) truncated at 0
+N_LAM = 5 if __import__("os").environ.get("MASSCOMP_DIRECTIONAL", "0") == "1" else 4
+LAM_MU = np.array([4.5, 3.0, 2.0, 6.0, 1.0][:N_LAM])
 LAM_SD = float(__import__("os").environ.get("MASSCOMP_LAM_SD", "1.0"))   # real-data probes: a tight prior pins lambda (see README, 4 Nov)
 # Optional lower bounds that truncate the normal prior per component (MASSCOMP_LAM_MIN="-,-,0,-" keeps deletion from
 # becoming cheaper than keeping a segment, the "union root" degeneracy of the Romance probe, README 5 Nov); "-" = none.
+# The insertion weight is bounded below at 4.5 by default (plan 12.12: the untruncated tail let simulated words
+# grow without bound; 6.7% of the prior mass, datasets with lambda_3 < 4.5 are redrawn from 6 Nov).
 LAM_MIN = np.array([float("-inf") if x.strip() in ("-", "") else float(x)
-                    for x in __import__("os").environ.get("MASSCOMP_LAM_MIN", "-,-,-,-").split(",")])
-assert LAM_MIN.shape == (4,)
+                    for x in __import__("os").environ.get("MASSCOMP_LAM_MIN", "-,-,-,4.5").split(",")] + ([0.0] if N_LAM == 5 else []))
+LAM_MIN = LAM_MIN[:N_LAM]
+assert LAM_MIN.shape == (N_LAM,)
 SIGMA2_U = 16.0                           # u_e[s,s'] ~ N(0, t_e * SIGMA2_U); slab sd 4*sqrt(t).
 # With sd 1 (the plan's value) a prior-drawn rule almost never changes a substitution probability
 # by more than a few percent (identity sits at logit ~6, a one-feature neighbour at ~ -0.3), so

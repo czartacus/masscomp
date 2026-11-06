@@ -13,7 +13,7 @@ The DP is written in plain Python on float lists: ~10x faster than numpy scalars
 import math
 import numpy as np
 from numba import njit
-from .segments import N_SEG, N_OUT, EPS, DIST
+from .segments import N_SEG, N_OUT, EPS, DIST, FORTITION
 
 FLOOR, FLOOR_PER_SEG = -40.0, 8.0
 DUMMY = N_SEG          # "previous segment" index at the start of the form
@@ -132,19 +132,42 @@ def _arr(form):
     return a
 
 
-class EdgeParams:
-    """Dense log-probability tables for one edge, built from (lam, u_e)."""
+# Rate-time coupling (MASSCOMP_RATE_TIME=1): every change logit (substitution, deletion, insertion) gains
+# log(t_e / T_REF), so that for short edges P(change) grows in proportion to the edge length and for
+# long ones it saturates through the softmax - a continuous-time substitution process in the log-linear
+# form. Off (the plan's transducer, whose intensity ignores edge length, spec 12.13), the tables are
+# unchanged for every t. T_REF is the length at which the two agree (the daughters' depth in the real-data
+# forests), so a fitted lambda keeps its meaning.
+RATE_TIME = __import__("os").environ.get("MASSCOMP_RATE_TIME", "0") == "1"
+T_REF = float(__import__("os").environ.get("MASSCOMP_T_REF", "0.3"))
+# Directional cost (MASSCOMP_DIRECTIONAL=1): a fifth weight lam4 on the consonantal strength GAINED by a
+# substitution (segments.FORTITION; lenition and loss gain nothing), so that b -> p costs more than p -> b
+# and a root that is the union of its daughters' segments stops being the cheapest story.
+DIRECTIONAL = __import__("os").environ.get("MASSCOMP_DIRECTIONAL", "0") == "1"
 
-    def __init__(self, lam, u=None):
-        lam0, lam1, lam2, lam3 = lam
+
+class EdgeParams:
+    """Dense log-probability tables for one edge, built from (lam, u_e); with t, the edge length, when
+    the rate-time coupling is on."""
+
+    def __init__(self, lam, u=None, t=None):
+        lam0, lam1, lam2, lam3 = lam[:4]
         u = u or {}
         psi = np.zeros((N_SEG, N_OUT))
         psi[:, :N_SEG] += lam0 * np.eye(N_SEG) - lam1 * DIST
         psi[:, EPS] += -lam2
+        if DIRECTIONAL and len(lam) > 4:
+            psi[:, :N_SEG] -= lam[4] * FORTITION
         ins = np.zeros((N_SEG + 1, N_SEG + 1))
         ins[:N_SEG, :N_SEG] += -lam3 - lam1 * DIST
         ins[DUMMY, :N_SEG] += -lam3
         ins[:, NOINS] = 0.0
+        self.t = t
+        if RATE_TIME and t is not None:
+            shift = math.log(t / T_REF)
+            psi[:, :N_SEG] += shift * (1.0 - np.eye(N_SEG))
+            psi[:, EPS] += shift
+            ins[:, :N_SEG] += shift
         psi3 = None                                       # (N_SEG+1 contexts, N_SEG, N_OUT), only with conditioned rules
         for key, w in u.items():
             if key[0] == "ins":
@@ -188,7 +211,7 @@ class EdgeParams:
         table is renormalised. Tables that do not change are shared with self (they are never
         mutated), so the derived object costs one row or one small table, not a rebuild."""
         new = EdgeParams.__new__(EdgeParams)
-        new._cache = {}; new._cache_lat = None
+        new._cache = {}; new._cache_lat = None; new.t = self.t
         new._psi, new._ins, new._psi3 = self._psi, self._ins, self._psi3
         new.log_sub_np, new.log_ins_np, new.log_sub3_np = self.log_sub_np, self.log_ins_np, self.log_sub3_np
         if slot[0] == "ins":

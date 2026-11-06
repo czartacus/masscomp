@@ -105,6 +105,29 @@ FEATURES = np.array([_feat_c(r) for r in _C] + [_feat_v(r) for r in _V]
 DIST = (FEATURES[:, None, :] != FEATURES[None, :, :]).sum(-1) / 12.0        # (N_SEG, N_SEG)
 
 
+def _strength(f):
+    """A consonantal-strength rank from the features (voiceless stop 7 ... vowel 0): the direction of
+    change that is common in attested sound change is downward (lenition, loss); upward is rare."""
+    place, stop, fric, son, voice, nasal, cont, high = f[0:3].any(), f[3], f[4], f[5], f[6], f[7], f[8], f[9]
+    if not place:                              # vowel
+        return 0
+    if stop and fric:                          # affricate
+        return 6 if not voice else 5
+    if stop:
+        return 7 if not voice else 6
+    if fric:
+        return 5 if not voice else 4
+    if nasal:
+        return 3
+    if son and cont and high:                  # glide
+        return 1
+    return 2                                   # liquid
+
+
+STRENGTH = np.array([_strength(f) for f in FEATURES])                           # (N_SEG,)
+FORTITION = np.maximum(0, STRENGTH[None, :] - STRENGTH[:, None]).astype(float)  # (s, s'): strength gained by s -> s' (0 for lenition)
+
+
 def to_str(form):
     return "".join(SEGMENTS[i] for i in form)
 

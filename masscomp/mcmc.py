@@ -12,6 +12,7 @@ from .segments import N_SEG, EPS
 from .transducer import EdgeParams
 from . import events as ev
 from .likelihood import State
+from .transducer import RATE_TIME
 from .tree import with_root_length
 
 MAX_FORM_LEN = int(__import__("os").environ.get("MASSCOMP_MAX_FORM_LEN", "12"))   # sampler support for ancestral forms; 8 until 2026-11-04 (2% of
@@ -755,7 +756,7 @@ class Sampler:
             # weakly identified), widened at low beta where the prior is much broader
             step = np.array([0.08, 0.2, 0.3, 0.08]) * (1.0 + 5.0 * (1.0 - self.beta))
         old = st.theta.lam.copy()
-        st.theta.lam = old + self.rng.normal(0, 1, size=4) * step
+        st.theta.lam = old + self.rng.normal(0, 1, size=len(old)) * step
         if np.any(st.theta.lam < ev.LAM_MIN):             # outside the truncated prior: reject without the recompute
             self.acc["lam"][1] += 1; st.theta.lam = old
             return
@@ -1105,11 +1106,23 @@ class Sampler:
         old_evp = {e: list(st.evp[e]) for e in st.root_edges}
         st.rebuild_event_probs(st.root_edges)
         d = dprior + math.log(prop / old); new = {}
-        for c in range(st.M):
+        old_ep = None
+        if RATE_TIME:
+            # the root-edge transducers change with their length: rebuild them and recompute the form terms
+            from .transducer import EdgeParams
+            old_ep = {e: st.ep[e] for e in st.root_edges}
             for e in st.root_edges:
-                k = st.event[(e, c)]
-                pr = st.t_prior[(e, c)] - old_evp[e][c][k] + st.evp[e][c][k]
-                new[(e, c)] = (pr, st.t_lik[(e, c)]); d += pr - st.t_prior[(e, c)]
+                st.ep[e] = EdgeParams(st.theta.lam, st.theta.u.get(e, {}), t=prop)
+            for c in range(st.M):
+                for e in st.root_edges:
+                    pr, lk = st.edge_terms(e, c)
+                    new[(e, c)] = (pr, lk); d += pr - st.t_prior[(e, c)] + lk - st.t_lik[(e, c)]
+        else:
+            for c in range(st.M):
+                for e in st.root_edges:
+                    k = st.event[(e, c)]
+                    pr = st.t_prior[(e, c)] - old_evp[e][c][k] + st.evp[e][c][k]
+                    new[(e, c)] = (pr, st.t_lik[(e, c)]); d += pr - st.t_prior[(e, c)]
         self.acc["troot"][1] += 1
         if self._accept(d):
             st.theta.t_root = prop; self._commit(new); st.t_param += dprior; self.acc["troot"][0] += 1
@@ -1117,6 +1130,9 @@ class Sampler:
             f.length[:] = old_len
             for e in st.root_edges:
                 st.evp[e] = old_evp[e]
+            if old_ep is not None:
+                for e in st.root_edges:
+                    st.ep[e] = old_ep[e]
 
     # ------------------------------------------------------------------ sweep
     FFBS_P = float(__import__("os").environ.get("MASSCOMP_FFBS_P", "0.25"))      # fraction of (node, concept) visited by the lattice FFBS move per sweep (0 = off)

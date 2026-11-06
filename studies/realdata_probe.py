@@ -19,6 +19,7 @@ import sys, os, time, math, json
 import numpy as np
 from masscomp import events as ev
 from masscomp.segments import N_SEG
+from masscomp.transducer import RATE_TIME, T_REF, DIRECTIONAL
 from masscomp.tree import Forest
 from masscomp.simulate import Theta, Dataset, sample_theta
 from masscomp.mcmc import run_chain, Sampler
@@ -234,7 +235,8 @@ def probe(p):
         ned_cog["leaves"] = float(np.mean([r["leaf_ned"] for r in cog])); ned_cog["n"] = len(cog)
     res = dict(config=dict(data=data, n=M, seed=seed, sweeps=sweeps, burn=burn, chains=n_chains, len_edge=len_edge, families=families, proto=PROTO,
                            inventory_size=N_SEG, lam_sd=ev.LAM_SD, lam_mu=[float(x) for x in ev.LAM_MU],
-                           lam_min=[None if not np.isfinite(x) else float(x) for x in ev.LAM_MIN]),
+                           lam_min=[None if not np.isfinite(x) else float(x) for x in ev.LAM_MIN],
+                           rate_time=RATE_TIME, t_ref=T_REF, directional=DIRECTIONAL),
                G=g_desc, report=dict(common_concepts=len(common), kept=report["kept"]), per_chain=per_chain,
                latin_len=latin_len, root_len_ratio=per_chain[0]["root_len"] / latin_len, fam_root_len_ratio=per_chain[0]["fam_root_len"] / latin_len,
                root_mode_is_latin=hit1, ned=ned, ned_cognate=ned_cog, mean_logp_latin_root=float(np.mean([r["root"]["logp_latin"] for r in concepts if "root" in r])),

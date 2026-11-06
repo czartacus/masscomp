@@ -28,10 +28,15 @@ class Dataset:
 
 
 def sample_theta(forest, M, rng):
-    lam = rng.normal(ev.LAM_MU, ev.LAM_SD)
+    lam = rng.normal(ev.LAM_MU[:4], ev.LAM_SD)
     for i in range(4):                                   # truncated components by rejection (no draw when unbounded,
         while lam[i] < ev.LAM_MIN[i]:                    # so the random stream of every seeded dataset is unchanged)
             lam[i] = rng.normal(ev.LAM_MU[i], ev.LAM_SD)
+    if ev.N_LAM > 4:                                     # the directional weight, drawn after the plan's four
+        extra = rng.normal(ev.LAM_MU[4], ev.LAM_SD)
+        while extra < ev.LAM_MIN[4]:
+            extra = rng.normal(ev.LAM_MU[4], ev.LAM_SD)
+        lam = np.append(lam, extra)
     u = {e: ev.sample_u(forest.length[e], rng) for e in forest.edges}
     rho = rng.gamma(ev.RHO_A, 1 / ev.RHO_RATE, size=M)
     omega = float(rng.gamma(ev.OMEGA_A, 1 / ev.OMEGA_RATE))
@@ -40,7 +45,7 @@ def sample_theta(forest, M, rng):
 
 
 def edge_params(forest, theta):
-    return {e: EdgeParams(theta.lam, theta.u.get(e, {})) for e in forest.edges}
+    return {e: EdgeParams(theta.lam, theta.u.get(e, {}), t=forest.length[e]) for e in forest.edges}
 
 
 def adapt_params(theta):

@@ -18,6 +18,7 @@ import sys, os, time, json
 import numpy as np
 from masscomp import events as ev
 from masscomp.segments import N_SEG
+from masscomp.transducer import RATE_TIME, T_REF, DIRECTIONAL
 from masscomp.simulate import Dataset, sample_theta
 from masscomp.marglik import join_path, join_path_re
 from masscomp.data import load_cldf
@@ -133,6 +134,7 @@ def lbf(p):
     return dict(concepts=chosen, tree=tree, leaf_forms=leaves, config=dict(fam1=f1, fam2=f2, families=families, n=M, seed=seed, K=K, sweeps=sweeps, burn=burn, warmup=warmup, power=power,
                             reps=reps, g=g_mode, len_edge=len_edge, init="prior" if init_prior else "copy", inventory_size=N_SEG,
                             lam_sd=ev.LAM_SD, lam_min=[None if not np.isfinite(x) else float(x) for x in ev.LAM_MIN],
+                            rate_time=RATE_TIME, t_ref=T_REF, directional=DIRECTIONAL,
                             u_context=ev.U_CONTEXT, u_rules=ev.U_RULES, u_per_t=ev.U_PER_T, concepts=concept_set, pool=len(pool),
                             donors=donors, dropped_for_donors=dropped, spacing=spacing, direction=direction, ess_min=ess_min, boost=boost,
                             estimator=estimator),
