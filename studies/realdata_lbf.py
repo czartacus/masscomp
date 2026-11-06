@@ -4,7 +4,8 @@ caveats of README "Real-data groundwork". Families are fixed 3-leaf binary trees
 joined at a root whose edges carry t_root (prior Gamma(2, 1)); n random concepts with a single-word form
 in all six languages; G flat or fitted to the six languages' other concepts.
 Usage: PYTHONPATH=. MASSCOMP_INVENTORY=extended python studies/realdata_lbf.py fam1=ibero,fam2=finnic,n=50,...
-  keys: fam1, fam2, n (50), seed (1), K (16), sweeps (600), burn (200), warmup (800), power (2), reps (1),
+  keys: fam1, fam2 (or fams=ibero+germanic+slavic: three or more families joined at one root - the mass
+        comparison proper, H1 = all joined against H0 = all separate), n (50), seed (1), K (16), sweeps (600), burn (200), warmup (800), power (2), reps (1),
         g (flat|fit), len_edge (0.3), thin (4), init (copy|prior), concepts (all|basic: Swadesh-100 + Leipzig-Jakarta),
         donors (none, or DONORS names joined by +: separate trees that are never joined but can be borrowed from),
         spacing (top|both: where the ladder is dense; "both" keeps the bottom stone's power variable in range), power (2),
@@ -82,7 +83,8 @@ def _estimate(args):
 def lbf(p):
     require_extended_inventory()
     data = p.get("data", "data/northeuralex_sel.csv"); n = int(p.get("n", 50)); seed = int(p.get("seed", 1))
-    f1, f2 = p["fam1"], p["fam2"]
+    fams = p["fams"].replace("+", ",").split(",") if "fams" in p else [p["fam1"], p["fam2"]]
+    f1, f2 = fams[0], fams[1]
     K = int(p.get("K", 16)); sweeps = int(p.get("sweeps", 600)); burn = int(p.get("burn", 200)); warmup = int(p.get("warmup", 800))
     power = float(p.get("power", 2.0)); reps = int(p.get("reps", 1)); g_mode = p.get("g", "flat"); len_edge = float(p.get("len_edge", 0.3))
     thin = int(p.get("thin", 4)); init_prior = p.get("init", "copy") == "prior"; spacing = p.get("spacing", "top")
@@ -90,7 +92,7 @@ def lbf(p):
     estimator = p.get("estimator", "ss")
     concept_set = p.get("concepts", "all")                      # all | basic (BASIC above)
     donors = [(d, DONORS[d]) for d in p.get("donors", "").replace("+", ",").split(",") if d]
-    families = [(f1, FAMILIES[f1]), (f2, FAMILIES[f2])]
+    families = [(fm, FAMILIES[fm]) for fm in fams]
     fam_langs = leaf_langs(families); donor_langs = leaf_langs(donors); langs = fam_langs + donor_langs
     forms_by, _, report = load_cldf(data, langs)
     common = sorted(set.intersection(*[set(forms_by[L]) for L in fam_langs]))   # the families decide the pool, so the
@@ -126,25 +128,27 @@ def lbf(p):
     else:
         ests = [_estimate(j) for j in jobs]
     vals = [e["lbf"] for e in ests]
-    key = frozenset((f1, f2))
+    pairs = [frozenset((a, b)) for i, a in enumerate(fams) for b in fams[i + 1:]]
+    n_rel = sum(k in RELATED for k in pairs)
+    known = "related" if n_rel == len(pairs) else ("unrelated" if n_rel == 0 else "mixed")
     from masscomp.data import to_str
     tree = dict(parent=list(f.parent), length=[float(x) for x in f.length], family=list(f.family), leaves=list(f.leaves),
                 names={str(k): v for k, v in f.names.items()})
     leaves = {L: {c: to_str(forms_by[L][c]) for c in chosen} for L in langs}
-    return dict(concepts=chosen, tree=tree, leaf_forms=leaves, config=dict(fam1=f1, fam2=f2, families=families, n=M, seed=seed, K=K, sweeps=sweeps, burn=burn, warmup=warmup, power=power,
+    return dict(concepts=chosen, tree=tree, leaf_forms=leaves, config=dict(fam1=f1, fam2=f2, fams=fams, families=families, n=M, seed=seed, K=K, sweeps=sweeps, burn=burn, warmup=warmup, power=power,
                             reps=reps, g=g_mode, len_edge=len_edge, init="prior" if init_prior else "copy", inventory_size=N_SEG,
                             lam_sd=ev.LAM_SD, lam_min=[None if not np.isfinite(x) else float(x) for x in ev.LAM_MIN],
                             rate_time=RATE_TIME, t_ref=T_REF, directional=DIRECTIONAL,
                             u_env_rules=ev.U_ENV_RULES, u_rules=ev.U_RULES, u_per_t=ev.U_PER_T, concepts=concept_set, pool=len(pool),
                             donors=donors, dropped_for_donors=dropped, spacing=spacing, direction=direction, ess_min=ess_min, boost=boost,
                             estimator=estimator),
-                known="related" if key in RELATED else "unrelated", deep=key in DEEP, common_concepts=len(common),
+                known=known, deep=any(k in DEEP for k in pairs), common_concepts=len(common),
                 lbf_mean=float(np.mean(vals)), lbf_sd=float(np.std(vals)) if reps > 1 else None, estimates=ests, secs=time.time() - t0)
 
 
 def summary_line(r):
     c = r["config"]
-    return (f"{c['fam1']}-{c['fam2']} ({r['known']}{', deep' if r['deep'] else ''}) G={c['g']} n={c['n']}/{c.get('pool', '?')} {c.get('concepts', 'all')}"
+    return (f"{'-'.join(c.get('fams', [c['fam1'], c['fam2']]))} ({r['known']}{', deep' if r['deep'] else ''}) G={c['g']} n={c['n']}/{c.get('pool', '?')} {c.get('concepts', 'all')}"
             f"{' donors ' + '+'.join(d for d, _ in c['donors']) if c.get('donors') else ''} K={c['K']}x{c['sweeps']}"
             f"{' ' + c['spacing'] + '^' + str(c['power']).rstrip('0').rstrip('.') if c.get('spacing', 'top') != 'top' or c.get('power', 2) != 2 else ''}"
             f"{' RE' if c.get('estimator') == 're' else ''}: "
@@ -157,6 +161,6 @@ if __name__ == "__main__":
     p = dict(kv.split("=", 1) for kv in spec.split(",") if kv)
     r = lbf(p)
     os.makedirs("results/realdata", exist_ok=True)
-    tag = p.get("tag", f"lbf_{p['fam1']}_{p['fam2']}_{p.get('g', 'flat')}_{p.get('seed', 1)}")
+    tag = p.get("tag", f"lbf_{p.get('fams', p.get('fam1', '') + '+' + p.get('fam2', '')).replace('+', '_')}_{p.get('g', 'flat')}_{p.get('seed', 1)}")
     json.dump(r, open(f"results/realdata/{tag}.json", "w"), indent=1)
     print(summary_line(r))

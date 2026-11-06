@@ -22,7 +22,7 @@ if study == "diag":
                                lam=[pc["lam"] for pc in r["per_chain"]], mean_logp_latin_root=r["mean_logp_latin_root"], secs=c["secs"]))
         elif c["kind"] == "realdata_lbf":
             r = c["result"]
-            digest.append(dict(spec=c["spec"], pair=f"{r['config']['fam1']}-{r['config']['fam2']}", known=r["known"], deep=r["deep"],
+            digest.append(dict(spec=c["spec"], pair="-".join(r["config"].get("fams", [r["config"]["fam1"], r["config"]["fam2"]])), known=r["known"], deep=r["deep"],
                                concepts=r["config"].get("concepts", "all"), pool=r["config"].get("pool"),
                                lbf_mean=r["lbf_mean"], lbf_sd=r["lbf_sd"], estimates=[e["lbf"] for e in r["estimates"]], secs=c["secs"]))
         elif c["kind"] == "essrate":
