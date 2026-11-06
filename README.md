@@ -831,16 +831,22 @@ vocabulary, two-sided ladder, cooled / heated):
 
 | pair | 3 rules (above) | 10 rules | 3 rules + context | 10 rules + context |
 |---|---|---|---|---|
-| Ibero – Germanic | +24.1 (+31.0, +17.1) | **+34.7** (+47.8, +21.7) | +10.1 (+10.1, +10.1) | — |
-| Ibero – Slavic | +19.1 (+29.0, +9.2) | **+35.5** (+47.8, +23.2) | +20.7 (+30.9, +10.4) | — |
-| Germanic – Slavic | −7.1 (−5.1, −9.1) | −0.0 (+2.8, −2.8) | — | — |
+| Ibero – Germanic | +24.1 (+31.0, +17.1) | **+34.7** (+47.8, +21.7) | +10.1 (+10.1, +10.1) | +12.7 (+12.4, +13.0) |
+| Ibero – Slavic | +19.1 (+29.0, +9.2) | **+35.5** (+47.8, +23.2) | +20.7 (+30.9, +10.4) | +18.7 (+17.5, +20.0) |
+| Germanic – Slavic | −7.1 (−5.1, −9.1) | −0.0 (+2.8, −2.8) | −4.5 (−6.5, −2.6) | +0.6 (+1.7, −0.6) |
 | Ibero – Finnic (control) | +7.5 (+15.5, −0.6) | +2.6 (+8.3, −3.2) | +1.0 (−0.4, +2.3) | +2.8 (−1.5, +7.2) |
-| Germanic – Finnic (control) | −9.2 (−8.9, −9.4) | −6.3 (−6.3, −6.2) | −6.2 (−7.0, −5.3) | — |
+| Germanic – Finnic (control) | −9.2 (−8.9, −9.4) | −6.3 (−6.3, −6.2) | −6.2 (−7.0, −5.3) | −9.3 (−9.1, −9.6) |
 
-Ten rules per edge, a bounded budget, is the setting that moves the right pairs: both Ibero-Romance
-pairs at PIE depth rise to +35 (brackets +22…+48), Germanic–Slavic from −7 to 0, and the controls
-stay where they were (+3 and −6; the Finnic look-alikes fall from +7.5 to +2.6). Context rules at
-the small budget do nothing by themselves. The remaining cells go in the table when in.
+Ten context-free rules per edge, a bounded budget, is the setting that moves the right pairs: both
+Ibero-Romance pairs at PIE depth rise to +35 (brackets +22…+48), Germanic–Slavic from −7 to 0, and
+the controls stay where they were (+3 and −6; the Finnic look-alikes fall from +7.5 to +2.6).
+Context rules make things worse at every budget (+10 to +19 on the Ibero pairs): the slot space is
+40 times larger, so under the same expected number of rules each rule costs 3.7 nats more, and the
+changes that matter here — Grimm's law, satemisation, the vowel shifts — are context-free anyway.
+Germanic–Slavic ends the night at the Occam threshold under every bounded setting: the words it
+finds are the cognates (*water* ~ *voda*, *salt*, *two* ~ *dva*, *stand*, *night*, *not*, *we*,
+*sun*), each worth 0.5–3.5 nats, and ten of them together just pay for the join. Whether twenty or
+forty rules per edge lift it is the one cell left running (`basic_all_rules_20_40`).
 
 **Latin inside the Romance tree (`diag_42057315383.json`: `romlat` = (((spa, por), cat), lat), all
 basic vocabulary, two-sided ladder, two seeds).** Romance+Latin against Germanic +11.2 (+14.6, +7.7)

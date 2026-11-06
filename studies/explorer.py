@@ -37,6 +37,9 @@ def languages():
     return out
 
 
+FAMILY_LABEL = {"ibero": "Ibero-Romance", "italo": "Italo-Romance", "romlat": "Romance + Latin", "latin": "Latin"}
+
+
 def build(pairs, out_path, note=""):
     langs = languages()
     land = json.load(open(LAND))
@@ -55,11 +58,13 @@ def build(pairs, out_path, note=""):
                     ls.append(x)
             walk(sub)
             fams[name] = dict(langs=ls, tree=sub, lat=float(np.mean([langs[L]["lat"] for L in ls])), lon=float(np.mean([langs[L]["lon"] for L in ls])),
-                              label=name.capitalize(), family=langs[ls[0]]["family"])
+                              label=FAMILY_LABEL.get(name, name.capitalize()), family=langs[ls[0]]["family"])
     # one record per pair (G=fit preferred when both exist; the flat run kept as a control note)
     recs = []
     for r in pairs:
         c = r["config"]
+        if c.get("u_per_t", 0) or c.get("u_context"):            # the unbounded budget overfits and context rules are a stricter prior: not atlas material
+            continue
         ests = []
         for e in r["estimates"]:
             t = e.get("trace", {})
@@ -67,7 +72,8 @@ def build(pairs, out_path, note=""):
                              t_root_sd=t.get("t_root_sd_at1"), omega=t.get("omega_at1"), lam=t.get("lam_at1"), events=t.get("events_at1"),
                              borrow=t.get("borrow_from_at1"), root_forms=t.get("root_forms_at1"), fam_forms=t.get("fam_forms_at1")))
         recs.append(dict(fam1=c["fam1"], fam2=c["fam2"], known=r["known"], deep=r["deep"], g=c["g"], n=c["n"], K=c["K"], sweeps=c["sweeps"],
-                         cset=(c.get("concepts", "all") + ("_all" if c.get("concepts") == "basic" and c["n"] > 100 else "")),   # the whole basic list is its own set
+                         cset=(c.get("concepts", "all") + ("_all" if c.get("concepts") == "basic" and c["n"] > 100 else "")
+                               + ("_r10" if c.get("u_rules", 3) == 10 else "")),   # the whole basic list, and the ten-rule budget, are their own sets
                          pool=c.get("pool"), seed=c.get("seed"), donors=[d for d, _ in (c.get("donors") or [])], ladder=f"{c.get('spacing', 'top')}^{c.get('power', 2):g} K{c['K']}",
                          lbf=r["lbf_mean"], lbf_sd=r["lbf_sd"], estimates=ests, concepts=r.get("concepts"), leaf_forms=r.get("leaf_forms"),
                          tree=r.get("tree"), secs=r.get("secs"), source=r.get("source")))
@@ -253,7 +259,7 @@ const pairName = (p) => `${famLabel(p.fam1)} – ${famLabel(p.fam2)}`;
 
 // one table per concept set (the full list, basic vocabulary); within a set prefer the fitted-G run for a pair and keep flat runs as controls
 const pairKey = (p) => [p.fam1, p.fam2].sort().join("|");
-const SET_LABEL = { all: ["Full list", "50 of 1,016 concepts"], basic: ["Basic vocabulary", "50 of Swadesh + Leipzig-Jakarta"], basic_all: ["All basic vocabulary", "every available item, 125–135"] };
+const SET_LABEL = { all: ["Full list", "50 of 1,016 concepts"], basic: ["Basic vocabulary", "50 of Swadesh + Leipzig-Jakarta"], basic_all: ["All basic vocabulary", "every available item, 125–135"], basic_all_r10: ["All basic, 10 rules", "ten sound-change rules per branch"] };
 const setLabel = (s) => (SET_LABEL[s] || [s, ""])[0];
 const byKey = {};
 for (const p of DATA.pairs) {
@@ -261,7 +267,7 @@ for (const p of DATA.pairs) {
   byKey[s] = byKey[s] || {};
   if (!byKey[s][k] || (p.g === "fit" && byKey[s][k].g !== "fit")) byKey[s][k] = p;
 }
-const SET_ORDER = ["all", "basic", "basic_all"];
+const SET_ORDER = ["all", "basic", "basic_all", "basic_all_r10"];
 const SETS = Object.keys(byKey).sort((a, b) => (SET_ORDER.indexOf(a) + 99) % 99 - (SET_ORDER.indexOf(b) + 99) % 99 || a.localeCompare(b));
 const pairsOf = (s) => Object.values(byKey[s] || {}).sort((a, b) => b.lbf - a.lbf);
 const bandOf = (s) => {
