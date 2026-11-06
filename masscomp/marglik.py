@@ -423,8 +423,8 @@ def join_path_re(ds, theta0, seed, K=24, n_sweeps=600, burn=200, thin=4, power=3
         if cache_clear and r % cache_clear == cache_clear - 1:      # the transducer memo tables of 25 replicas would otherwise grow without bound
             for rk in reps:
                 for ep in rk.st.ep.values():
-                    ep._cache.clear(); ep._cache_lat = None
-                rk.st.adapt._cache.clear(); rk.st.adapt._cache_lat = None
+                    ep._cache.clear(); ep._cache_lat = None; ep._pos_cache.clear()
+                rk.st.adapt._cache.clear(); rk.st.adapt._cache_lat = None; rk.st.adapt._pos_cache.clear()
         if verbose and r % 50 == 49:
             print(f"  round {r + 1}: delta by stone " + " ".join(f"{d:.0f}" for d in deltas) + "  swap acc " +
                   " ".join(f"{a / max(t, 1):.2f}" for a, t in zip(swap_acc, swap_att)), flush=True)

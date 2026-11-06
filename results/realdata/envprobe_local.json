@@ -1,0 +1,8088 @@
+{
+ "config": {
+  "data": "data/northeuralex_sel.csv",
+  "n": 100,
+  "seed": 3,
+  "sweeps": 300,
+  "burn": 100,
+  "chains": 2,
+  "len_edge": 0.3,
+  "families": [
+   [
+    "ibero",
+    [
+     [
+      "spa",
+      "por"
+     ],
+     "cat"
+    ]
+   ],
+   [
+    "italo",
+    [
+     [
+      "ita",
+      "fra"
+     ],
+     "ron"
+    ]
+   ]
+  ],
+  "proto": "lat",
+  "inventory_size": 40,
+  "lam_sd": 1.0,
+  "lam_mu": [
+   4.5,
+   3.0,
+   2.0,
+   6.0
+  ],
+  "lam_min": [
+   null,
+   null,
+   null,
+   4.5
+  ],
+  "rate_time": false,
+  "t_ref": 0.3,
+  "directional": false
+ },
+ "G": {
+  "mode": "fit",
+  "len_p": {
+   "1": 0.0035,
+   "2": 0.0371,
+   "3": 0.1169,
+   "4": 0.2208,
+   "5": 0.2462,
+   "6": 0.1806,
+   "7": 0.1056,
+   "8": 0.0567,
+   "9": 0.0227,
+   "10": 0.0075,
+   "11": 0.0015,
+   "12": 0.0008
+  },
+  "seg_p": [
+   0.0341,
+   0.0146,
+   0.0533,
+   0.02,
+   0.0404,
+   0.0102,
+   0.0147,
+   0.0227,
+   0.0038,
+   0.0096,
+   0.0388,
+   0.0078,
+   0.0111,
+   0.0023,
+   0.0002,
+   0.0314,
+   0.0393,
+   0.0021,
+   0.0349,
+   0.1109,
+   0.0109,
+   0.0181,
+   0.0,
+   0.0058,
+   0.1201,
+   0.0999,
+   0.0525,
+   0.0672,
+   0.0442,
+   0.0056,
+   0.0039,
+   0.0051,
+   0.0034,
+   0.0001,
+   0.0061,
+   0.0037,
+   0.0,
+   0.0019,
+   0.0018,
+   0.0475
+  ],
+  "fit_forms": 4788
+ },
+ "report": {
+  "common_concepts": 898,
+  "kept": {
+   "lat": 1000,
+   "spa": 975,
+   "por": 1003,
+   "cat": 974,
+   "ita": 992,
+   "fra": 1002,
+   "ron": 951
+  }
+ },
+ "per_chain": [
+  {
+   "secs": 193.3558440208435,
+   "t_root": 0.338270394605698,
+   "omega": 0.5866495982004004,
+   "lam": [
+    4.37,
+    5.76,
+    -1.61,
+    6.99
+   ],
+   "lam_sd": [
+    0.16,
+    0.46,
+    0.21,
+    0.19
+   ],
+   "n_u": 230.675,
+   "root_len": 5.6005,
+   "fam_root_len": 5.497125,
+   "events": {
+    "ibero": {
+     "inherit": 0.7735,
+     "replace": 0.2265,
+     "borrow": 0.0
+    },
+    "italo": {
+     "inherit": 0.6485,
+     "replace": 0.17925,
+     "borrow": 0.17225
+    },
+    "spa": {
+     "inherit": 0.85625,
+     "replace": 0.06875,
+     "borrow": 0.075
+    },
+    "por": {
+     "inherit": 0.783,
+     "replace": 0.132,
+     "borrow": 0.085
+    },
+    "cat": {
+     "inherit": 0.78275,
+     "replace": 0.15075,
+     "borrow": 0.0665
+    },
+    "ita": {
+     "inherit": 0.739,
+     "replace": 0.12325,
+     "borrow": 0.13775
+    },
+    "fra": {
+     "inherit": 0.649,
+     "replace": 0.262,
+     "borrow": 0.089
+    },
+    "ron": {
+     "inherit": 0.521,
+     "replace": 0.3985,
+     "borrow": 0.0805
+    }
+   },
+   "log_lik": -4404.717842669163
+  },
+  {
+   "secs": 187.6953580379486,
+   "t_root": 0.9395315120878316,
+   "omega": 0.7739097023185566,
+   "lam": [
+    4.48,
+    4.93,
+    -1.59,
+    6.75
+   ],
+   "lam_sd": [
+    0.12,
+    0.39,
+    0.15,
+    0.12
+   ],
+   "n_u": 229.825,
+   "root_len": 5.2375,
+   "fam_root_len": 5.27825,
+   "events": {
+    "ibero": {
+     "inherit": 0.49925,
+     "replace": 0.50075,
+     "borrow": 0.0
+    },
+    "italo": {
+     "inherit": 0.255,
+     "replace": 0.26925,
+     "borrow": 0.47575
+    },
+    "spa": {
+     "inherit": 0.84175,
+     "replace": 0.08725,
+     "borrow": 0.071
+    },
+    "por": {
+     "inherit": 0.80675,
+     "replace": 0.112,
+     "borrow": 0.08125
+    },
+    "cat": {
+     "inherit": 0.74775,
+     "replace": 0.14125,
+     "borrow": 0.111
+    },
+    "ita": {
+     "inherit": 0.7345,
+     "replace": 0.097,
+     "borrow": 0.1685
+    },
+    "fra": {
+     "inherit": 0.59025,
+     "replace": 0.25325,
+     "borrow": 0.1565
+    },
+    "ron": {
+     "inherit": 0.469,
+     "replace": 0.43,
+     "borrow": 0.101
+    }
+   },
+   "log_lik": -4489.14949332369
+  }
+ ],
+ "latin_len": 5.87,
+ "root_len_ratio": 0.9540885860306644,
+ "fam_root_len_ratio": 0.9364778534923338,
+ "root_mode_is_latin": 0.05,
+ "ned": {
+  "root": 0.60809,
+  "ibero": 0.6257,
+  "italo": 0.6278865979381443,
+  "leaves": 0.68045
+ },
+ "ned_cognate": {
+  "root": 0.31600000000000006,
+  "ibero": 0.35361290322580646,
+  "italo": 0.3419655172413793,
+  "leaves": 0.46164516129032257,
+  "n": 31
+ },
+ "mean_logp_latin_root": -17.703200000000002,
+ "mean_logp_mode_root": -1.3895000000000002,
+ "rules": [
+  {
+   "edge": "cat",
+   "rule": "o \u2192 \u00d8",
+   "freq": 0.97,
+   "w": 4.38,
+   "conditioned": false
+  },
+  {
+   "edge": "cat",
+   "rule": "r \u2192 \u00d8 / _#",
+   "freq": 0.96,
+   "w": 3.34,
+   "conditioned": true
+  },
+  {
+   "edge": "cat",
+   "rule": "a \u2192 \u0268 / _#",
+   "freq": 0.84,
+   "w": 4.5,
+   "conditioned": true
+  },
+  {
+   "edge": "cat",
+   "rule": "e \u2192 \u0268",
+   "freq": 0.75,
+   "w": 3.89,
+   "conditioned": false
+  },
+  {
+   "edge": "cat",
+   "rule": "a \u2192 \u0268",
+   "freq": 0.59,
+   "w": 4.02,
+   "conditioned": false
+  },
+  {
+   "edge": "cat",
+   "rule": "l \u2192 \u028e / _V",
+   "freq": 0.5,
+   "w": 5.39,
+   "conditioned": true
+  },
+  {
+   "edge": "cat",
+   "rule": "o \u2192 u / C_",
+   "freq": 0.5,
+   "w": 4.81,
+   "conditioned": true
+  },
+  {
+   "edge": "cat",
+   "rule": "l \u2192 \u028e",
+   "freq": 0.5,
+   "w": 4.18,
+   "conditioned": false
+  },
+  {
+   "edge": "cat",
+   "rule": "e \u2192 \u0268 / C_",
+   "freq": 0.5,
+   "w": 4.1,
+   "conditioned": true
+  },
+  {
+   "edge": "cat",
+   "rule": "a \u2192 \u0268 / _C",
+   "freq": 0.5,
+   "w": 3.76,
+   "conditioned": true
+  },
+  {
+   "edge": "cat",
+   "rule": "\u00f8 \u2192 d\u0292",
+   "freq": 0.5,
+   "w": -2.04,
+   "conditioned": false
+  },
+  {
+   "edge": "cat",
+   "rule": "s \u2192 x",
+   "freq": 0.5,
+   "w": -1.63,
+   "conditioned": false
+  },
+  {
+   "edge": "cat",
+   "rule": "p \u2192 e",
+   "freq": 0.5,
+   "w": -0.48,
+   "conditioned": false
+  },
+  {
+   "edge": "fra",
+   "rule": "a \u2192 \u00d8 / _#",
+   "freq": 0.5,
+   "w": 4.69,
+   "conditioned": true
+  },
+  {
+   "edge": "fra",
+   "rule": "e \u2192 a",
+   "freq": 0.5,
+   "w": 2.6,
+   "conditioned": false
+  },
+  {
+   "edge": "fra",
+   "rule": "w \u2192 \u0283",
+   "freq": 0.5,
+   "w": -1.86,
+   "conditioned": false
+  },
+  {
+   "edge": "fra",
+   "rule": "x \u2192 j",
+   "freq": 0.5,
+   "w": 0.85,
+   "conditioned": false
+  },
+  {
+   "edge": "fra",
+   "rule": "\u00e7 \u2192 x",
+   "freq": 0.5,
+   "w": 0.84,
+   "conditioned": false
+  },
+  {
+   "edge": "fra",
+   "rule": "\u0294 \u2192 j",
+   "freq": 0.5,
+   "w": -0.67,
+   "conditioned": false
+  },
+  {
+   "edge": "fra",
+   "rule": "\u0295 \u2192 v",
+   "freq": 0.5,
+   "w": 0.65,
+   "conditioned": false
+  },
+  {
+   "edge": "fra",
+   "rule": "u \u2192 v",
+   "freq": 0.5,
+   "w": -0.34,
+   "conditioned": false
+  },
+  {
+   "edge": "fra",
+   "rule": "\u0294 \u2192 ts",
+   "freq": 0.5,
+   "w": 0.3,
+   "conditioned": false
+  },
+  {
+   "edge": "ibero",
+   "rule": "l \u2192 \u00f0",
+   "freq": 0.5,
+   "w": -9.84,
+   "conditioned": false
+  },
+  {
+   "edge": "ibero",
+   "rule": "\u0268 \u2192 y",
+   "freq": 0.5,
+   "w": -6.58,
+   "conditioned": false
+  },
+  {
+   "edge": "ibero",
+   "rule": "m \u2192 t\u0283",
+   "freq": 0.5,
+   "w": -3.11,
+   "conditioned": false
+  },
+  {
+   "edge": "ibero",
+   "rule": "x \u2192 v",
+   "freq": 0.5,
+   "w": -2.53,
+   "conditioned": false
+  },
+  {
+   "edge": "ibero",
+   "rule": "\u0294 \u2192 h",
+   "freq": 0.5,
+   "w": -2.15,
+   "conditioned": false
+  },
+  {
+   "edge": "ibero",
+   "rule": "z \u2192 x",
+   "freq": 0.5,
+   "w": 0.22,
+   "conditioned": false
+  },
+  {
+   "edge": "ibero/2",
+   "rule": "\u00d8 \u2192 r / _#",
+   "freq": 0.5,
+   "w": 3.54,
+   "conditioned": true
+  },
+  {
+   "edge": "ibero/2",
+   "rule": "\u00d8 \u2192 r",
+   "freq": 0.5,
+   "w": 2.39,
+   "conditioned": false
+  },
+  {
+   "edge": "ibero/2",
+   "rule": "\u0292 \u2192 \u0272",
+   "freq": 0.5,
+   "w": 1.9,
+   "conditioned": false
+  },
+  {
+   "edge": "ibero/2",
+   "rule": "b \u2192 ts",
+   "freq": 0.5,
+   "w": -1.53,
+   "conditioned": false
+  },
+  {
+   "edge": "ibero/2",
+   "rule": "y \u2192 \u028e",
+   "freq": 0.5,
+   "w": -0.83,
+   "conditioned": false
+  },
+  {
+   "edge": "ibero/2",
+   "rule": "\u00f8 \u2192 \u0272",
+   "freq": 0.5,
+   "w": 0.23,
+   "conditioned": false
+  },
+  {
+   "edge": "ibero/2",
+   "rule": "j \u2192 t",
+   "freq": 0.5,
+   "w": 0.17,
+   "conditioned": false
+  },
+  {
+   "edge": "ibero/2",
+   "rule": "\u0292 \u2192 \u014b",
+   "freq": 0.5,
+   "w": 0.15,
+   "conditioned": false
+  },
+  {
+   "edge": "ibero/2",
+   "rule": "e \u2192 x",
+   "freq": 0.5,
+   "w": 0.14,
+   "conditioned": false
+  },
+  {
+   "edge": "ibero/2",
+   "rule": "s \u2192 j",
+   "freq": 0.5,
+   "w": -0.11,
+   "conditioned": false
+  },
+  {
+   "edge": "ita",
+   "rule": "\u00d8 \u2192 e / C_",
+   "freq": 0.85,
+   "w": 2.82,
+   "conditioned": true
+  },
+  {
+   "edge": "ita",
+   "rule": "\u0268 \u2192 a / C_",
+   "freq": 0.74,
+   "w": 3.88,
+   "conditioned": true
+  },
+  {
+   "edge": "ita",
+   "rule": "\u00d8 \u2192 e / _#",
+   "freq": 0.5,
+   "w": 4.02,
+   "conditioned": true
+  },
+  {
+   "edge": "ita",
+   "rule": "\u00d8 \u2192 o / C_",
+   "freq": 0.5,
+   "w": 3.74,
+   "conditioned": true
+  },
+  {
+   "edge": "ita",
+   "rule": "\u00d8 \u2192 o / _#",
+   "freq": 0.5,
+   "w": 2.77,
+   "conditioned": true
+  },
+  {
+   "edge": "ita",
+   "rule": "\u0268 \u2192 a",
+   "freq": 0.5,
+   "w": 2.59,
+   "conditioned": false
+  },
+  {
+   "edge": "ita",
+   "rule": "\u014b \u2192 \u028e",
+   "freq": 0.5,
+   "w": -2.12,
+   "conditioned": false
+  },
+  {
+   "edge": "ita",
+   "rule": "\u00d8 \u2192 e",
+   "freq": 0.5,
+   "w": 2.12,
+   "conditioned": false
+  },
+  {
+   "edge": "ita",
+   "rule": "n \u2192 f",
+   "freq": 0.5,
+   "w": -2.12,
+   "conditioned": false
+  },
+  {
+   "edge": "ita",
+   "rule": "d\u0292 \u2192 i",
+   "freq": 0.5,
+   "w": -1.04,
+   "conditioned": false
+  },
+  {
+   "edge": "ita",
+   "rule": "f \u2192 \u00f8",
+   "freq": 0.5,
+   "w": -0.15,
+   "conditioned": false
+  },
+  {
+   "edge": "ita",
+   "rule": "n \u2192 \u00f8",
+   "freq": 0.5,
+   "w": 0.09,
+   "conditioned": false
+  },
+  {
+   "edge": "ita",
+   "rule": "t\u0283 \u2192 y",
+   "freq": 0.5,
+   "w": -0.01,
+   "conditioned": false
+  },
+  {
+   "edge": "italo",
+   "rule": "v \u2192 b",
+   "freq": 0.82,
+   "w": 5.04,
+   "conditioned": false
+  },
+  {
+   "edge": "italo",
+   "rule": "f \u2192 \u03b8",
+   "freq": 0.5,
+   "w": -6.41,
+   "conditioned": false
+  },
+  {
+   "edge": "italo",
+   "rule": "\u0295 \u2192 w",
+   "freq": 0.5,
+   "w": -1.34,
+   "conditioned": false
+  },
+  {
+   "edge": "italo/6",
+   "rule": "\u00d8 \u2192 e",
+   "freq": 0.5,
+   "w": 3.03,
+   "conditioned": false
+  },
+  {
+   "edge": "italo/6",
+   "rule": "\u00d8 \u2192 e / C_",
+   "freq": 0.5,
+   "w": 2.35,
+   "conditioned": true
+  },
+  {
+   "edge": "italo/6",
+   "rule": "\u00d8 \u2192 e / _#",
+   "freq": 0.5,
+   "w": 2.26,
+   "conditioned": true
+  },
+  {
+   "edge": "italo/6",
+   "rule": "h \u2192 \u00d8",
+   "freq": 0.5,
+   "w": -1.67,
+   "conditioned": false
+  },
+  {
+   "edge": "italo/6",
+   "rule": "l \u2192 d\u0292",
+   "freq": 0.5,
+   "w": -0.55,
+   "conditioned": false
+  },
+  {
+   "edge": "italo/6",
+   "rule": "\u03b8 \u2192 \u0283",
+   "freq": 0.5,
+   "w": 0.18,
+   "conditioned": false
+  },
+  {
+   "edge": "italo/6",
+   "rule": "f \u2192 \u014b",
+   "freq": 0.5,
+   "w": 0.09,
+   "conditioned": false
+  },
+  {
+   "edge": "por",
+   "rule": "e \u2192 \u0268 / C_",
+   "freq": 0.96,
+   "w": 4.01,
+   "conditioned": true
+  },
+  {
+   "edge": "por",
+   "rule": "\u03b8 \u2192 s",
+   "freq": 0.86,
+   "w": 4.55,
+   "conditioned": false
+  },
+  {
+   "edge": "por",
+   "rule": "o \u2192 u / _#",
+   "freq": 0.56,
+   "w": 4.82,
+   "conditioned": true
+  },
+  {
+   "edge": "por",
+   "rule": "o \u2192 u",
+   "freq": 0.5,
+   "w": 5.35,
+   "conditioned": false
+  },
+  {
+   "edge": "por",
+   "rule": "n \u2192 \u00d8 / _C",
+   "freq": 0.5,
+   "w": 5.29,
+   "conditioned": true
+  },
+  {
+   "edge": "por",
+   "rule": "s \u2192 \u0283",
+   "freq": 0.5,
+   "w": 4.38,
+   "conditioned": false
+  },
+  {
+   "edge": "por",
+   "rule": "s \u2192 \u0283 / V_",
+   "freq": 0.5,
+   "w": 4.26,
+   "conditioned": true
+  },
+  {
+   "edge": "por",
+   "rule": "o \u2192 u / C_",
+   "freq": 0.5,
+   "w": 4.2,
+   "conditioned": true
+  },
+  {
+   "edge": "por",
+   "rule": "d \u2192 o",
+   "freq": 0.5,
+   "w": 0.97,
+   "conditioned": false
+  },
+  {
+   "edge": "por",
+   "rule": "l \u2192 t",
+   "freq": 0.5,
+   "w": -0.83,
+   "conditioned": false
+  },
+  {
+   "edge": "por",
+   "rule": "dz \u2192 ts",
+   "freq": 0.5,
+   "w": 0.83,
+   "conditioned": false
+  },
+  {
+   "edge": "por",
+   "rule": "m \u2192 e",
+   "freq": 0.5,
+   "w": -0.22,
+   "conditioned": false
+  },
+  {
+   "edge": "por",
+   "rule": "ts \u2192 \u00f8",
+   "freq": 0.5,
+   "w": -0.18,
+   "conditioned": false
+  },
+  {
+   "edge": "ron",
+   "rule": "a \u2192 \u0268 / C_",
+   "freq": 1.0,
+   "w": 4.91,
+   "conditioned": true
+  },
+  {
+   "edge": "ron",
+   "rule": "o \u2192 \u00d8",
+   "freq": 0.59,
+   "w": 1.79,
+   "conditioned": false
+  },
+  {
+   "edge": "ron",
+   "rule": "\u00d8 \u2192 j / _Vfront",
+   "freq": 0.5,
+   "w": 6.23,
+   "conditioned": true
+  },
+  {
+   "edge": "ron",
+   "rule": "o \u2192 u / _C",
+   "freq": 0.5,
+   "w": 5.2,
+   "conditioned": true
+  },
+  {
+   "edge": "ron",
+   "rule": "\u00d8 \u2192 j / _V",
+   "freq": 0.5,
+   "w": 4.84,
+   "conditioned": true
+  },
+  {
+   "edge": "ron",
+   "rule": "f \u2192 a",
+   "freq": 0.5,
+   "w": -4.27,
+   "conditioned": false
+  },
+  {
+   "edge": "ron",
+   "rule": "o \u2192 u",
+   "freq": 0.5,
+   "w": 3.67,
+   "conditioned": false
+  },
+  {
+   "edge": "ron",
+   "rule": "f \u2192 v",
+   "freq": 0.5,
+   "w": -1.53,
+   "conditioned": false
+  },
+  {
+   "edge": "ron",
+   "rule": "r \u2192 ts",
+   "freq": 0.5,
+   "w": -0.77,
+   "conditioned": false
+  },
+  {
+   "edge": "ron",
+   "rule": "dz \u2192 \u00f8",
+   "freq": 0.5,
+   "w": 0.47,
+   "conditioned": false
+  },
+  {
+   "edge": "ron",
+   "rule": "y \u2192 e",
+   "freq": 0.5,
+   "w": 0.28,
+   "conditioned": false
+  },
+  {
+   "edge": "spa",
+   "rule": "u \u2192 o / C_",
+   "freq": 0.71,
+   "w": 3.62,
+   "conditioned": true
+  },
+  {
+   "edge": "spa",
+   "rule": "s \u2192 \u03b8",
+   "freq": 0.71,
+   "w": 3.03,
+   "conditioned": false
+  },
+  {
+   "edge": "spa",
+   "rule": "\u00d8 \u2192 j / _V",
+   "freq": 0.55,
+   "w": 3.16,
+   "conditioned": true
+  },
+  {
+   "edge": "spa",
+   "rule": "v \u2192 b / _V",
+   "freq": 0.5,
+   "w": 4.16,
+   "conditioned": true
+  },
+  {
+   "edge": "spa",
+   "rule": "\u00d8 \u2192 j / _Vfront",
+   "freq": 0.5,
+   "w": 4.16,
+   "conditioned": true
+  },
+  {
+   "edge": "spa",
+   "rule": "d \u2192 k",
+   "freq": 0.5,
+   "w": -3.1,
+   "conditioned": false
+  },
+  {
+   "edge": "spa",
+   "rule": "\u0295 \u2192 u",
+   "freq": 0.5,
+   "w": -3.03,
+   "conditioned": false
+  },
+  {
+   "edge": "spa",
+   "rule": "t \u2192 z",
+   "freq": 0.5,
+   "w": -2.65,
+   "conditioned": false
+  },
+  {
+   "edge": "spa",
+   "rule": "\u0294 \u2192 u",
+   "freq": 0.5,
+   "w": -2.36,
+   "conditioned": false
+  },
+  {
+   "edge": "spa",
+   "rule": "z \u2192 d\u0292",
+   "freq": 0.5,
+   "w": -2.19,
+   "conditioned": false
+  },
+  {
+   "edge": "spa",
+   "rule": "\u00d8 \u2192 j",
+   "freq": 0.5,
+   "w": 2.03,
+   "conditioned": false
+  },
+  {
+   "edge": "spa",
+   "rule": "\u00f8 \u2192 y",
+   "freq": 0.5,
+   "w": -1.54,
+   "conditioned": false
+  },
+  {
+   "edge": "spa",
+   "rule": "a \u2192 w",
+   "freq": 0.5,
+   "w": -1.54,
+   "conditioned": false
+  },
+  {
+   "edge": "spa",
+   "rule": "w \u2192 \u0294",
+   "freq": 0.5,
+   "w": -1.49,
+   "conditioned": false
+  },
+  {
+   "edge": "spa",
+   "rule": "\u0272 \u2192 k",
+   "freq": 0.5,
+   "w": -1.4,
+   "conditioned": false
+  },
+  {
+   "edge": "spa",
+   "rule": "o \u2192 r",
+   "freq": 0.5,
+   "w": -1.16,
+   "conditioned": false
+  },
+  {
+   "edge": "spa",
+   "rule": "f \u2192 o",
+   "freq": 0.5,
+   "w": -1.1,
+   "conditioned": false
+  },
+  {
+   "edge": "spa",
+   "rule": "y \u2192 t",
+   "freq": 0.5,
+   "w": -0.78,
+   "conditioned": false
+  },
+  {
+   "edge": "spa",
+   "rule": "s \u2192 m",
+   "freq": 0.5,
+   "w": 0.75,
+   "conditioned": false
+  },
+  {
+   "edge": "spa",
+   "rule": "ts \u2192 \u028e",
+   "freq": 0.5,
+   "w": -0.69,
+   "conditioned": false
+  },
+  {
+   "edge": "spa",
+   "rule": "e \u2192 n",
+   "freq": 0.5,
+   "w": -0.55,
+   "conditioned": false
+  },
+  {
+   "edge": "spa",
+   "rule": "\u0295 \u2192 y",
+   "freq": 0.5,
+   "w": 0.04,
+   "conditioned": false
+  }
+ ],
+ "concepts": [
+  {
+   "concept": "1002_forget",
+   "latin": "obliwiski",
+   "latin_len": 9,
+   "root": {
+    "top": [
+     [
+      "oblitar",
+      0.041
+     ],
+     [
+      "uoblvi\u00f0ar",
+      0.041
+     ],
+     [
+      "orlblitar",
+      0.037
+     ]
+    ],
+    "logp_latin": -34.34,
+    "logp_mode": -3.19,
+    "mode_len": 7,
+    "ned": 0.556
+   },
+   "ibero": {
+    "top": [
+     [
+      "olbli\u00f0ar",
+      0.176
+     ],
+     [
+      "ublvi\u00f0ar",
+      0.151
+     ],
+     [
+      "obli\u00f0ar",
+      0.142
+     ]
+    ],
+    "logp_latin": -40.27,
+    "logp_mode": -1.74,
+    "mode_len": 8,
+    "ned": 0.667
+   },
+   "italo": {
+    "top": [
+     [
+      "oblitar",
+      0.013
+     ],
+     [
+      "uoblvi\u00f0ar",
+      0.007
+     ],
+     [
+      "orlblitar",
+      0.004
+     ]
+    ],
+    "logp_latin": -35.73,
+    "logp_mode": -4.37,
+    "mode_len": 7,
+    "ned": 0.556
+   },
+   "leaves": {
+    "spa": "olvi\u00f0ar",
+    "por": "i\u0283keser",
+    "cat": "ubli\u00f0a",
+    "ita": "dimentikare",
+    "fra": "ublie",
+    "ron": "ujta"
+   },
+   "leaf_ned": 0.8
+  },
+  {
+   "concept": "1005_calculate",
+   "latin": "reri",
+   "latin_len": 4,
+   "root": {
+    "top": [
+     [
+      "kontar",
+      0.341
+     ],
+     [
+      "kontara",
+      0.048
+     ],
+     [
+      "konatar",
+      0.038
+     ]
+    ],
+    "logp_latin": -12.95,
+    "logp_mode": -1.08,
+    "mode_len": 6,
+    "ned": 1.0
+   },
+   "ibero": {
+    "top": [
+     [
+      "kontar",
+      0.231
+     ],
+     [
+      "kontara",
+      0.043
+     ],
+     [
+      "lrv",
+      0.014
+     ]
+    ],
+    "logp_latin": -14.01,
+    "logp_mode": -1.46,
+    "mode_len": 6,
+    "ned": 1.0
+   },
+   "italo": {
+    "top": [
+     [
+      "kontar",
+      0.531
+     ],
+     [
+      "kontatr",
+      0.03
+     ],
+     [
+      "konatar",
+      0.019
+     ]
+    ],
+    "logp_latin": -13.47,
+    "logp_mode": -0.63,
+    "mode_len": 6,
+    "ned": 1.0
+   },
+   "leaves": {
+    "spa": "kontar",
+    "por": "kalkular",
+    "cat": "k\u0268lkula",
+    "ita": "kontare",
+    "fra": "kalkyle",
+    "ron": "kalkula"
+   },
+   "leaf_ned": 0.976
+  },
+  {
+   "concept": "110_grass",
+   "latin": "herba",
+   "latin_len": 5,
+   "root": {
+    "top": [
+     [
+      "erva",
+      0.972
+     ],
+     [
+      "erba",
+      0.006
+     ],
+     [
+      "ervar",
+      0.0
+     ]
+    ],
+    "logp_latin": -19.2,
+    "logp_mode": -0.03,
+    "mode_len": 4,
+    "ned": 0.4
+   },
+   "ibero": {
+    "top": [
+     [
+      "erva",
+      0.998
+     ]
+    ],
+    "logp_latin": -20.91,
+    "logp_mode": -0.0,
+    "mode_len": 4,
+    "ned": 0.4
+   },
+   "italo": {
+    "top": [
+     [
+      "erba",
+      0.934
+     ]
+    ],
+    "logp_latin": -11.02,
+    "logp_mode": -0.07,
+    "mode_len": 4,
+    "ned": 0.2
+   },
+   "leaves": {
+    "spa": "jerva",
+    "por": "erva",
+    "cat": "erv\u0268",
+    "ita": "erba",
+    "fra": "erb",
+    "ron": "jarb\u0268"
+   },
+   "leaf_ned": 0.433
+  },
+  {
+   "concept": "111_root",
+   "latin": "radiks",
+   "latin_len": 6,
+   "root": {
+    "top": [
+     [
+      "rais",
+      0.084
+     ],
+     [
+      "rad\u0268t\u0283ina",
+      0.061
+     ],
+     [
+      "radisn",
+      0.053
+     ]
+    ],
+    "logp_latin": -13.22,
+    "logp_mode": -2.48,
+    "mode_len": 4,
+    "ned": 0.333
+   },
+   "ibero": {
+    "top": [
+     [
+      "rais",
+      0.342
+     ],
+     [
+      "rel",
+      0.068
+     ],
+     [
+      "rail",
+      0.039
+     ]
+    ],
+    "logp_latin": -14.93,
+    "logp_mode": -1.07,
+    "mode_len": 4,
+    "ned": 0.333
+   },
+   "italo": {
+    "top": [
+     [
+      "rad\u0268t\u0283in\u0268",
+      0.248
+     ],
+     [
+      "rad\u0268t\u0283ina",
+      0.078
+     ],
+     [
+      "radit\u0283in\u0268",
+      0.072
+     ]
+    ],
+    "logp_latin": -16.48,
+    "logp_mode": -1.39,
+    "mode_len": 8,
+    "ned": 0.5
+   },
+   "leaves": {
+    "spa": "rai\u03b8",
+    "por": "rai\u0283",
+    "cat": "rel",
+    "ita": "radit\u0283e",
+    "fra": "rasin",
+    "ron": "r\u0268d\u0268t\u0283in\u0268"
+   },
+   "leaf_ned": 0.549
+  },
+  {
+   "concept": "116_twig",
+   "latin": "ramus",
+   "latin_len": 5,
+   "root": {
+    "top": [
+     [
+      "ramo",
+      0.733
+     ],
+     [
+      "rama",
+      0.015
+     ],
+     [
+      "tsramo",
+      0.0
+     ]
+    ],
+    "logp_latin": -13.04,
+    "logp_mode": -0.31,
+    "mode_len": 4,
+    "ned": 0.4
+   },
+   "ibero": {
+    "top": [
+     [
+      "ramo",
+      0.954
+     ]
+    ],
+    "logp_latin": -20.17,
+    "logp_mode": -0.05,
+    "mode_len": 4,
+    "ned": 0.4
+   },
+   "italo": {
+    "top": [
+     [
+      "ramo",
+      0.786
+     ],
+     [
+      "rama",
+      0.005
+     ],
+     [
+      "ram",
+      0.003
+     ]
+    ],
+    "logp_latin": -13.73,
+    "logp_mode": -0.24,
+    "mode_len": 4,
+    "ned": 0.4
+   },
+   "leaves": {
+    "spa": "ramo",
+    "por": "\u0295a\u028eu",
+    "cat": "ram",
+    "ita": "ramo",
+    "fra": "ramo",
+    "ron": "ramur\u0268"
+   },
+   "leaf_ned": 0.422
+  },
+  {
+   "concept": "120_willow",
+   "latin": "saliks",
+   "latin_len": 6,
+   "root": {
+    "top": [
+     [
+      "salze",
+      0.418
+     ],
+     [
+      "salt\u0283e",
+      0.268
+     ],
+     [
+      "salise",
+      0.038
+     ]
+    ],
+    "logp_latin": -19.75,
+    "logp_mode": -0.87,
+    "mode_len": 5,
+    "ned": 0.5
+   },
+   "ibero": {
+    "top": [
+     [
+      "salze",
+      0.429
+     ],
+     [
+      "salse",
+      0.157
+     ],
+     [
+      "sal\u03b8e",
+      0.129
+     ]
+    ],
+    "logp_latin": -23.97,
+    "logp_mode": -0.85,
+    "mode_len": 5,
+    "ned": 0.5
+   },
+   "italo": {
+    "top": [
+     [
+      "salt\u0283e",
+      0.668
+     ],
+     [
+      "salit\u0283e",
+      0.051
+     ],
+     [
+      "salze",
+      0.043
+     ]
+    ],
+    "logp_latin": -20.38,
+    "logp_mode": -0.4,
+    "mode_len": 5,
+    "ned": 0.5
+   },
+   "leaves": {
+    "spa": "sau\u03b8e",
+    "por": "\u0283al\u0295ejru",
+    "cat": "salz\u0268",
+    "ita": "salit\u0283e",
+    "fra": "sol",
+    "ron": "salt\u0283je"
+   },
+   "leaf_ned": 0.569
+  },
+  {
+   "concept": "147_wolf",
+   "latin": "lupus",
+   "latin_len": 5,
+   "root": {
+    "top": [
+     [
+      "lopo",
+      0.716
+     ],
+     [
+      "lupo",
+      0.087
+     ],
+     [
+      "eopo",
+      0.003
+     ]
+    ],
+    "logp_latin": -18.25,
+    "logp_mode": -0.33,
+    "mode_len": 4,
+    "ned": 0.6
+   },
+   "ibero": {
+    "top": [
+     [
+      "lopo",
+      0.886
+     ]
+    ],
+    "logp_latin": -23.91,
+    "logp_mode": -0.12,
+    "mode_len": 4,
+    "ned": 0.6
+   },
+   "italo": {
+    "top": [
+     [
+      "lupo",
+      0.992
+     ],
+     [
+      "lopo",
+      0.006
+     ]
+    ],
+    "logp_latin": -24.55,
+    "logp_mode": -0.01,
+    "mode_len": 4,
+    "ned": 0.4
+   },
+   "leaves": {
+    "spa": "lovo",
+    "por": "lovu",
+    "cat": "\u028eop",
+    "ita": "lupo",
+    "fra": "lu",
+    "ron": "lup"
+   },
+   "leaf_ned": 0.6
+  },
+  {
+   "concept": "150_chicken",
+   "latin": "galina",
+   "latin_len": 6,
+   "root": {
+    "top": [
+     [
+      "galina",
+      0.593
+     ],
+     [
+      "gajina",
+      0.063
+     ],
+     [
+      "galjna",
+      0.027
+     ]
+    ],
+    "logp_latin": -0.52,
+    "logp_mode": -0.52,
+    "mode_len": 6,
+    "ned": 0.0
+   },
+   "ibero": {
+    "top": [
+     [
+      "galina",
+      0.846
+     ]
+    ],
+    "logp_latin": -0.17,
+    "logp_mode": -0.17,
+    "mode_len": 6,
+    "ned": 0.0
+   },
+   "italo": {
+    "top": [
+     [
+      "galina",
+      0.516
+     ],
+     [
+      "galjna",
+      0.049
+     ],
+     [
+      "gajina",
+      0.039
+     ]
+    ],
+    "logp_latin": -0.66,
+    "logp_mode": -0.66,
+    "mode_len": 6,
+    "ned": 0.0
+   },
+   "leaves": {
+    "spa": "gajina",
+    "por": "gali\u0272a",
+    "cat": "g\u0268\u028ein\u0268",
+    "ita": "galina",
+    "fra": "pul",
+    "ron": "g\u0268jn\u0268"
+   },
+   "leaf_ned": 0.389
+  },
+  {
+   "concept": "158_cuckoo",
+   "latin": "kukulus",
+   "latin_len": 7,
+   "root": {
+    "top": [
+     [
+      "kukut",
+      0.675
+     ],
+     [
+      "kuku",
+      0.064
+     ],
+     [
+      "kuskut",
+      0.035
+     ]
+    ],
+    "logp_latin": -20.51,
+    "logp_mode": -0.39,
+    "mode_len": 5,
+    "ned": 0.429
+   },
+   "ibero": {
+    "top": [
+     [
+      "kukut",
+      0.906
+     ],
+     [
+      "kuku",
+      0.073
+     ],
+     [
+      "kuskut",
+      0.012
+     ]
+    ],
+    "logp_latin": -30.67,
+    "logp_mode": -0.1,
+    "mode_len": 5,
+    "ned": 0.429
+   },
+   "italo": {
+    "top": [
+     [
+      "kuku",
+      0.77
+     ],
+     [
+      "kukut",
+      0.109
+     ],
+     [
+      "kuk",
+      0.033
+     ]
+    ],
+    "logp_latin": -27.46,
+    "logp_mode": -0.26,
+    "mode_len": 4,
+    "ned": 0.429
+   },
+   "leaves": {
+    "spa": "kuko",
+    "por": "kuku",
+    "cat": "kukut",
+    "ita": "kuku",
+    "fra": "kuku",
+    "ron": "kuk"
+   },
+   "leaf_ned": 0.476
+  },
+  {
+   "concept": "15_jaw",
+   "latin": "mala",
+   "latin_len": 4,
+   "root": {
+    "top": [
+     [
+      "maneiila",
+      0.058
+     ],
+     [
+      "mankdiular",
+      0.04
+     ],
+     [
+      "man\u0283ielar",
+      0.036
+     ]
+    ],
+    "logp_latin": -11.61,
+    "logp_mode": -2.85,
+    "mode_len": 8,
+    "ned": 0.5
+   },
+   "ibero": {
+    "top": [
+     [
+      "mandiila",
+      0.084
+     ],
+     [
+      "maneiila",
+      0.051
+     ],
+     [
+      "makdivula",
+      0.037
+     ]
+    ],
+    "logp_latin": -11.69,
+    "logp_mode": -2.48,
+    "mode_len": 8,
+    "ned": 0.5
+   },
+   "italo": {
+    "top": [
+     [
+      "ma\u0283elar",
+      0.107
+     ],
+     [
+      "ma\u0283eila",
+      0.056
+     ],
+     [
+      "ma\u0283ela",
+      0.033
+     ]
+    ],
+    "logp_latin": -14.93,
+    "logp_mode": -2.23,
+    "mode_len": 7,
+    "ned": 0.429
+   },
+   "leaves": {
+    "spa": "mandivula",
+    "por": "maksila",
+    "cat": "ke\u0283",
+    "ita": "ma\u0283ela",
+    "fra": "ma\u0283war",
+    "ron": "falk\u0268"
+   },
+   "leaf_ned": 0.57
+  },
+  {
+   "concept": "171_berry",
+   "latin": "baka",
+   "latin_len": 4,
+   "root": {
+    "top": [
+     [
+      "baja",
+      0.228
+     ],
+     [
+      "baaka",
+      0.123
+     ],
+     [
+      "bajka",
+      0.081
+     ]
+    ],
+    "logp_latin": -3.51,
+    "logp_mode": -1.48,
+    "mode_len": 4,
+    "ned": 0.25
+   },
+   "ibero": {
+    "top": [
+     [
+      "baja",
+      0.8
+     ],
+     [
+      "boaja",
+      0.113
+     ],
+     [
+      "bajka",
+      0.071
+     ]
+    ],
+    "logp_latin": -8.91,
+    "logp_mode": -0.22,
+    "mode_len": 4,
+    "ned": 0.25
+   },
+   "italo": {
+    "top": [
+     [
+      "boaba",
+      0.184
+     ],
+     [
+      "baba",
+      0.162
+     ],
+     [
+      "baaka",
+      0.128
+     ]
+    ],
+    "logp_latin": -2.14,
+    "logp_mode": -1.69,
+    "mode_len": 5,
+    "ned": 0.4
+   },
+   "leaves": {
+    "spa": "baja",
+    "por": "ba\u0295u",
+    "cat": "baj\u0268",
+    "ita": "baka",
+    "fra": "be",
+    "ron": "boab\u0268"
+   },
+   "leaf_ned": 0.433
+  },
+  {
+   "concept": "172_apple",
+   "latin": "malu",
+   "latin_len": 4,
+   "root": {
+    "top": [
+     [
+      "pomar",
+      0.409
+     ],
+     [
+      "pimar",
+      0.071
+     ],
+     [
+      "omar",
+      0.037
+     ]
+    ],
+    "logp_latin": -14.12,
+    "logp_mode": -0.89,
+    "mode_len": 5,
+    "ned": 0.8
+   },
+   "ibero": {
+    "top": [
+     [
+      "poma",
+      0.288
+     ],
+     [
+      "pomar",
+      0.209
+     ],
+     [
+      "pom\u0268",
+      0.054
+     ]
+    ],
+    "logp_latin": -15.39,
+    "logp_mode": -1.24,
+    "mode_len": 4,
+    "ned": 1.0
+   },
+   "italo": {
+    "top": [
+     [
+      "pomar",
+      0.241
+     ],
+     [
+      "mar",
+      0.065
+     ],
+     [
+      "omar",
+      0.036
+     ]
+    ],
+    "logp_latin": -17.02,
+    "logp_mode": -1.42,
+    "mode_len": 5,
+    "ned": 0.8
+   },
+   "leaves": {
+    "spa": "man\u03b8ana",
+    "por": "masa",
+    "cat": "pom\u0268",
+    "ita": "mela",
+    "fra": "pom",
+    "ron": "m\u0268r"
+   },
+   "leaf_ned": 0.744
+  },
+  {
+   "concept": "195_child",
+   "latin": "puer",
+   "latin_len": 4,
+   "root": {
+    "top": [
+     [
+      "namvino",
+      0.065
+     ],
+     [
+      "amnino",
+      0.053
+     ],
+     [
+      "ambino",
+      0.035
+     ]
+    ],
+    "logp_latin": -15.31,
+    "logp_mode": -2.73,
+    "mode_len": 7,
+    "ned": 1.0
+   },
+   "ibero": {
+    "top": [
+     [
+      "nino",
+      0.344
+     ],
+     [
+      "fnino",
+      0.124
+     ],
+     [
+      "neno",
+      0.063
+     ]
+    ],
+    "logp_latin": -17.47,
+    "logp_mode": -1.07,
+    "mode_len": 4,
+    "ned": 1.0
+   },
+   "italo": {
+    "top": [
+     [
+      "bambino",
+      0.344
+     ],
+     [
+      "ambino",
+      0.149
+     ],
+     [
+      "babnino",
+      0.036
+     ]
+    ],
+    "logp_latin": -16.25,
+    "logp_mode": -1.07,
+    "mode_len": 7,
+    "ned": 1.0
+   },
+   "leaves": {
+    "spa": "ni\u0272o",
+    "por": "fi\u028eu",
+    "cat": "nen",
+    "ita": "bambino",
+    "fra": "afa",
+    "ron": "kopil"
+   },
+   "leaf_ned": 0.958
+  },
+  {
+   "concept": "206_brother",
+   "latin": "frater",
+   "latin_len": 6,
+   "root": {
+    "top": [
+     [
+      "fermateo",
+      0.08
+     ],
+     [
+      "fermaneo",
+      0.066
+     ],
+     [
+      "frateo",
+      0.062
+     ]
+    ],
+    "logp_latin": -8.15,
+    "logp_mode": -2.52,
+    "mode_len": 8,
+    "ned": 0.375
+   },
+   "ibero": {
+    "top": [
+     [
+      "ermano",
+      0.157
+     ],
+     [
+      "\u0292ermano",
+      0.1
+     ],
+     [
+      "\u0268rmano",
+      0.069
+     ]
+    ],
+    "logp_latin": -10.3,
+    "logp_mode": -1.85,
+    "mode_len": 6,
+    "ned": 0.833
+   },
+   "italo": {
+    "top": [
+     [
+      "frateo",
+      0.509
+     ],
+     [
+      "fratero",
+      0.211
+     ],
+     [
+      "fratelo",
+      0.183
+     ]
+    ],
+    "logp_latin": -5.58,
+    "logp_mode": -0.68,
+    "mode_len": 6,
+    "ned": 0.167
+   },
+   "leaves": {
+    "spa": "ermano",
+    "por": "irmaw",
+    "cat": "\u0292\u0268rma",
+    "ita": "fratelo",
+    "fra": "frer",
+    "ron": "frate"
+   },
+   "leaf_ned": 0.575
+  },
+  {
+   "concept": "217_desire",
+   "latin": "libido",
+   "latin_len": 6,
+   "root": {
+    "top": [
+     [
+      "ganas",
+      0.199
+     ],
+     [
+      "poft\u0268",
+      0.082
+     ],
+     [
+      "rganas",
+      0.019
+     ]
+    ],
+    "logp_latin": -22.94,
+    "logp_mode": -1.62,
+    "mode_len": 5,
+    "ned": 1.0
+   },
+   "ibero": {
+    "top": [
+     [
+      "ganas",
+      0.939
+     ],
+     [
+      "gan\u0268s",
+      0.029
+     ]
+    ],
+    "logp_latin": -30.98,
+    "logp_mode": -0.06,
+    "mode_len": 5,
+    "ned": 1.0
+   },
+   "italo": {
+    "top": [
+     [
+      "poft\u0268",
+      0.244
+     ],
+     [
+      "ganas",
+      0.041
+     ],
+     [
+      "\u0268avui",
+      0.025
+     ]
+    ],
+    "logp_latin": -24.13,
+    "logp_mode": -1.41,
+    "mode_len": 5,
+    "ned": 1.0
+   },
+   "leaves": {
+    "spa": "ganas",
+    "por": "vota\u00f0\u0268",
+    "cat": "gan\u0268s",
+    "ita": "vo\u028ea",
+    "fra": "avi",
+    "ron": "poft\u0268"
+   },
+   "leaf_ned": 0.972
+  },
+  {
+   "concept": "218_spirit",
+   "latin": "mes",
+   "latin_len": 3,
+   "root": {
+    "top": [
+     [
+      "mente",
+      0.201
+     ],
+     [
+      "dux",
+      0.072
+     ],
+     [
+      "espri",
+      0.017
+     ]
+    ],
+    "logp_latin": -12.91,
+    "logp_mode": -1.61,
+    "mode_len": 5,
+    "ned": 0.6
+   },
+   "ibero": {
+    "top": [
+     [
+      "mente",
+      0.691
+     ],
+     [
+      "ment",
+      0.082
+     ],
+     [
+      "mene",
+      0.06
+     ]
+    ],
+    "logp_latin": -13.9,
+    "logp_mode": -0.37,
+    "mode_len": 5,
+    "ned": 0.6
+   },
+   "italo": {
+    "top": [
+     [
+      "dux",
+      0.306
+     ],
+     [
+      "mente",
+      0.063
+     ],
+     [
+      "espri",
+      0.038
+     ]
+    ],
+    "logp_latin": -13.08,
+    "logp_mode": -1.18,
+    "mode_len": 3,
+    "ned": 1.0
+   },
+   "leaves": {
+    "spa": "mente",
+    "por": "mete",
+    "cat": "men",
+    "ita": "mente",
+    "fra": "espri",
+    "ron": "dux"
+   },
+   "leaf_ned": 0.639
+  },
+  {
+   "concept": "21_belly",
+   "latin": "wenter",
+   "latin_len": 6,
+   "root": {
+    "top": [
+     [
+      "ventr\u0268",
+      0.096
+     ],
+     [
+      "ventre",
+      0.054
+     ],
+     [
+      "pa\u0272\u0283a",
+      0.051
+     ]
+    ],
+    "logp_latin": -17.59,
+    "logp_mode": -2.35,
+    "mode_len": 6,
+    "ned": 0.5
+   },
+   "ibero": {
+    "top": [
+     [
+      "pa\u0272\u0283a",
+      0.129
+     ],
+     [
+      "ventr\u0268",
+      0.118
+     ],
+     [
+      "pa\u0272\u0283\u0268",
+      0.117
+     ]
+    ],
+    "logp_latin": -21.15,
+    "logp_mode": -2.05,
+    "mode_len": 5,
+    "ned": 1.0
+   },
+   "italo": {
+    "top": [
+     [
+      "ventr",
+      0.209
+     ],
+     [
+      "ventr\u0268",
+      0.199
+     ],
+     [
+      "ventre",
+      0.001
+     ]
+    ],
+    "logp_latin": -21.39,
+    "logp_mode": -1.56,
+    "mode_len": 5,
+    "ned": 0.333
+   },
+   "leaves": {
+    "spa": "bjentre",
+    "por": "vetr\u0268",
+    "cat": "pa\u0272\u0283\u0268",
+    "ita": "ventre",
+    "fra": "vatr\u0268",
+    "ron": "burt\u0268"
+   },
+   "leaf_ned": 0.734
+  },
+  {
+   "concept": "235_word",
+   "latin": "werbu",
+   "latin_len": 5,
+   "root": {
+    "top": [
+     [
+      "mot",
+      0.24
+     ],
+     [
+      "palavra",
+      0.07
+     ],
+     [
+      "paravra",
+      0.047
+     ]
+    ],
+    "logp_latin": -19.75,
+    "logp_mode": -1.43,
+    "mode_len": 3,
+    "ned": 1.0
+   },
+   "ibero": {
+    "top": [
+     [
+      "palavra",
+      0.268
+     ],
+     [
+      "mot",
+      0.19
+     ],
+     [
+      "paravra",
+      0.051
+     ]
+    ],
+    "logp_latin": -20.32,
+    "logp_mode": -1.32,
+    "mode_len": 7,
+    "ned": 1.0
+   },
+   "italo": {
+    "top": [
+     [
+      "mot",
+      0.134
+     ],
+     [
+      "mo",
+      0.113
+     ],
+     [
+      "paraira",
+      0.049
+     ]
+    ],
+    "logp_latin": -20.95,
+    "logp_mode": -2.01,
+    "mode_len": 3,
+    "ned": 1.0
+   },
+   "leaves": {
+    "spa": "palavra",
+    "por": "palavra",
+    "cat": "mot",
+    "ita": "parola",
+    "fra": "mo",
+    "ron": "kuv\u0268nt"
+   },
+   "leaf_ned": 0.972
+  },
+  {
+   "concept": "250_help",
+   "latin": "auksiliu",
+   "latin_len": 8,
+   "root": {
+    "top": [
+     [
+      "a\u0292utor",
+      0.568
+     ],
+     [
+      "a\u0292utar",
+      0.157
+     ],
+     [
+      "a\u0292uto",
+      0.031
+     ]
+    ],
+    "logp_latin": -29.2,
+    "logp_mode": -0.56,
+    "mode_len": 6,
+    "ned": 0.875
+   },
+   "ibero": {
+    "top": [
+     [
+      "a\u0292uto",
+      0.558
+     ],
+     [
+      "a\u0292utar",
+      0.057
+     ],
+     [
+      "a\u0292utor",
+      0.05
+     ]
+    ],
+    "logp_latin": -39.24,
+    "logp_mode": -0.58,
+    "mode_len": 5,
+    "ned": 0.875
+   },
+   "italo": {
+    "top": [
+     [
+      "a\u0292utor",
+      0.91
+     ],
+     [
+      "a\u0292uto",
+      0.042
+     ],
+     [
+      "a\u0292ultor",
+      0.0
+     ]
+    ],
+    "logp_latin": -32.97,
+    "logp_mode": -0.09,
+    "mode_len": 6,
+    "ned": 0.875
+   },
+   "leaves": {
+    "spa": "aju\u00f0a",
+    "por": "a\u0292u\u00f0a",
+    "cat": "\u0268\u0292ut",
+    "ita": "aiuto",
+    "fra": "ed",
+    "ron": "a\u0292utor"
+   },
+   "leaf_ned": 0.896
+  },
+  {
+   "concept": "25_shoulder",
+   "latin": "umerus",
+   "latin_len": 6,
+   "root": {
+    "top": [
+     [
+      "\u0268spal\u0268",
+      0.187
+     ],
+     [
+      "spala",
+      0.187
+     ],
+     [
+      "spal\u0268",
+      0.152
+     ]
+    ],
+    "logp_latin": -20.86,
+    "logp_mode": -1.68,
+    "mode_len": 6,
+    "ned": 1.0
+   },
+   "ibero": {
+    "top": [
+     [
+      "\u0268spal\u0268",
+      0.141
+     ],
+     [
+      "spala",
+      0.061
+     ],
+     [
+      "aspal\u0268",
+      0.056
+     ]
+    ],
+    "logp_latin": -20.72,
+    "logp_mode": -1.96,
+    "mode_len": 6,
+    "ned": 1.0
+   },
+   "italo": {
+    "top": [
+     [
+      "spala",
+      0.271
+     ],
+     [
+      "spal\u0268",
+      0.256
+     ],
+     [
+      "\u0268spal\u0268",
+      0.096
+     ]
+    ],
+    "logp_latin": -20.17,
+    "logp_mode": -1.31,
+    "mode_len": 5,
+    "ned": 1.0
+   },
+   "leaves": {
+    "spa": "ombro",
+    "por": "obru",
+    "cat": "\u0268spa\u028e\u0268",
+    "ita": "spala",
+    "fra": "epol",
+    "ron": "um\u0268r"
+   },
+   "leaf_ned": 0.778
+  },
+  {
+   "concept": "262_stroke",
+   "latin": "lineamentu",
+   "latin_len": 10,
+   "root": {
+    "top": [
+     [
+      "traso",
+      0.358
+     ],
+     [
+      "aine",
+      0.068
+     ],
+     [
+      "trato",
+      0.059
+     ]
+    ],
+    "logp_latin": -35.63,
+    "logp_mode": -1.03,
+    "mode_len": 5,
+    "ned": 0.9
+   },
+   "ibero": {
+    "top": [
+     [
+      "traso",
+      0.982
+     ],
+     [
+      "tras",
+      0.002
+     ],
+     [
+      "traaso",
+      0.0
+     ]
+    ],
+    "logp_latin": -42.21,
+    "logp_mode": -0.02,
+    "mode_len": 5,
+    "ned": 0.9
+   },
+   "italo": {
+    "top": [
+     [
+      "traso",
+      0.337
+     ],
+     [
+      "trato",
+      0.181
+     ],
+     [
+      "traio",
+      0.025
+     ]
+    ],
+    "logp_latin": -36.76,
+    "logp_mode": -1.09,
+    "mode_len": 5,
+    "ned": 0.9
+   },
+   "leaves": {
+    "spa": "raja",
+    "por": "trasu",
+    "cat": "tras",
+    "ita": "trato",
+    "fra": "tre",
+    "ron": "linje"
+   },
+   "leaf_ned": 0.817
+  },
+  {
+   "concept": "269_middle",
+   "latin": "mediu",
+   "latin_len": 5,
+   "root": {
+    "top": [
+     [
+      "me\u00f0jo",
+      0.156
+     ],
+     [
+      "mi\u00f0jo",
+      0.123
+     ],
+     [
+      "miljo",
+      0.113
+     ]
+    ],
+    "logp_latin": -17.32,
+    "logp_mode": -1.86,
+    "mode_len": 5,
+    "ned": 0.6
+   },
+   "ibero": {
+    "top": [
+     [
+      "me\u00f0jo",
+      0.225
+     ],
+     [
+      "miljo",
+      0.161
+     ],
+     [
+      "mi\u00f0jo",
+      0.11
+     ]
+    ],
+    "logp_latin": -17.66,
+    "logp_mode": -1.49,
+    "mode_len": 5,
+    "ned": 0.6
+   },
+   "italo": {
+    "top": [
+     [
+      "miljo",
+      0.148
+     ],
+     [
+      "milj\u00f8",
+      0.092
+     ],
+     [
+      "me\u00f0jo",
+      0.087
+     ]
+    ],
+    "logp_latin": -19.46,
+    "logp_mode": -1.91,
+    "mode_len": 5,
+    "ned": 0.8
+   },
+   "leaves": {
+    "spa": "me\u00f0jo",
+    "por": "meju",
+    "cat": "mik",
+    "ita": "mettso",
+    "fra": "milj\u00f8",
+    "ron": "t\u0283entru"
+   },
+   "leaf_ned": 0.611
+  },
+  {
+   "concept": "277_hole",
+   "latin": "foramen",
+   "latin_len": 7,
+   "root": {
+    "top": [
+     [
+      "furat",
+      0.095
+     ],
+     [
+      "furaot",
+      0.066
+     ],
+     [
+      "furut",
+      0.048
+     ]
+    ],
+    "logp_latin": -22.13,
+    "logp_mode": -2.36,
+    "mode_len": 5,
+    "ned": 0.571
+   },
+   "ibero": {
+    "top": [
+     [
+      "furat",
+      0.414
+     ],
+     [
+      "furaot",
+      0.21
+     ],
+     [
+      "furut",
+      0.11
+     ]
+    ],
+    "logp_latin": -27.94,
+    "logp_mode": -0.88,
+    "mode_len": 5,
+    "ned": 0.571
+   },
+   "italo": {
+    "top": [
+     [
+      "tru",
+      0.071
+     ],
+     [
+      "buko",
+      0.042
+     ],
+     [
+      "trnu",
+      0.031
+     ]
+    ],
+    "logp_latin": -24.45,
+    "logp_mode": -2.65,
+    "mode_len": 3,
+    "ned": 0.857
+   },
+   "leaves": {
+    "spa": "a\u0295uxero",
+    "por": "furu",
+    "cat": "furat",
+    "ita": "buko",
+    "fra": "tru",
+    "ron": "gawr\u0268"
+   },
+   "leaf_ned": 0.833
+  },
+  {
+   "concept": "283_weight",
+   "latin": "pondus",
+   "latin_len": 6,
+   "root": {
+    "top": [
+     [
+      "peso",
+      0.309
+     ],
+     [
+      "pesu",
+      0.147
+     ],
+     [
+      "pezo",
+      0.035
+     ]
+    ],
+    "logp_latin": -23.28,
+    "logp_mode": -1.17,
+    "mode_len": 4,
+    "ned": 0.833
+   },
+   "ibero": {
+    "top": [
+     [
+      "peso",
+      0.697
+     ],
+     [
+      "pesu",
+      0.189
+     ],
+     [
+      "pezo",
+      0.035
+     ]
+    ],
+    "logp_latin": -26.96,
+    "logp_mode": -0.36,
+    "mode_len": 4,
+    "ned": 0.833
+   },
+   "italo": {
+    "top": [
+     [
+      "peso",
+      0.166
+     ],
+     [
+      "pwnv",
+      0.074
+     ],
+     [
+      "pezo",
+      0.068
+     ]
+    ],
+    "logp_latin": -24.31,
+    "logp_mode": -1.8,
+    "mode_len": 4,
+    "ned": 0.833
+   },
+   "leaves": {
+    "spa": "peso",
+    "por": "pezu",
+    "cat": "pes",
+    "ita": "pezo",
+    "fra": "pwa",
+    "ron": "grewtate"
+   },
+   "leaf_ned": 0.806
+  },
+  {
+   "concept": "286_row",
+   "latin": "ordo",
+   "latin_len": 4,
+   "root": {
+    "top": [
+     [
+      "fila",
+      0.547
+     ],
+     [
+      "fira",
+      0.042
+     ],
+     [
+      "\u0283ir",
+      0.026
+     ]
+    ],
+    "logp_latin": -15.79,
+    "logp_mode": -0.6,
+    "mode_len": 4,
+    "ned": 1.0
+   },
+   "ibero": {
+    "top": [
+     [
+      "fila",
+      0.984
+     ]
+    ],
+    "logp_latin": -22.92,
+    "logp_mode": -0.02,
+    "mode_len": 4,
+    "ned": 1.0
+   },
+   "italo": {
+    "top": [
+     [
+      "fila",
+      0.402
+     ],
+     [
+      "\u0283ir",
+      0.205
+     ],
+     [
+      "fir",
+      0.028
+     ]
+    ],
+    "logp_latin": -17.04,
+    "logp_mode": -0.91,
+    "mode_len": 4,
+    "ned": 1.0
+   },
+   "leaves": {
+    "spa": "fila",
+    "por": "fila",
+    "cat": "fil\u0268",
+    "ita": "fila",
+    "fra": "fil",
+    "ron": "\u0283ir"
+   },
+   "leaf_ned": 1.0
+  },
+  {
+   "concept": "303_pole",
+   "latin": "pertika",
+   "latin_len": 7,
+   "root": {
+    "top": [
+     [
+      "vara",
+      0.971
+     ],
+     [
+      "vaara",
+      0.002
+     ]
+    ],
+    "logp_latin": -28.3,
+    "logp_mode": -0.03,
+    "mode_len": 4,
+    "ned": 0.714
+   },
+   "ibero": {
+    "top": [
+     [
+      "vara",
+      0.999
+     ]
+    ],
+    "logp_latin": -41.03,
+    "logp_mode": -0.0,
+    "mode_len": 4,
+    "ned": 0.714
+   },
+   "italo": {
+    "top": [
+     [
+      "bara",
+      0.987
+     ]
+    ],
+    "logp_latin": -33.12,
+    "logp_mode": -0.01,
+    "mode_len": 4,
+    "ned": 0.714
+   },
+   "leaves": {
+    "spa": "bara",
+    "por": "vara",
+    "cat": "var\u0268",
+    "ita": "zbara",
+    "fra": "bar",
+    "ron": "bar\u0268"
+   },
+   "leaf_ned": 0.81
+  },
+  {
+   "concept": "311_table",
+   "latin": "mesa",
+   "latin_len": 4,
+   "root": {
+    "top": [
+     [
+      "mesa",
+      0.106
+     ],
+     [
+      "mes\u0268",
+      0.105
+     ],
+     [
+      "tavol\u0268",
+      0.069
+     ]
+    ],
+    "logp_latin": -2.25,
+    "logp_mode": -2.25,
+    "mode_len": 4,
+    "ned": 0.0
+   },
+   "ibero": {
+    "top": [
+     [
+      "mesa",
+      0.507
+     ],
+     [
+      "masa",
+      0.002
+     ],
+     [
+      "mes\u0268",
+      0.001
+     ]
+    ],
+    "logp_latin": -0.68,
+    "logp_mode": -0.68,
+    "mode_len": 4,
+    "ned": 0.0
+   },
+   "leaves": {
+    "spa": "mesa",
+    "por": "meza",
+    "cat": "tawl\u0268",
+    "ita": "tavolo",
+    "fra": "tabl\u0268",
+    "ron": "mas\u0268"
+   },
+   "leaf_ned": 0.625
+  },
+  {
+   "concept": "317_window",
+   "latin": "fenestra",
+   "latin_len": 8,
+   "root": {
+    "top": [
+     [
+      "finestr\u0268",
+      0.026
+     ],
+     [
+      "fenestr\u0268",
+      0.022
+     ],
+     [
+      "feneastr\u0268",
+      0.013
+     ]
+    ],
+    "logp_latin": -6.74,
+    "logp_mode": -3.65,
+    "mode_len": 8,
+    "ned": 0.25
+   },
+   "ibero": {
+    "top": [
+     [
+      "eanela",
+      0.025
+     ],
+     [
+      "anenla",
+      0.025
+     ],
+     [
+      "oidrr",
+      0.025
+     ]
+    ],
+    "logp_latin": -9.37,
+    "logp_mode": -3.67,
+    "mode_len": 6,
+    "ned": 0.625
+   },
+   "leaves": {
+    "spa": "bentana",
+    "por": "\u0292anela",
+    "cat": "finestr\u0268",
+    "ita": "finestra",
+    "fra": "f\u0268netr\u0268",
+    "ron": "fereastr\u0268"
+   },
+   "leaf_ned": 0.389
+  },
+  {
+   "concept": "320_fence",
+   "latin": "saepes",
+   "latin_len": 6,
+   "root": {
+    "top": [
+     [
+      "baa",
+      0.05
+     ],
+     [
+      "gard",
+      0.028
+     ],
+     [
+      "klotodr",
+      0.021
+     ]
+    ],
+    "logp_latin": -19.5,
+    "logp_mode": -3.0,
+    "mode_len": 3,
+    "ned": 0.833
+   },
+   "ibero": {
+    "top": [
+     [
+      "ta\u014bka",
+      0.116
+     ],
+     [
+      "baa",
+      0.088
+     ],
+     [
+      "taka",
+      0.045
+     ]
+    ],
+    "logp_latin": -20.87,
+    "logp_mode": -2.16,
+    "mode_len": 5,
+    "ned": 0.833
+   },
+   "italo": {
+    "top": [
+     [
+      "gard",
+      0.129
+     ],
+     [
+      "klotyr",
+      0.039
+     ],
+     [
+      "kflotyr",
+      0.028
+     ]
+    ],
+    "logp_latin": -20.97,
+    "logp_mode": -2.05,
+    "mode_len": 4,
+    "ned": 0.833
+   },
+   "leaves": {
+    "spa": "baja",
+    "por": "serka",
+    "cat": "ta\u014bk\u0268",
+    "ita": "ret\u0283into",
+    "fra": "klotyr",
+    "ron": "gard"
+   },
+   "leaf_ned": 0.861
+  },
+  {
+   "concept": "324_spade",
+   "latin": "pala",
+   "latin_len": 4,
+   "root": {
+    "top": [
+     [
+      "pala",
+      0.424
+     ],
+     [
+      "palma",
+      0.158
+     ],
+     [
+      "kalma",
+      0.05
+     ]
+    ],
+    "logp_latin": -0.86,
+    "logp_mode": -0.86,
+    "mode_len": 4,
+    "ned": 0.0
+   },
+   "ibero": {
+    "top": [
+     [
+      "pala",
+      0.977
+     ],
+     [
+      "pal\u0268",
+      0.001
+     ]
+    ],
+    "logp_latin": -0.02,
+    "logp_mode": -0.02,
+    "mode_len": 4,
+    "ned": 0.0
+   },
+   "italo": {
+    "top": [
+     [
+      "pala",
+      0.152
+     ],
+     [
+      "kazma",
+      0.139
+     ],
+     [
+      "bala",
+      0.119
+     ]
+    ],
+    "logp_latin": -1.89,
+    "logp_mode": -1.89,
+    "mode_len": 4,
+    "ned": 0.0
+   },
+   "leaves": {
+    "spa": "pala",
+    "por": "pa",
+    "cat": "pal\u0268",
+    "ita": "va\u014bga",
+    "fra": "be\u0283",
+    "ron": "kazma"
+   },
+   "leaf_ned": 0.492
+  },
+  {
+   "concept": "32_nail",
+   "latin": "u\u014bgis",
+   "latin_len": 5,
+   "root": {
+    "top": [
+     [
+      "u\u014bgja",
+      0.423
+     ],
+     [
+      "u\u014bgla",
+      0.188
+     ],
+     [
+      "ungaja",
+      0.041
+     ]
+    ],
+    "logp_latin": -14.78,
+    "logp_mode": -0.86,
+    "mode_len": 5,
+    "ned": 0.4
+   },
+   "ibero": {
+    "top": [
+     [
+      "u\u014bgla",
+      0.581
+     ],
+     [
+      "u\u014bgja",
+      0.265
+     ],
+     [
+      "u\u014bg\u0272a",
+      0.098
+     ]
+    ],
+    "logp_latin": -20.48,
+    "logp_mode": -0.54,
+    "mode_len": 5,
+    "ned": 0.4
+   },
+   "italo": {
+    "top": [
+     [
+      "u\u014bgja",
+      0.894
+     ],
+     [
+      "ungaja",
+      0.009
+     ]
+    ],
+    "logp_latin": -19.31,
+    "logp_mode": -0.11,
+    "mode_len": 5,
+    "ned": 0.4
+   },
+   "leaves": {
+    "spa": "u\u0272a",
+    "por": "u\u0272a",
+    "cat": "u\u014bgl\u0268",
+    "ita": "u\u014bgja",
+    "fra": "ogl\u0268",
+    "ron": "ungje"
+   },
+   "leaf_ned": 0.633
+  },
+  {
+   "concept": "330_net",
+   "latin": "rete",
+   "latin_len": 4,
+   "root": {
+    "top": [
+     [
+      "plas\u0268",
+      0.153
+     ],
+     [
+      "pras\u0268",
+      0.055
+     ],
+     [
+      "pre\u00f0\u0268",
+      0.03
+     ]
+    ],
+    "logp_latin": -9.96,
+    "logp_mode": -1.87,
+    "mode_len": 5,
+    "ned": 1.0
+   },
+   "ibero": {
+    "top": [
+     [
+      "re\u00f0\u0268",
+      0.263
+     ],
+     [
+      "ra\u00f0\u0268",
+      0.037
+     ],
+     [
+      "pre\u00f0\u0268",
+      0.033
+     ]
+    ],
+    "logp_latin": -8.6,
+    "logp_mode": -1.33,
+    "mode_len": 4,
+    "ned": 0.5
+   },
+   "italo": {
+    "top": [
+     [
+      "plas\u0268",
+      0.36
+     ],
+     [
+      "pras\u0268",
+      0.037
+     ],
+     [
+      "pla\u00f0\u0268",
+      0.023
+     ]
+    ],
+    "logp_latin": -13.46,
+    "logp_mode": -1.02,
+    "mode_len": 5,
+    "ned": 1.0
+   },
+   "leaves": {
+    "spa": "re\u00f0",
+    "por": "re\u00f0\u0268",
+    "cat": "filat",
+    "ita": "rete",
+    "fra": "file",
+    "ron": "plas\u0268"
+   },
+   "leaf_ned": 0.625
+  },
+  {
+   "concept": "332_handle",
+   "latin": "manubriu",
+   "latin_len": 8,
+   "root": {
+    "top": [
+     [
+      "pru\u0272",
+      0.045
+     ],
+     [
+      "manirko",
+      0.034
+     ],
+     [
+      "pu\u0272o",
+      0.032
+     ]
+    ],
+    "logp_latin": -28.15,
+    "logp_mode": -3.1,
+    "mode_len": 4,
+    "ned": 0.875
+   },
+   "ibero": {
+    "top": [
+     [
+      "pu\u0272o",
+      0.112
+     ],
+     [
+      "pu\u0272",
+      0.096
+     ],
+     [
+      "aza",
+      0.06
+     ]
+    ],
+    "logp_latin": -30.09,
+    "logp_mode": -2.19,
+    "mode_len": 4,
+    "ned": 0.875
+   },
+   "italo": {
+    "top": [
+     [
+      "manerko",
+      0.116
+     ],
+     [
+      "maniko",
+      0.095
+     ],
+     [
+      "manero",
+      0.059
+     ]
+    ],
+    "logp_latin": -29.93,
+    "logp_mode": -2.15,
+    "mode_len": 7,
+    "ned": 0.5
+   },
+   "leaves": {
+    "spa": "asa",
+    "por": "aza",
+    "cat": "pu\u0272",
+    "ita": "maniko",
+    "fra": "priz",
+    "ron": "m\u0268ner"
+   },
+   "leaf_ned": 0.771
+  },
+  {
+   "concept": "353_bread",
+   "latin": "panis",
+   "latin_len": 5,
+   "root": {
+    "top": [
+     [
+      "pane",
+      0.384
+     ],
+     [
+      "pajne",
+      0.183
+     ],
+     [
+      "paane",
+      0.07
+     ]
+    ],
+    "logp_latin": -13.9,
+    "logp_mode": -0.96,
+    "mode_len": 4,
+    "ned": 0.4
+   },
+   "ibero": {
+    "top": [
+     [
+      "pan",
+      0.313
+     ],
+     [
+      "pane",
+      0.282
+     ],
+     [
+      "panw",
+      0.144
+     ]
+    ],
+    "logp_latin": -18.7,
+    "logp_mode": -1.16,
+    "mode_len": 3,
+    "ned": 0.4
+   },
+   "italo": {
+    "top": [
+     [
+      "pane",
+      0.434
+     ],
+     [
+      "pajne",
+      0.266
+     ],
+     [
+      "paane",
+      0.069
+     ]
+    ],
+    "logp_latin": -20.63,
+    "logp_mode": -0.84,
+    "mode_len": 4,
+    "ned": 0.4
+   },
+   "leaves": {
+    "spa": "pan",
+    "por": "paw",
+    "cat": "pa",
+    "ita": "pane",
+    "fra": "pe",
+    "ron": "p\u0268jne"
+   },
+   "leaf_ned": 0.6
+  },
+  {
+   "concept": "380_ring",
+   "latin": "anulus",
+   "latin_len": 6,
+   "root": {
+    "top": [
+     [
+      "anelo",
+      0.727
+     ],
+     [
+      "anero",
+      0.004
+     ],
+     [
+      "aneeo",
+      0.003
+     ]
+    ],
+    "logp_latin": -20.03,
+    "logp_mode": -0.32,
+    "mode_len": 5,
+    "ned": 0.5
+   },
+   "ibero": {
+    "top": [
+     [
+      "anelo",
+      0.733
+     ]
+    ],
+    "logp_latin": -29.46,
+    "logp_mode": -0.31,
+    "mode_len": 5,
+    "ned": 0.5
+   },
+   "italo": {
+    "top": [
+     [
+      "anelo",
+      0.73
+     ],
+     [
+      "anel",
+      0.216
+     ],
+     [
+      "aneloo",
+      0.0
+     ]
+    ],
+    "logp_latin": -26.4,
+    "logp_mode": -0.32,
+    "mode_len": 5,
+    "ned": 0.5
+   },
+   "leaves": {
+    "spa": "anijo",
+    "por": "anel",
+    "cat": "\u0268ne\u028e",
+    "ita": "anelo",
+    "fra": "bag",
+    "ron": "inel"
+   },
+   "leaf_ned": 0.694
+  },
+  {
+   "concept": "381_ribbon",
+   "latin": "redimikulu",
+   "latin_len": 10,
+   "root": {
+    "top": [
+     [
+      "senta",
+      0.102
+     ],
+     [
+      "renta",
+      0.06
+     ],
+     [
+      "venta",
+      0.057
+     ]
+    ],
+    "logp_latin": -36.88,
+    "logp_mode": -2.28,
+    "mode_len": 5,
+    "ned": 0.9
+   },
+   "ibero": {
+    "top": [
+     [
+      "senta",
+      0.162
+     ],
+     [
+      "venta",
+      0.155
+     ],
+     [
+      "vinta",
+      0.154
+     ]
+    ],
+    "logp_latin": -39.47,
+    "logp_mode": -1.82,
+    "mode_len": 5,
+    "ned": 0.9
+   },
+   "italo": {
+    "top": [
+     [
+      "panglika",
+      0.048
+     ],
+     [
+      "ryba",
+      0.042
+     ],
+     [
+      "rynba",
+      0.023
+     ]
+    ],
+    "logp_latin": -38.01,
+    "logp_mode": -3.04,
+    "mode_len": 8,
+    "ned": 0.8
+   },
+   "leaves": {
+    "spa": "\u03b8inta",
+    "por": "fita",
+    "cat": "vet\u0268",
+    "ita": "nastro",
+    "fra": "ryba",
+    "ron": "panglik\u0268"
+   },
+   "leaf_ned": 0.9
+  },
+  {
+   "concept": "399_bridge",
+   "latin": "pos",
+   "latin_len": 3,
+   "root": {
+    "top": [
+     [
+      "ponte",
+      0.682
+     ],
+     [
+      "ponde",
+      0.039
+     ],
+     [
+      "pone",
+      0.028
+     ]
+    ],
+    "logp_latin": -13.84,
+    "logp_mode": -0.38,
+    "mode_len": 5,
+    "ned": 0.6
+   },
+   "ibero": {
+    "top": [
+     [
+      "ponte",
+      0.879
+     ],
+     [
+      "ponge",
+      0.022
+     ],
+     [
+      "xponde",
+      0.0
+     ]
+    ],
+    "logp_latin": -24.21,
+    "logp_mode": -0.13,
+    "mode_len": 5,
+    "ned": 0.6
+   },
+   "leaves": {
+    "spa": "pwente",
+    "por": "pot\u0268",
+    "cat": "pon",
+    "ita": "ponte",
+    "fra": "po",
+    "ron": "pod"
+   },
+   "leaf_ned": 0.489
+  },
+  {
+   "concept": "400_well",
+   "latin": "puteus",
+   "latin_len": 6,
+   "root": {
+    "top": [
+     [
+      "potso",
+      0.234
+     ],
+     [
+      "poso",
+      0.167
+     ],
+     [
+      "poiso",
+      0.057
+     ]
+    ],
+    "logp_latin": -22.87,
+    "logp_mode": -1.45,
+    "mode_len": 4,
+    "ned": 0.833
+   },
+   "ibero": {
+    "top": [
+     [
+      "poso",
+      0.22
+     ],
+     [
+      "po\u03b8o",
+      0.203
+     ],
+     [
+      "potso",
+      0.147
+     ]
+    ],
+    "logp_latin": -25.75,
+    "logp_mode": -1.51,
+    "mode_len": 4,
+    "ned": 0.833
+   },
+   "italo": {
+    "top": [
+     [
+      "potso",
+      0.311
+     ],
+     [
+      "poitso",
+      0.198
+     ],
+     [
+      "pojtso",
+      0.179
+     ]
+    ],
+    "logp_latin": -28.58,
+    "logp_mode": -1.17,
+    "mode_len": 4,
+    "ned": 0.833
+   },
+   "leaves": {
+    "spa": "po\u03b8o",
+    "por": "posu",
+    "cat": "pow",
+    "ita": "pottso",
+    "fra": "pji",
+    "ron": "puts"
+   },
+   "leaf_ned": 0.75
+  },
+  {
+   "concept": "402_path",
+   "latin": "semita",
+   "latin_len": 6,
+   "root": {
+    "top": [
+     [
+      "sendera",
+      0.282
+     ],
+     [
+      "sendero",
+      0.15
+     ],
+     [
+      "sendaro",
+      0.109
+     ]
+    ],
+    "logp_latin": -21.61,
+    "logp_mode": -1.27,
+    "mode_len": 7,
+    "ned": 0.571
+   },
+   "ibero": {
+    "top": [
+     [
+      "senda",
+      0.348
+     ],
+     [
+      "sendera",
+      0.237
+     ],
+     [
+      "sendao",
+      0.161
+     ]
+    ],
+    "logp_latin": -25.23,
+    "logp_mode": -1.06,
+    "mode_len": 5,
+    "ned": 0.5
+   },
+   "italo": {
+    "top": [
+     [
+      "sendera",
+      0.128
+     ],
+     [
+      "renera",
+      0.036
+     ],
+     [
+      "sentjro",
+      0.034
+     ]
+    ],
+    "logp_latin": -21.88,
+    "logp_mode": -2.05,
+    "mode_len": 7,
+    "ned": 0.571
+   },
+   "leaves": {
+    "spa": "sendero",
+    "por": "\u0283eda",
+    "cat": "sen\u00f0\u0268",
+    "ita": "sentiero",
+    "fra": "satje",
+    "ron": "k\u0268rare"
+   },
+   "leaf_ned": 0.751
+  },
+  {
+   "concept": "407_letter",
+   "latin": "epistula",
+   "latin_len": 8,
+   "root": {
+    "top": [
+     [
+      "karta",
+      0.317
+     ],
+     [
+      "letra",
+      0.022
+     ],
+     [
+      "eetar\u0268",
+      0.015
+     ]
+    ],
+    "logp_latin": -27.62,
+    "logp_mode": -1.15,
+    "mode_len": 5,
+    "ned": 0.75
+   },
+   "ibero": {
+    "top": [
+     [
+      "karta",
+      0.978
+     ],
+     [
+      "kart\u0268",
+      0.005
+     ]
+    ],
+    "logp_latin": -36.66,
+    "logp_mode": -0.02,
+    "mode_len": 5,
+    "ned": 0.75
+   },
+   "italo": {
+    "top": [
+     [
+      "letr\u0268",
+      0.163
+     ],
+     [
+      "letra",
+      0.079
+     ],
+     [
+      "karta",
+      0.07
+     ]
+    ],
+    "logp_latin": -28.43,
+    "logp_mode": -1.82,
+    "mode_len": 5,
+    "ned": 0.875
+   },
+   "leaves": {
+    "spa": "karta",
+    "por": "karta",
+    "cat": "kart\u0268",
+    "ita": "letera",
+    "fra": "letr\u0268",
+    "ron": "skrisoare"
+   },
+   "leaf_ned": 0.796
+  },
+  {
+   "concept": "40_skin",
+   "latin": "kutis",
+   "latin_len": 5,
+   "root": {
+    "top": [
+     [
+      "pele",
+      0.734
+     ],
+     [
+      "pel\u0268",
+      0.032
+     ],
+     [
+      "pelue",
+      0.019
+     ]
+    ],
+    "logp_latin": -19.52,
+    "logp_mode": -0.31,
+    "mode_len": 4,
+    "ned": 1.0
+   },
+   "ibero": {
+    "top": [
+     [
+      "pele",
+      0.579
+     ],
+     [
+      "pel\u0268",
+      0.119
+     ],
+     [
+      "pel\u028e",
+      0.047
+     ]
+    ],
+    "logp_latin": -21.75,
+    "logp_mode": -0.55,
+    "mode_len": 4,
+    "ned": 1.0
+   },
+   "italo": {
+    "top": [
+     [
+      "pele",
+      0.787
+     ]
+    ],
+    "logp_latin": -22.25,
+    "logp_mode": -0.24,
+    "mode_len": 4,
+    "ned": 1.0
+   },
+   "leaves": {
+    "spa": "pjel",
+    "por": "pel\u0268",
+    "cat": "pe\u028e",
+    "ita": "pele",
+    "fra": "po",
+    "ron": "pjele"
+   },
+   "leaf_ned": 1.0
+  },
+  {
+   "concept": "410_newspaper",
+   "latin": "diurnu",
+   "latin_len": 6,
+   "root": {
+    "top": [
+     [
+      "\u0292urnal",
+      0.113
+     ],
+     [
+      "diaroi",
+      0.053
+     ],
+     [
+      "diario",
+      0.045
+     ]
+    ],
+    "logp_latin": -19.39,
+    "logp_mode": -2.18,
+    "mode_len": 6,
+    "ned": 0.667
+   },
+   "ibero": {
+    "top": [
+     [
+      "diario",
+      0.225
+     ],
+     [
+      "diari",
+      0.219
+     ],
+     [
+      "diaroi",
+      0.154
+     ]
+    ],
+    "logp_latin": -22.37,
+    "logp_mode": -1.49,
+    "mode_len": 6,
+    "ned": 0.5
+   },
+   "italo": {
+    "top": [
+     [
+      "\u0292urnal",
+      0.341
+     ],
+     [
+      "\u0283urnal",
+      0.022
+     ],
+     [
+      "\u0292ornal",
+      0.022
+     ]
+    ],
+    "logp_latin": -20.52,
+    "logp_mode": -1.08,
+    "mode_len": 6,
+    "ned": 0.667
+   },
+   "leaves": {
+    "spa": "djarjo",
+    "por": "\u0292urnal",
+    "cat": "diari",
+    "ita": "d\u0292ornale",
+    "fra": "\u0292urnal",
+    "ron": "zjar"
+   },
+   "leaf_ned": 0.698
+  },
+  {
+   "concept": "425_price",
+   "latin": "pretiu",
+   "latin_len": 6,
+   "root": {
+    "top": [
+     [
+      "preso",
+      0.322
+     ],
+     [
+      "pretso",
+      0.158
+     ],
+     [
+      "pre\u03b8o",
+      0.094
+     ]
+    ],
+    "logp_latin": -15.49,
+    "logp_mode": -1.13,
+    "mode_len": 5,
+    "ned": 0.5
+   },
+   "ibero": {
+    "top": [
+     [
+      "preso",
+      0.492
+     ],
+     [
+      "pre\u03b8o",
+      0.271
+     ],
+     [
+      "pretso",
+      0.054
+     ]
+    ],
+    "logp_latin": -19.82,
+    "logp_mode": -0.71,
+    "mode_len": 5,
+    "ned": 0.5
+   },
+   "italo": {
+    "top": [
+     [
+      "pretso",
+      0.762
+     ],
+     [
+      "prettso",
+      0.192
+     ]
+    ],
+    "logp_latin": -22.93,
+    "logp_mode": -0.27,
+    "mode_len": 5,
+    "ned": 0.5
+   },
+   "leaves": {
+    "spa": "pre\u03b8jo",
+    "por": "presu",
+    "cat": "prew",
+    "ita": "prettso",
+    "fra": "pri",
+    "ron": "prets"
+   },
+   "leaf_ned": 0.444
+  },
+  {
+   "concept": "435_war",
+   "latin": "belu",
+   "latin_len": 4,
+   "root": {
+    "top": [
+     [
+      "gera",
+      0.47
+     ],
+     [
+      "razboj",
+      0.039
+     ],
+     [
+      "razvoj",
+      0.031
+     ]
+    ],
+    "logp_latin": -16.84,
+    "logp_mode": -0.76,
+    "mode_len": 4,
+    "ned": 0.75
+   },
+   "ibero": {
+    "top": [
+     [
+      "gera",
+      0.989
+     ],
+     [
+      "guera",
+      0.0
+     ]
+    ],
+    "logp_latin": -22.99,
+    "logp_mode": -0.01,
+    "mode_len": 4,
+    "ned": 0.75
+   },
+   "italo": {
+    "top": [
+     [
+      "gera",
+      0.439
+     ],
+     [
+      "razboj",
+      0.047
+     ],
+     [
+      "rlzboj",
+      0.016
+     ]
+    ],
+    "logp_latin": -17.62,
+    "logp_mode": -0.82,
+    "mode_len": 4,
+    "ned": 0.75
+   },
+   "leaves": {
+    "spa": "gera",
+    "por": "gera",
+    "cat": "ger\u0268",
+    "ita": "guera",
+    "fra": "ger",
+    "ron": "r\u0268zboj"
+   },
+   "leaf_ned": 0.8
+  },
+  {
+   "concept": "442_mistake",
+   "latin": "eror",
+   "latin_len": 4,
+   "root": {
+    "top": [
+     [
+      "erore",
+      0.514
+     ],
+     [
+      "eroare",
+      0.223
+     ],
+     [
+      "errre",
+      0.012
+     ]
+    ],
+    "logp_latin": -4.02,
+    "logp_mode": -0.67,
+    "mode_len": 5,
+    "ned": 0.2
+   },
+   "ibero": {
+    "top": [
+     [
+      "eror",
+      0.308
+     ],
+     [
+      "erore",
+      0.276
+     ],
+     [
+      "eroar",
+      0.053
+     ]
+    ],
+    "logp_latin": -1.18,
+    "logp_mode": -1.18,
+    "mode_len": 4,
+    "ned": 0.0
+   },
+   "italo": {
+    "top": [
+     [
+      "erore",
+      0.598
+     ],
+     [
+      "eroare",
+      0.242
+     ]
+    ],
+    "logp_latin": -6.02,
+    "logp_mode": -0.51,
+    "mode_len": 5,
+    "ned": 0.2
+   },
+   "leaves": {
+    "spa": "eror",
+    "por": "eru",
+    "cat": "falt\u0268",
+    "ita": "erore",
+    "fra": "fot",
+    "ron": "jeroare"
+   },
+   "leaf_ned": 0.48
+  },
+  {
+   "concept": "454_night",
+   "latin": "noks",
+   "latin_len": 4,
+   "root": {
+    "top": [
+     [
+      "noapte",
+      0.571
+     ],
+     [
+      "noipte",
+      0.158
+     ],
+     [
+      "noaite",
+      0.035
+     ]
+    ],
+    "logp_latin": -19.39,
+    "logp_mode": -0.56,
+    "mode_len": 6,
+    "ned": 0.667
+   },
+   "ibero": {
+    "top": [
+     [
+      "noite",
+      0.645
+     ],
+     [
+      "nojte",
+      0.142
+     ],
+     [
+      "noate",
+      0.102
+     ]
+    ],
+    "logp_latin": -21.86,
+    "logp_mode": -0.44,
+    "mode_len": 5,
+    "ned": 0.6
+   },
+   "italo": {
+    "top": [
+     [
+      "noapte",
+      0.742
+     ],
+     [
+      "noipte",
+      0.108
+     ],
+     [
+      "nopte",
+      0.035
+     ]
+    ],
+    "logp_latin": -22.21,
+    "logp_mode": -0.3,
+    "mode_len": 6,
+    "ned": 0.667
+   },
+   "leaves": {
+    "spa": "not\u0283e",
+    "por": "nojt\u0268",
+    "cat": "nit",
+    "ita": "note",
+    "fra": "nji",
+    "ron": "noapte"
+   },
+   "leaf_ned": 0.628
+  },
+  {
+   "concept": "458_spring",
+   "latin": "wer",
+   "latin_len": 3,
+   "root": {
+    "top": [
+     [
+      "primavera",
+      0.549
+     ],
+     [
+      "prmavera",
+      0.036
+     ],
+     [
+      "priavera",
+      0.031
+     ]
+    ],
+    "logp_latin": -14.01,
+    "logp_mode": -0.6,
+    "mode_len": 9,
+    "ned": 0.778
+   },
+   "ibero": {
+    "top": [
+     [
+      "primavera",
+      0.985
+     ]
+    ],
+    "logp_latin": -24.37,
+    "logp_mode": -0.02,
+    "mode_len": 9,
+    "ned": 0.778
+   },
+   "italo": {
+    "top": [
+     [
+      "primavera",
+      0.122
+     ],
+     [
+      "primaveta",
+      0.039
+     ],
+     [
+      "pravera",
+      0.023
+     ]
+    ],
+    "logp_latin": -15.02,
+    "logp_mode": -2.1,
+    "mode_len": 9,
+    "ned": 0.778
+   },
+   "leaves": {
+    "spa": "primavera",
+    "por": "primavera",
+    "cat": "prim\u0268ver\u0268",
+    "ita": "primavera",
+    "fra": "preta",
+    "ron": "prim\u0268var\u0268"
+   },
+   "leaf_ned": 0.8
+  },
+  {
+   "concept": "480_sunday",
+   "latin": "dominikus",
+   "latin_len": 9,
+   "root": {
+    "top": [
+     [
+      "domenik\u0268",
+      0.439
+     ],
+     [
+      "domeniku",
+      0.104
+     ],
+     [
+      "dominik\u0268",
+      0.049
+     ]
+    ],
+    "logp_latin": -12.32,
+    "logp_mode": -0.82,
+    "mode_len": 8,
+    "ned": 0.333
+   },
+   "ibero": {
+    "top": [
+     [
+      "domeng\u0268",
+      0.073
+     ],
+     [
+      "domeik\u0268",
+      0.043
+     ],
+     [
+      "domenk\u0268",
+      0.031
+     ]
+    ],
+    "logp_latin": -16.49,
+    "logp_mode": -2.62,
+    "mode_len": 7,
+    "ned": 0.556
+   },
+   "italo": {
+    "top": [
+     [
+      "domenik\u0268",
+      0.955
+     ]
+    ],
+    "logp_latin": -30.36,
+    "logp_mode": -0.05,
+    "mode_len": 8,
+    "ned": 0.333
+   },
+   "leaves": {
+    "spa": "domi\u014bgo",
+    "por": "dumigu",
+    "cat": "diwme\u0272\u0292\u0268",
+    "ita": "domenika",
+    "fra": "dima\u0283",
+    "ron": "duminik\u0268"
+   },
+   "leaf_ned": 0.574
+  },
+  {
+   "concept": "481_big",
+   "latin": "ma\u014bnus",
+   "latin_len": 6,
+   "root": {
+    "top": [
+     [
+      "grande",
+      0.392
+     ],
+     [
+      "grands",
+      0.039
+     ],
+     [
+      "grandl",
+      0.03
+     ]
+    ],
+    "logp_latin": -24.67,
+    "logp_mode": -0.94,
+    "mode_len": 6,
+    "ned": 0.833
+   },
+   "ibero": {
+    "top": [
+     [
+      "grande",
+      0.541
+     ],
+     [
+      "grands",
+      0.034
+     ],
+     [
+      "in\u0268nnor",
+      0.008
+     ]
+    ],
+    "logp_latin": -25.57,
+    "logp_mode": -0.61,
+    "mode_len": 6,
+    "ned": 0.833
+   },
+   "italo": {
+    "top": [
+     [
+      "grande",
+      0.278
+     ],
+     [
+      "grand",
+      0.192
+     ],
+     [
+      "iiea",
+      0.006
+     ]
+    ],
+    "logp_latin": -25.38,
+    "logp_mode": -1.28,
+    "mode_len": 6,
+    "ned": 0.833
+   },
+   "leaves": {
+    "spa": "grande",
+    "por": "grad\u0268",
+    "cat": "gros",
+    "ita": "grande",
+    "fra": "gra",
+    "ron": "mare"
+   },
+   "leaf_ned": 0.861
+  },
+  {
+   "concept": "500_heavy",
+   "latin": "grawis",
+   "latin_len": 6,
+   "root": {
+    "top": [
+     [
+      "pezant",
+      0.27
+     ],
+     [
+      "pezantu",
+      0.163
+     ],
+     [
+      "pezanto",
+      0.135
+     ]
+    ],
+    "logp_latin": -24.01,
+    "logp_mode": -1.31,
+    "mode_len": 6,
+    "ned": 1.0
+   },
+   "ibero": {
+    "top": [
+     [
+      "pezatu",
+      0.322
+     ],
+     [
+      "pezato",
+      0.169
+     ],
+     [
+      "pezant",
+      0.154
+     ]
+    ],
+    "logp_latin": -28.87,
+    "logp_mode": -1.13,
+    "mode_len": 6,
+    "ned": 1.0
+   },
+   "italo": {
+    "top": [
+     [
+      "pezant",
+      0.54
+     ],
+     [
+      "pezantu",
+      0.127
+     ],
+     [
+      "pezanto",
+      0.053
+     ]
+    ],
+    "logp_latin": -20.9,
+    "logp_mode": -0.62,
+    "mode_len": 6,
+    "ned": 1.0
+   },
+   "leaves": {
+    "spa": "pesa\u00f0o",
+    "por": "p\u0268za\u00f0u",
+    "cat": "p\u0268zat",
+    "ita": "pezante",
+    "fra": "lur",
+    "ron": "grew"
+   },
+   "leaf_ned": 0.893
+  },
+  {
+   "concept": "503_warm",
+   "latin": "kalidus",
+   "latin_len": 7,
+   "root": {
+    "top": [
+     [
+      "kalito",
+      0.426
+     ],
+     [
+      "kalido",
+      0.134
+     ],
+     [
+      "kalto",
+      0.057
+     ]
+    ],
+    "logp_latin": -16.09,
+    "logp_mode": -0.85,
+    "mode_len": 6,
+    "ned": 0.429
+   },
+   "ibero": {
+    "top": [
+     [
+      "kalito",
+      0.911
+     ],
+     [
+      "kali\u00f0o",
+      0.032
+     ],
+     [
+      "kalio",
+      0.004
+     ]
+    ],
+    "logp_latin": -30.81,
+    "logp_mode": -0.09,
+    "mode_len": 6,
+    "ned": 0.429
+   },
+   "italo": {
+    "top": [
+     [
+      "kaldo",
+      0.947
+     ],
+     [
+      "kalido",
+      0.034
+     ]
+    ],
+    "logp_latin": -29.56,
+    "logp_mode": -0.05,
+    "mode_len": 5,
+    "ned": 0.429
+   },
+   "leaves": {
+    "spa": "kali\u00f0o",
+    "por": "ket\u0268",
+    "cat": "kalit",
+    "ita": "kaldo",
+    "fra": "\u0283o",
+    "ron": "kald"
+   },
+   "leaf_ned": 0.595
+  },
+  {
+   "concept": "521_sour",
+   "latin": "akidus",
+   "latin_len": 6,
+   "root": {
+    "top": [
+     [
+      "akru",
+      0.057
+     ],
+     [
+      "a\u0295ror",
+      0.052
+     ],
+     [
+      "akr\u0268",
+      0.05
+     ]
+    ],
+    "logp_latin": -18.68,
+    "logp_mode": -2.86,
+    "mode_len": 4,
+    "ned": 0.5
+   },
+   "ibero": {
+    "top": [
+     [
+      "a\u0295rao",
+      0.253
+     ],
+     [
+      "a\u0295reo",
+      0.138
+     ],
+     [
+      "a\u0295r\u0268o",
+      0.108
+     ]
+    ],
+    "logp_latin": -30.02,
+    "logp_mode": -1.37,
+    "mode_len": 5,
+    "ned": 0.833
+   },
+   "italo": {
+    "top": [
+     [
+      "akru",
+      0.264
+     ],
+     [
+      "oakru",
+      0.102
+     ],
+     [
+      "ekru",
+      0.059
+     ]
+    ],
+    "logp_latin": -21.97,
+    "logp_mode": -1.33,
+    "mode_len": 4,
+    "ned": 0.5
+   },
+   "leaves": {
+    "spa": "a\u0295rjo",
+    "por": "aze\u00f0u",
+    "cat": "a\u0295r\u0268",
+    "ita": "aspro",
+    "fra": "egr\u0268",
+    "ron": "akru"
+   },
+   "leaf_ned": 0.778
+  },
+  {
+   "concept": "536_deaf",
+   "latin": "surdus",
+   "latin_len": 6,
+   "root": {
+    "top": [
+     [
+      "sordo",
+      0.68
+     ],
+     [
+      "sor\u00f0o",
+      0.132
+     ],
+     [
+      "soreo",
+      0.02
+     ]
+    ],
+    "logp_latin": -19.39,
+    "logp_mode": -0.39,
+    "mode_len": 5,
+    "ned": 0.5
+   },
+   "ibero": {
+    "top": [
+     [
+      "sor\u00f0o",
+      0.473
+     ],
+     [
+      "sordo",
+      0.372
+     ],
+     [
+      "soro",
+      0.077
+     ]
+    ],
+    "logp_latin": -25.91,
+    "logp_mode": -0.75,
+    "mode_len": 5,
+    "ned": 0.667
+   },
+   "italo": {
+    "top": [
+     [
+      "sordo",
+      0.953
+     ]
+    ],
+    "logp_latin": -23.14,
+    "logp_mode": -0.05,
+    "mode_len": 5,
+    "ned": 0.5
+   },
+   "leaves": {
+    "spa": "sor\u00f0o",
+    "por": "sur\u00f0u",
+    "cat": "sor",
+    "ita": "sordo",
+    "fra": "sur",
+    "ron": "surd"
+   },
+   "leaf_ned": 0.5
+  },
+  {
+   "concept": "548_clever",
+   "latin": "prudes",
+   "latin_len": 6,
+   "root": {
+    "top": [
+     [
+      "istets",
+      0.137
+     ],
+     [
+      "\u00f0istets",
+      0.025
+     ],
+     [
+      "istet",
+      0.024
+     ]
+    ],
+    "logp_latin": -21.7,
+    "logp_mode": -1.99,
+    "mode_len": 5,
+    "ned": 0.833
+   },
+   "ibero": {
+    "top": [
+     [
+      "istets",
+      0.026
+     ],
+     [
+      "ukjkol",
+      0.005
+     ],
+     [
+      "edoebjf",
+      0.005
+     ]
+    ],
+    "logp_latin": -22.21,
+    "logp_mode": -3.64,
+    "mode_len": 5,
+    "ned": 0.833
+   },
+   "italo": {
+    "top": [
+     [
+      "istets",
+      0.467
+     ],
+     [
+      "aistets",
+      0.021
+     ],
+     [
+      "pistets",
+      0.018
+     ]
+    ],
+    "logp_latin": -22.49,
+    "logp_mode": -0.76,
+    "mode_len": 5,
+    "ned": 0.833
+   },
+   "leaves": {
+    "spa": "sensato",
+    "por": "pru\u00f0ete",
+    "cat": "int\u0268li\u0292en",
+    "ita": "intelid\u0292ente",
+    "fra": "eteli\u0292a",
+    "ron": "istets"
+   },
+   "leaf_ned": 0.843
+  },
+  {
+   "concept": "553_hungry",
+   "latin": "impastus",
+   "latin_len": 8,
+   "root": {
+    "top": [
+     [
+      "aflamranto",
+      0.269
+     ],
+     [
+      "afamreato",
+      0.157
+     ],
+     [
+      "afamranto",
+      0.141
+     ]
+    ],
+    "logp_latin": -29.97,
+    "logp_mode": -1.31,
+    "mode_len": 10,
+    "ned": 0.8
+   },
+   "ibero": {
+    "top": [
+     [
+      "afamranto",
+      0.507
+     ],
+     [
+      "afamreato",
+      0.213
+     ],
+     [
+      "afamrato",
+      0.145
+     ]
+    ],
+    "logp_latin": -44.5,
+    "logp_mode": -0.68,
+    "mode_len": 9,
+    "ned": 0.778
+   },
+   "italo": {
+    "top": [
+     [
+      "afameato",
+      0.108
+     ],
+     [
+      "afamanto",
+      0.098
+     ],
+     [
+      "afamreato",
+      0.095
+     ]
+    ],
+    "logp_latin": -32.35,
+    "logp_mode": -2.22,
+    "mode_len": 8,
+    "ned": 0.875
+   },
+   "leaves": {
+    "spa": "ambrjento",
+    "por": "famitu",
+    "cat": "\u0268f\u0268mat",
+    "ita": "afamato",
+    "fra": "afame",
+    "ron": "fl\u0268m\u0268nd"
+   },
+   "leaf_ned": 0.877
+  },
+  {
+   "concept": "573_different",
+   "latin": "warius",
+   "latin_len": 6,
+   "root": {
+    "top": [
+     [
+      "diferin",
+      0.347
+     ],
+     [
+      "difereon",
+      0.066
+     ],
+     [
+      "diferian",
+      0.042
+     ]
+    ],
+    "logp_latin": -22.48,
+    "logp_mode": -1.06,
+    "mode_len": 7,
+    "ned": 0.857
+   },
+   "ibero": {
+    "top": [
+     [
+      "diferin",
+      0.246
+     ],
+     [
+      "difereon",
+      0.187
+     ],
+     [
+      "diferion",
+      0.063
+     ]
+    ],
+    "logp_latin": -27.33,
+    "logp_mode": -1.4,
+    "mode_len": 7,
+    "ned": 0.857
+   },
+   "italo": {
+    "top": [
+     [
+      "diferin",
+      0.422
+     ],
+     [
+      "diferit",
+      0.19
+     ],
+     [
+      "diferan",
+      0.102
+     ]
+    ],
+    "logp_latin": -26.02,
+    "logp_mode": -0.86,
+    "mode_len": 7,
+    "ned": 0.857
+   },
+   "leaves": {
+    "spa": "diverso",
+    "por": "diver\u0283u",
+    "cat": "dif\u0268ren",
+    "ita": "diverzo",
+    "fra": "difera",
+    "ron": "diferit"
+   },
+   "leaf_ned": 0.929
+  },
+  {
+   "concept": "576_left",
+   "latin": "sinister",
+   "latin_len": 8,
+   "root": {
+    "top": [
+     [
+      "go\u0283",
+      0.032
+     ],
+     [
+      "iskerau",
+      0.011
+     ],
+     [
+      "asker\u00f0a",
+      0.011
+     ]
+    ],
+    "logp_latin": -24.43,
+    "logp_mode": -3.43,
+    "mode_len": 3,
+    "ned": 1.0
+   },
+   "ibero": {
+    "top": [
+     [
+      "iskerau",
+      0.059
+     ],
+     [
+      "isker\u00f0u",
+      0.057
+     ],
+     [
+      "\u0268skert\u0268",
+      0.052
+     ]
+    ],
+    "logp_latin": -29.24,
+    "logp_mode": -2.83,
+    "mode_len": 7,
+    "ned": 0.75
+   },
+   "italo": {
+    "top": [
+     [
+      "go\u0283",
+      0.15
+     ],
+     [
+      "st\u0268ng",
+      0.098
+     ],
+     [
+      "t\u0283go\u0283",
+      0.026
+     ]
+    ],
+    "logp_latin": -15.22,
+    "logp_mode": -1.9,
+    "mode_len": 3,
+    "ned": 1.0
+   },
+   "leaves": {
+    "spa": "i\u03b8kjer\u00f0o",
+    "por": "i\u0283ker\u00f0u",
+    "cat": "\u0268sker\u0268",
+    "ita": "sinistro",
+    "fra": "go\u0283",
+    "ron": "st\u0268ng"
+   },
+   "leaf_ned": 0.771
+  },
+  {
+   "concept": "579_first",
+   "latin": "primus",
+   "latin_len": 6,
+   "root": {
+    "top": [
+     [
+      "primero",
+      0.302
+     ],
+     [
+      "primejo",
+      0.252
+     ],
+     [
+      "primeo",
+      0.12
+     ]
+    ],
+    "logp_latin": -18.3,
+    "logp_mode": -1.2,
+    "mode_len": 7,
+    "ned": 0.429
+   },
+   "ibero": {
+    "top": [
+     [
+      "primejo",
+      0.427
+     ],
+     [
+      "primero",
+      0.379
+     ],
+     [
+      "primeo",
+      0.148
+     ]
+    ],
+    "logp_latin": -22.91,
+    "logp_mode": -0.85,
+    "mode_len": 7,
+    "ned": 0.429
+   },
+   "italo": {
+    "top": [
+     [
+      "primjo",
+      0.329
+     ],
+     [
+      "primo",
+      0.207
+     ],
+     [
+      "primero",
+      0.115
+     ]
+    ],
+    "logp_latin": -18.55,
+    "logp_mode": -1.11,
+    "mode_len": 6,
+    "ned": 0.333
+   },
+   "leaves": {
+    "spa": "primero",
+    "por": "primejru",
+    "cat": "prime",
+    "ita": "primo",
+    "fra": "pr\u0268mje",
+    "ron": "prim"
+   },
+   "leaf_ned": 0.405
+  },
+  {
+   "concept": "593_soon",
+   "latin": "moks",
+   "latin_len": 4,
+   "root": {
+    "top": [
+     [
+      "aviat",
+      0.094
+     ],
+     [
+      "prento",
+      0.089
+     ],
+     [
+      "pronto",
+      0.043
+     ]
+    ],
+    "logp_latin": -15.46,
+    "logp_mode": -2.36,
+    "mode_len": 5,
+    "ned": 1.0
+   },
+   "ibero": {
+    "top": [
+     [
+      "aviat",
+      0.145
+     ],
+     [
+      "\u0268viat",
+      0.092
+     ],
+     [
+      "o\u0268viat",
+      0.055
+     ]
+    ],
+    "logp_latin": -16.73,
+    "logp_mode": -1.93,
+    "mode_len": 5,
+    "ned": 1.0
+   },
+   "italo": {
+    "top": [
+     [
+      "prento",
+      0.196
+     ],
+     [
+      "kur\u0268nd",
+      0.138
+     ],
+     [
+      "peerto",
+      0.037
+     ]
+    ],
+    "logp_latin": -16.53,
+    "logp_mode": -1.63,
+    "mode_len": 6,
+    "ned": 1.0
+   },
+   "leaves": {
+    "spa": "pronto",
+    "por": "lo\u0295u",
+    "cat": "\u0268viat",
+    "ita": "presto",
+    "fra": "bjeto",
+    "ron": "kur\u0268nd"
+   },
+   "leaf_ned": 0.903
+  },
+  {
+   "concept": "596_once",
+   "latin": "oli",
+   "latin_len": 3,
+   "root": {
+    "top": [
+     [
+      "antarurmen",
+      0.036
+     ],
+     [
+      "antariurmen",
+      0.029
+     ],
+     [
+      "prm",
+      0.023
+     ]
+    ],
+    "logp_latin": -12.23,
+    "logp_mode": -3.32,
+    "mode_len": 10,
+    "ned": 1.0
+   },
+   "ibero": {
+    "top": [
+     [
+      "antariurmen",
+      0.196
+     ],
+     [
+      "antarurmen",
+      0.16
+     ],
+     [
+      "antarurmn",
+      0.031
+     ]
+    ],
+    "logp_latin": -15.16,
+    "logp_mode": -1.63,
+    "mode_len": 11,
+    "ned": 0.909
+   },
+   "italo": {
+    "top": [
+     [
+      "prima",
+      0.073
+     ],
+     [
+      "primo",
+      0.065
+     ],
+     [
+      "kjeri",
+      0.025
+     ]
+    ],
+    "logp_latin": -13.29,
+    "logp_mode": -2.62,
+    "mode_len": 5,
+    "ned": 0.8
+   },
+   "leaves": {
+    "spa": "anta\u0272o",
+    "por": "ati\u0295amete",
+    "cat": "\u0268nt\u0268riurmen",
+    "ita": "prima",
+    "fra": "\u0292adis",
+    "ron": "odat\u0268"
+   },
+   "leaf_ned": 0.866
+  },
+  {
+   "concept": "604_always",
+   "latin": "semper",
+   "latin_len": 6,
+   "root": {
+    "top": [
+     [
+      "sempre",
+      0.262
+     ],
+     [
+      "sempr\u0268",
+      0.028
+     ],
+     [
+      "semipre",
+      0.018
+     ]
+    ],
+    "logp_latin": -11.63,
+    "logp_mode": -1.34,
+    "mode_len": 6,
+    "ned": 0.333
+   },
+   "ibero": {
+    "top": [
+     [
+      "sempre",
+      0.698
+     ],
+     [
+      "sempr\u0268",
+      0.164
+     ]
+    ],
+    "logp_latin": -15.95,
+    "logp_mode": -0.36,
+    "mode_len": 6,
+    "ned": 0.333
+   },
+   "italo": {
+    "top": [
+     [
+      "sempre",
+      0.133
+     ],
+     [
+      "merew",
+      0.089
+     ],
+     [
+      "tu\u0292ur",
+      0.052
+     ]
+    ],
+    "logp_latin": -10.62,
+    "logp_mode": -2.02,
+    "mode_len": 6,
+    "ned": 0.333
+   },
+   "leaves": {
+    "spa": "sjempre",
+    "por": "sepr\u0268",
+    "cat": "sempr\u0268",
+    "ita": "sempre",
+    "fra": "tu\u0292ur",
+    "ron": "merew"
+   },
+   "leaf_ned": 0.516
+  },
+  {
+   "concept": "606_here",
+   "latin": "hik",
+   "latin_len": 3,
+   "root": {
+    "top": [
+     [
+      "aki",
+      0.338
+     ],
+     [
+      "aki\u0268",
+      0.072
+     ],
+     [
+      "akwi",
+      0.059
+     ]
+    ],
+    "logp_latin": -19.04,
+    "logp_mode": -1.08,
+    "mode_len": 3,
+    "ned": 1.0
+   },
+   "ibero": {
+    "top": [
+     [
+      "aki",
+      0.966
+     ]
+    ],
+    "logp_latin": -24.46,
+    "logp_mode": -0.03,
+    "mode_len": 3,
+    "ned": 1.0
+   },
+   "italo": {
+    "top": [
+     [
+      "aki",
+      0.126
+     ],
+     [
+      "kw\u0268",
+      0.11
+     ],
+     [
+      "akw\u0268",
+      0.087
+     ]
+    ],
+    "logp_latin": -18.81,
+    "logp_mode": -2.07,
+    "mode_len": 3,
+    "ned": 1.0
+   },
+   "leaves": {
+    "spa": "aki",
+    "por": "ka",
+    "cat": "\u0268ki",
+    "ita": "kwa",
+    "fra": "isi",
+    "ron": "at\u0283"
+   },
+   "leaf_ned": 1.0
+  },
+  {
+   "concept": "633_through",
+   "latin": "per",
+   "latin_len": 3,
+   "root": {
+    "top": [
+     [
+      "per",
+      0.655
+     ],
+     [
+      "peor",
+      0.084
+     ],
+     [
+      "poer",
+      0.057
+     ]
+    ],
+    "logp_latin": -0.42,
+    "logp_mode": -0.42,
+    "mode_len": 3,
+    "ned": 0.0
+   },
+   "ibero": {
+    "top": [
+     [
+      "per",
+      0.607
+     ],
+     [
+      "peor",
+      0.07
+     ],
+     [
+      "poer",
+      0.062
+     ]
+    ],
+    "logp_latin": -0.5,
+    "logp_mode": -0.5,
+    "mode_len": 3,
+    "ned": 0.0
+   },
+   "italo": {
+    "top": [
+     [
+      "per",
+      0.744
+     ],
+     [
+      "peor",
+      0.061
+     ]
+    ],
+    "logp_latin": -0.3,
+    "logp_mode": -0.3,
+    "mode_len": 3,
+    "ned": 0.0
+   },
+   "leaves": {
+    "spa": "por",
+    "por": "pur",
+    "cat": "pe",
+    "ita": "per",
+    "fra": "par",
+    "ron": "prin"
+   },
+   "leaf_ned": 0.347
+  },
+  {
+   "concept": "635_between",
+   "latin": "inter",
+   "latin_len": 5,
+   "root": {
+    "top": [
+     [
+      "entre",
+      0.567
+     ],
+     [
+      "\u0268ntre",
+      0.092
+     ],
+     [
+      "entrse",
+      0.037
+     ]
+    ],
+    "logp_latin": -16.79,
+    "logp_mode": -0.57,
+    "mode_len": 5,
+    "ned": 0.6
+   },
+   "ibero": {
+    "top": [
+     [
+      "entre",
+      0.909
+     ]
+    ],
+    "logp_latin": -19.96,
+    "logp_mode": -0.1,
+    "mode_len": 5,
+    "ned": 0.6
+   },
+   "italo": {
+    "top": [
+     [
+      "\u0268ntre",
+      0.454
+     ],
+     [
+      "entre",
+      0.327
+     ],
+     [
+      "\u0268ntrse",
+      0.027
+     ]
+    ],
+    "logp_latin": -16.62,
+    "logp_mode": -0.79,
+    "mode_len": 5,
+    "ned": 0.6
+   },
+   "leaves": {
+    "spa": "entre",
+    "por": "etr\u0268",
+    "cat": "entr\u0268",
+    "ita": "fra",
+    "fra": "atr\u0268",
+    "ron": "\u0268ntre"
+   },
+   "leaf_ned": 0.733
+  },
+  {
+   "concept": "642_he",
+   "latin": "is",
+   "latin_len": 2,
+   "root": {
+    "top": [
+     [
+      "el\u0268",
+      0.349
+     ],
+     [
+      "elo",
+      0.26
+     ],
+     [
+      "el",
+      0.069
+     ]
+    ],
+    "logp_latin": -11.82,
+    "logp_mode": -1.05,
+    "mode_len": 3,
+    "ned": 1.0
+   },
+   "ibero": {
+    "top": [
+     [
+      "el\u0268",
+      0.606
+     ],
+     [
+      "elo",
+      0.27
+     ],
+     [
+      "el",
+      0.063
+     ]
+    ],
+    "logp_latin": -16.76,
+    "logp_mode": -0.5,
+    "mode_len": 3,
+    "ned": 1.0
+   },
+   "italo": {
+    "top": [
+     [
+      "el",
+      0.614
+     ],
+     [
+      "elo",
+      0.123
+     ],
+     [
+      "ela",
+      0.057
+     ]
+    ],
+    "logp_latin": -13.84,
+    "logp_mode": -0.49,
+    "mode_len": 2,
+    "ned": 1.0
+   },
+   "leaves": {
+    "spa": "el",
+    "por": "el\u0268",
+    "cat": "e\u028e",
+    "ita": "lui",
+    "fra": "il",
+    "ron": "jel"
+   },
+   "leaf_ned": 0.917
+  },
+  {
+   "concept": "645_they",
+   "latin": "ij",
+   "latin_len": 2,
+   "root": {
+    "top": [
+     [
+      "elo\u0283",
+      0.225
+     ],
+     [
+      "elos",
+      0.101
+     ],
+     [
+      "el\u0268\u0283",
+      0.071
+     ]
+    ],
+    "logp_latin": -11.45,
+    "logp_mode": -1.49,
+    "mode_len": 4,
+    "ned": 1.0
+   },
+   "ibero": {
+    "top": [
+     [
+      "elo\u0283",
+      0.424
+     ],
+     [
+      "el\u0268\u0283",
+      0.159
+     ],
+     [
+      "ele\u0283",
+      0.106
+     ]
+    ],
+    "logp_latin": -19.4,
+    "logp_mode": -0.86,
+    "mode_len": 4,
+    "ned": 1.0
+   },
+   "italo": {
+    "top": [
+     [
+      "el",
+      0.276
+     ],
+     [
+      "elo",
+      0.066
+     ],
+     [
+      "il",
+      0.054
+     ]
+    ],
+    "logp_latin": -8.61,
+    "logp_mode": -1.29,
+    "mode_len": 2,
+    "ned": 1.0
+   },
+   "leaves": {
+    "spa": "ejos",
+    "por": "el\u0268\u0283",
+    "cat": "e\u028e\u0283",
+    "ita": "loro",
+    "fra": "il",
+    "ron": "jej"
+   },
+   "leaf_ned": 0.819
+  },
+  {
+   "concept": "653_one",
+   "latin": "unus",
+   "latin_len": 4,
+   "root": {
+    "top": [
+     [
+      "unu",
+      0.701
+     ],
+     [
+      "unku",
+      0.055
+     ],
+     [
+      "uno",
+      0.016
+     ]
+    ],
+    "logp_latin": -7.51,
+    "logp_mode": -0.36,
+    "mode_len": 3,
+    "ned": 0.25
+   },
+   "ibero": {
+    "top": [
+     [
+      "unu",
+      0.684
+     ],
+     [
+      "u",
+      0.163
+     ],
+     [
+      "uno",
+      0.031
+     ]
+    ],
+    "logp_latin": -11.76,
+    "logp_mode": -0.38,
+    "mode_len": 3,
+    "ned": 0.25
+   },
+   "italo": {
+    "top": [
+     [
+      "unu",
+      0.763
+     ],
+     [
+      "unku",
+      0.026
+     ],
+     [
+      "uu",
+      0.005
+     ]
+    ],
+    "logp_latin": -12.48,
+    "logp_mode": -0.27,
+    "mode_len": 3,
+    "ned": 0.25
+   },
+   "leaves": {
+    "spa": "uno",
+    "por": "u",
+    "cat": "u",
+    "ita": "uno",
+    "fra": "\u00f8",
+    "ron": "unu"
+   },
+   "leaf_ned": 0.625
+  },
+  {
+   "concept": "655_three",
+   "latin": "tres",
+   "latin_len": 4,
+   "root": {
+    "top": [
+     [
+      "tres",
+      0.458
+     ],
+     [
+      "tree",
+      0.111
+     ],
+     [
+      "trea",
+      0.093
+     ]
+    ],
+    "logp_latin": -0.78,
+    "logp_mode": -0.78,
+    "mode_len": 4,
+    "ned": 0.0
+   },
+   "ibero": {
+    "top": [
+     [
+      "tres",
+      0.987
+     ],
+     [
+      "tresa",
+      0.001
+     ]
+    ],
+    "logp_latin": -0.01,
+    "logp_mode": -0.01,
+    "mode_len": 4,
+    "ned": 0.0
+   },
+   "italo": {
+    "top": [
+     [
+      "trej",
+      0.358
+     ],
+     [
+      "trea",
+      0.212
+     ],
+     [
+      "tree",
+      0.192
+     ]
+    ],
+    "logp_latin": -2.23,
+    "logp_mode": -1.03,
+    "mode_len": 4,
+    "ned": 0.25
+   },
+   "leaves": {
+    "spa": "tres",
+    "por": "tre\u0283",
+    "cat": "tres",
+    "ita": "tre",
+    "fra": "trwa",
+    "ron": "trej"
+   },
+   "leaf_ned": 0.208
+  },
+  {
+   "concept": "660_eight",
+   "latin": "okto",
+   "latin_len": 4,
+   "root": {
+    "top": [
+     [
+      "ojto",
+      0.412
+     ],
+     [
+      "opto",
+      0.261
+     ],
+     [
+      "oto",
+      0.026
+     ]
+    ],
+    "logp_latin": -7.46,
+    "logp_mode": -0.89,
+    "mode_len": 4,
+    "ned": 0.25
+   },
+   "ibero": {
+    "top": [
+     [
+      "ojto",
+      0.387
+     ],
+     [
+      "opto",
+      0.094
+     ],
+     [
+      "ot\u0283to",
+      0.093
+     ]
+    ],
+    "logp_latin": -9.41,
+    "logp_mode": -0.95,
+    "mode_len": 4,
+    "ned": 0.25
+   },
+   "italo": {
+    "top": [
+     [
+      "opto",
+      0.45
+     ],
+     [
+      "ojto",
+      0.425
+     ],
+     [
+      "oto",
+      0.01
+     ]
+    ],
+    "logp_latin": -7.9,
+    "logp_mode": -0.8,
+    "mode_len": 4,
+    "ned": 0.25
+   },
+   "leaves": {
+    "spa": "ot\u0283o",
+    "por": "ojtu",
+    "cat": "vujt",
+    "ita": "oto",
+    "fra": "jit",
+    "ron": "opt"
+   },
+   "leaf_ned": 0.583
+  },
+  {
+   "concept": "670_seventy",
+   "latin": "septuaginta",
+   "latin_len": 11,
+   "root": {
+    "top": [
+     [
+      "setanta",
+      0.251
+     ],
+     [
+      "setenta",
+      0.069
+     ],
+     [
+      "\u0283aptezet\u0283",
+      0.017
+     ]
+    ],
+    "logp_latin": -31.61,
+    "logp_mode": -1.38,
+    "mode_len": 7,
+    "ned": 0.364
+   },
+   "ibero": {
+    "top": [
+     [
+      "setenta",
+      0.485
+     ],
+     [
+      "setanta",
+      0.335
+     ]
+    ],
+    "logp_latin": -44.49,
+    "logp_mode": -0.72,
+    "mode_len": 7,
+    "ned": 0.455
+   },
+   "italo": {
+    "top": [
+     [
+      "setanta",
+      0.138
+     ],
+     [
+      "\u0283aptezet\u0283",
+      0.118
+     ],
+     [
+      "\u0283apteze",
+      0.037
+     ]
+    ],
+    "logp_latin": -40.18,
+    "logp_mode": -1.98,
+    "mode_len": 7,
+    "ned": 0.364
+   },
+   "leaves": {
+    "spa": "setenta",
+    "por": "s\u0268teta",
+    "cat": "s\u0268tant\u0268",
+    "ita": "setanta",
+    "fra": "swasatdis",
+    "ron": "\u0283aptezet\u0283"
+   },
+   "leaf_ned": 0.606
+  },
+  {
+   "concept": "674_athousand",
+   "latin": "mile",
+   "latin_len": 4,
+   "root": {
+    "top": [
+     [
+      "mie",
+      0.434
+     ],
+     [
+      "mil",
+      0.322
+     ],
+     [
+      "mjl",
+      0.029
+     ]
+    ],
+    "logp_latin": -4.33,
+    "logp_mode": -0.83,
+    "mode_len": 3,
+    "ned": 0.25
+   },
+   "ibero": {
+    "top": [
+     [
+      "mil",
+      0.989
+     ]
+    ],
+    "logp_latin": -9.0,
+    "logp_mode": -0.01,
+    "mode_len": 3,
+    "ned": 0.25
+   },
+   "italo": {
+    "top": [
+     [
+      "mje",
+      0.344
+     ],
+     [
+      "mie",
+      0.324
+     ],
+     [
+      "mil",
+      0.225
+     ]
+    ],
+    "logp_latin": -8.76,
+    "logp_mode": -1.07,
+    "mode_len": 3,
+    "ned": 0.5
+   },
+   "leaves": {
+    "spa": "mil",
+    "por": "mil",
+    "cat": "mil",
+    "ita": "mile",
+    "fra": "mil",
+    "ron": "mje"
+   },
+   "leaf_ned": 0.25
+  },
+  {
+   "concept": "67_dust",
+   "latin": "pulwis",
+   "latin_len": 6,
+   "root": {
+    "top": [
+     [
+      "polvr",
+      0.174
+     ],
+     [
+      "polsr",
+      0.144
+     ],
+     [
+      "polver",
+      0.139
+     ]
+    ],
+    "logp_latin": -22.35,
+    "logp_mode": -1.75,
+    "mode_len": 5,
+    "ned": 0.667
+   },
+   "ibero": {
+    "top": [
+     [
+      "pols",
+      0.374
+     ],
+     [
+      "polvo",
+      0.2
+     ],
+     [
+      "polr",
+      0.093
+     ]
+    ],
+    "logp_latin": -25.65,
+    "logp_mode": -0.98,
+    "mode_len": 4,
+    "ned": 0.5
+   },
+   "italo": {
+    "top": [
+     [
+      "polvr",
+      0.292
+     ],
+     [
+      "polver",
+      0.266
+     ],
+     [
+      "polvor",
+      0.079
+     ]
+    ],
+    "logp_latin": -26.09,
+    "logp_mode": -1.23,
+    "mode_len": 5,
+    "ned": 0.667
+   },
+   "leaves": {
+    "spa": "polvo",
+    "por": "po",
+    "cat": "pols",
+    "ita": "polvere",
+    "fra": "pusjer",
+    "ron": "praf"
+   },
+   "leaf_ned": 0.702
+  },
+  {
+   "concept": "686_rise",
+   "latin": "oriri",
+   "latin_len": 5,
+   "root": {
+    "top": [
+     [
+      "r\u0268ls\u0268er",
+      0.141
+     ],
+     [
+      "r\u0268s\u0268r",
+      0.056
+     ],
+     [
+      "s\u0268a\u0268rr",
+      0.046
+     ]
+    ],
+    "logp_latin": -16.7,
+    "logp_mode": -1.96,
+    "mode_len": 7,
+    "ned": 1.0
+   },
+   "ibero": {
+    "top": [
+     [
+      "r\u0268ld\u0292\u0268er",
+      0.052
+     ],
+     [
+      "sa\u0268ir",
+      0.026
+     ],
+     [
+      "sa\u0268rr",
+      0.026
+     ]
+    ],
+    "logp_latin": -18.06,
+    "logp_mode": -2.96,
+    "mode_len": 7,
+    "ned": 1.0
+   },
+   "italo": {
+    "top": [
+     [
+      "r\u0268s\u0268r",
+      0.155
+     ],
+     [
+      "r\u0268s\u0268er",
+      0.072
+     ],
+     [
+      "r\u0268ld\u0292\u0268er",
+      0.043
+     ]
+    ],
+    "logp_latin": -16.91,
+    "logp_mode": -1.86,
+    "mode_len": 5,
+    "ned": 1.0
+   },
+   "leaves": {
+    "spa": "salir",
+    "por": "na\u0283ser",
+    "cat": "surti",
+    "ita": "sord\u0292ere",
+    "fra": "s\u0268l\u0268ve",
+    "ron": "r\u0268s\u0268r"
+   },
+   "leaf_ned": 0.862
+  },
+  {
+   "concept": "709_pass",
+   "latin": "praeterire",
+   "latin_len": 10,
+   "root": {
+    "top": [
+     [
+      "pasar",
+      0.702
+     ],
+     [
+      "nrwu",
+      0.007
+     ],
+     [
+      "erao",
+      0.006
+     ]
+    ],
+    "logp_latin": -31.76,
+    "logp_mode": -0.35,
+    "mode_len": 5,
+    "ned": 0.7
+   },
+   "ibero": {
+    "top": [
+     [
+      "pasar",
+      0.887
+     ]
+    ],
+    "logp_latin": -37.35,
+    "logp_mode": -0.12,
+    "mode_len": 5,
+    "ned": 0.7
+   },
+   "italo": {
+    "top": [
+     [
+      "pasar",
+      0.699
+     ],
+     [
+      "nrwu",
+      0.005
+     ],
+     [
+      "erao",
+      0.003
+     ]
+    ],
+    "logp_latin": -32.65,
+    "logp_mode": -0.36,
+    "mode_len": 5,
+    "ned": 0.7
+   },
+   "leaves": {
+    "spa": "pasar",
+    "por": "pasar",
+    "cat": "p\u0268sa",
+    "ita": "pasare",
+    "fra": "pase",
+    "ron": "tret\u0283e"
+   },
+   "leaf_ned": 0.717
+  },
+  {
+   "concept": "713_decrease",
+   "latin": "deminuj",
+   "latin_len": 7,
+   "root": {
+    "top": [
+     [
+      "dekre\u0283er",
+      0.078
+     ],
+     [
+      "dekreser",
+      0.05
+     ],
+     [
+      "diminuir",
+      0.039
+     ]
+    ],
+    "logp_latin": -17.44,
+    "logp_mode": -2.55,
+    "mode_len": 8,
+    "ned": 0.75
+   },
+   "ibero": {
+    "top": [
+     [
+      "dekre\u0283er",
+      0.3
+     ],
+     [
+      "dekre\u0283e",
+      0.085
+     ],
+     [
+      "dekreser",
+      0.07
+     ]
+    ],
+    "logp_latin": -25.52,
+    "logp_mode": -1.2,
+    "mode_len": 8,
+    "ned": 0.75
+   },
+   "italo": {
+    "top": [
+     [
+      "diminuir",
+      0.205
+     ],
+     [
+      "diminwir",
+      0.064
+     ],
+     [
+      "dimineir",
+      0.029
+     ]
+    ],
+    "logp_latin": -17.09,
+    "logp_mode": -1.58,
+    "mode_len": 8,
+    "ned": 0.375
+   },
+   "leaves": {
+    "spa": "dekre\u03b8er",
+    "por": "d\u0268minwir",
+    "cat": "d\u0268kre\u0283\u0268",
+    "ita": "diminuire",
+    "fra": "diminje",
+    "ron": "sk\u0268dea"
+   },
+   "leaf_ned": 0.663
+  },
+  {
+   "concept": "726_bark",
+   "latin": "latrare",
+   "latin_len": 7,
+   "root": {
+    "top": [
+     [
+      "latrar",
+      0.739
+     ],
+     [
+      "la\u00f0rar",
+      0.153
+     ],
+     [
+      "larar",
+      0.001
+     ]
+    ],
+    "logp_latin": -8.96,
+    "logp_mode": -0.3,
+    "mode_len": 6,
+    "ned": 0.143
+   },
+   "ibero": {
+    "top": [
+     [
+      "la\u00f0rar",
+      0.959
+     ]
+    ],
+    "logp_latin": -17.23,
+    "logp_mode": -0.04,
+    "mode_len": 6,
+    "ned": 0.286
+   },
+   "italo": {
+    "top": [
+     [
+      "latrar",
+      0.989
+     ]
+    ],
+    "logp_latin": -13.68,
+    "logp_mode": -0.01,
+    "mode_len": 6,
+    "ned": 0.143
+   },
+   "leaves": {
+    "spa": "la\u00f0rar",
+    "por": "la\u00f0rar",
+    "cat": "\u028e\u0268\u00f0ra",
+    "ita": "latrare",
+    "fra": "abwaje",
+    "ron": "l\u0268tra"
+   },
+   "leaf_ned": 0.381
+  },
+  {
+   "concept": "72_shadow",
+   "latin": "umbra",
+   "latin_len": 5,
+   "root": {
+    "top": [
+     [
+      "ombra",
+      0.491
+     ],
+     [
+      "ombr\u0268",
+      0.155
+     ],
+     [
+      "sombra",
+      0.074
+     ]
+    ],
+    "logp_latin": -7.6,
+    "logp_mode": -0.71,
+    "mode_len": 5,
+    "ned": 0.2
+   },
+   "ibero": {
+    "top": [
+     [
+      "ombra",
+      0.389
+     ],
+     [
+      "sombra",
+      0.255
+     ],
+     [
+      "sombr\u0268",
+      0.117
+     ]
+    ],
+    "logp_latin": -10.93,
+    "logp_mode": -0.94,
+    "mode_len": 5,
+    "ned": 0.2
+   },
+   "italo": {
+    "top": [
+     [
+      "ombr\u0268",
+      0.965
+     ],
+     [
+      "ombra",
+      0.008
+     ],
+     [
+      "onbr\u0268",
+      0.0
+     ]
+    ],
+    "logp_latin": -7.7,
+    "logp_mode": -0.04,
+    "mode_len": 5,
+    "ned": 0.4
+   },
+   "leaves": {
+    "spa": "sombra",
+    "por": "sobra",
+    "cat": "omvr\u0268",
+    "ita": "ombra",
+    "fra": "obr\u0268",
+    "ron": "umbr\u0268"
+   },
+   "leaf_ned": 0.389
+  },
+  {
+   "concept": "735_breathe",
+   "latin": "spirare",
+   "latin_len": 7,
+   "root": {
+    "top": [
+     [
+      "respirar",
+      0.417
+     ],
+     [
+      "respira",
+      0.073
+     ],
+     [
+      "erespirar",
+      0.022
+     ]
+    ],
+    "logp_latin": -21.8,
+    "logp_mode": -0.88,
+    "mode_len": 8,
+    "ned": 0.375
+   },
+   "ibero": {
+    "top": [
+     [
+      "respirar",
+      0.654
+     ],
+     [
+      "respira",
+      0.143
+     ]
+    ],
+    "logp_latin": -19.79,
+    "logp_mode": -0.42,
+    "mode_len": 8,
+    "ned": 0.375
+   },
+   "italo": {
+    "top": [
+     [
+      "respira",
+      0.365
+     ],
+     [
+      "respirar",
+      0.253
+     ],
+     [
+      "resprar",
+      0.002
+     ]
+    ],
+    "logp_latin": -16.83,
+    "logp_mode": -1.01,
+    "mode_len": 7,
+    "ned": 0.571
+   },
+   "leaves": {
+    "spa": "respirar",
+    "por": "r\u0268\u0283pirar",
+    "cat": "r\u0268spira",
+    "ita": "respirare",
+    "fra": "r\u0268spire",
+    "ron": "respira"
+   },
+   "leaf_ned": 0.469
+  },
+  {
+   "concept": "748_cough",
+   "latin": "tusire",
+   "latin_len": 6,
+   "root": {
+    "top": [
+     [
+      "tusir",
+      0.709
+     ],
+     [
+      "tuser",
+      0.025
+     ],
+     [
+      "tusi",
+      0.014
+     ]
+    ],
+    "logp_latin": -7.13,
+    "logp_mode": -0.34,
+    "mode_len": 5,
+    "ned": 0.167
+   },
+   "ibero": {
+    "top": [
+     [
+      "tusir",
+      0.888
+     ]
+    ],
+    "logp_latin": -11.72,
+    "logp_mode": -0.12,
+    "mode_len": 5,
+    "ned": 0.167
+   },
+   "italo": {
+    "top": [
+     [
+      "tusir",
+      0.618
+     ],
+     [
+      "tu\u0283",
+      0.045
+     ],
+     [
+      "tu\u0283r",
+      0.029
+     ]
+    ],
+    "logp_latin": -11.12,
+    "logp_mode": -0.48,
+    "mode_len": 5,
+    "ned": 0.167
+   },
+   "leaves": {
+    "spa": "toser",
+    "por": "tusir",
+    "cat": "tusi",
+    "ita": "tosire",
+    "fra": "tuse",
+    "ron": "tu\u0283"
+   },
+   "leaf_ned": 0.361
+  },
+  {
+   "concept": "772_fly",
+   "latin": "wolare",
+   "latin_len": 6,
+   "root": {
+    "top": [
+     [
+      "vular",
+      0.444
+     ],
+     [
+      "vurar",
+      0.255
+     ],
+     [
+      "volar",
+      0.079
+     ]
+    ],
+    "logp_latin": -20.54,
+    "logp_mode": -0.81,
+    "mode_len": 5,
+    "ned": 0.5
+   },
+   "ibero": {
+    "top": [
+     [
+      "vular",
+      0.882
+     ]
+    ],
+    "logp_latin": -24.9,
+    "logp_mode": -0.13,
+    "mode_len": 5,
+    "ned": 0.5
+   },
+   "italo": {
+    "top": [
+     [
+      "zbura",
+      0.202
+     ],
+     [
+      "zburar",
+      0.144
+     ],
+     [
+      "bura",
+      0.126
+     ]
+    ],
+    "logp_latin": -23.13,
+    "logp_mode": -1.6,
+    "mode_len": 5,
+    "ned": 0.833
+   },
+   "leaves": {
+    "spa": "bolar",
+    "por": "vwar",
+    "cat": "vula",
+    "ita": "volare",
+    "fra": "vole",
+    "ron": "zbura"
+   },
+   "leaf_ned": 0.528
+  },
+  {
+   "concept": "7_lip",
+   "latin": "labru",
+   "latin_len": 5,
+   "root": {
+    "top": [
+     [
+      "lavro",
+      0.485
+     ],
+     [
+      "lavio",
+      0.159
+     ],
+     [
+      "laveo",
+      0.038
+     ]
+    ],
+    "logp_latin": -14.16,
+    "logp_mode": -0.72,
+    "mode_len": 5,
+    "ned": 0.4
+   },
+   "ibero": {
+    "top": [
+     [
+      "lavio",
+      0.468
+     ],
+     [
+      "lavjo",
+      0.233
+     ],
+     [
+      "lavro",
+      0.196
+     ]
+    ],
+    "logp_latin": -17.85,
+    "logp_mode": -0.76,
+    "mode_len": 5,
+    "ned": 0.6
+   },
+   "italo": {
+    "top": [
+     [
+      "lavro",
+      0.618
+     ],
+     [
+      "lavio",
+      0.119
+     ],
+     [
+      "laveo",
+      0.021
+     ]
+    ],
+    "logp_latin": -10.71,
+    "logp_mode": -0.48,
+    "mode_len": 5,
+    "ned": 0.4
+   },
+   "leaves": {
+    "spa": "lavjo",
+    "por": "lavju",
+    "cat": "\u028eavi",
+    "ita": "labro",
+    "fra": "levr\u0268",
+    "ron": "buz\u0268"
+   },
+   "leaf_ned": 0.6
+  },
+  {
+   "concept": "827_cover",
+   "latin": "tegere",
+   "latin_len": 6,
+   "root": {
+    "top": [
+     [
+      "tapar",
+      0.284
+     ],
+     [
+      "kuvrir",
+      0.106
+     ],
+     [
+      "apar",
+      0.005
+     ]
+    ],
+    "logp_latin": -19.63,
+    "logp_mode": -1.26,
+    "mode_len": 5,
+    "ned": 0.667
+   },
+   "ibero": {
+    "top": [
+     [
+      "tapar",
+      0.936
+     ],
+     [
+      "taprar",
+      0.001
+     ]
+    ],
+    "logp_latin": -28.12,
+    "logp_mode": -0.07,
+    "mode_len": 5,
+    "ned": 0.667
+   },
+   "italo": {
+    "top": [
+     [
+      "kuvrir",
+      0.274
+     ],
+     [
+      "xkuvrir",
+      0.02
+     ],
+     [
+      "kjrvrir",
+      0.002
+     ]
+    ],
+    "logp_latin": -20.83,
+    "logp_mode": -1.29,
+    "mode_len": 6,
+    "ned": 1.0
+   },
+   "leaves": {
+    "spa": "tapar",
+    "por": "kuvrir",
+    "cat": "t\u0268pa",
+    "ita": "koprire",
+    "fra": "kuvrir",
+    "ron": "akoper"
+   },
+   "leaf_ned": 0.841
+  },
+  {
+   "concept": "828_hangup",
+   "latin": "suspendere",
+   "latin_len": 10,
+   "root": {
+    "top": [
+     [
+      "pe\u00f0orar",
+      0.064
+     ],
+     [
+      "at\u0268rna",
+      0.043
+     ],
+     [
+      "peeorar",
+      0.021
+     ]
+    ],
+    "logp_latin": -35.14,
+    "logp_mode": -2.75,
+    "mode_len": 7,
+    "ned": 0.8
+   },
+   "ibero": {
+    "top": [
+     [
+      "pe\u00f0orar",
+      0.193
+     ],
+     [
+      "pe\u0272orar",
+      0.077
+     ],
+     [
+      "peeorar",
+      0.066
+     ]
+    ],
+    "logp_latin": -37.01,
+    "logp_mode": -1.65,
+    "mode_len": 7,
+    "ned": 0.8
+   },
+   "italo": {
+    "top": [
+     [
+      "at\u0268rna",
+      0.248
+     ],
+     [
+      "akro\u0283e",
+      0.087
+     ],
+     [
+      "\u00f0wkro\u0283e",
+      0.034
+     ]
+    ],
+    "logp_latin": -36.17,
+    "logp_mode": -1.39,
+    "mode_len": 6,
+    "ned": 0.9
+   },
+   "leaves": {
+    "spa": "kol\u0295ar",
+    "por": "pe\u00f0urar",
+    "cat": "p\u0268\u0272\u0292a",
+    "ita": "atakare",
+    "fra": "akro\u0283e",
+    "ron": "at\u0268rna"
+   },
+   "leaf_ned": 0.867
+  },
+  {
+   "concept": "829_light",
+   "latin": "akendere",
+   "latin_len": 8,
+   "root": {
+    "top": [
+     [
+      "ansender",
+      0.245
+     ],
+     [
+      "anrender",
+      0.138
+     ],
+     [
+      "atsender",
+      0.085
+     ]
+    ],
+    "logp_latin": -18.05,
+    "logp_mode": -1.41,
+    "mode_len": 8,
+    "ned": 0.375
+   },
+   "ibero": {
+    "top": [
+     [
+      "ansender",
+      0.871
+     ],
+     [
+      "ansendere",
+      0.024
+     ]
+    ],
+    "logp_latin": -29.25,
+    "logp_mode": -0.14,
+    "mode_len": 8,
+    "ned": 0.375
+   },
+   "italo": {
+    "top": [
+     [
+      "aprender",
+      0.261
+     ],
+     [
+      "apsender",
+      0.189
+     ],
+     [
+      "atrender",
+      0.183
+     ]
+    ],
+    "logp_latin": -18.19,
+    "logp_mode": -1.34,
+    "mode_len": 8,
+    "ned": 0.375
+   },
+   "leaves": {
+    "spa": "en\u03b8ender",
+    "por": "aseder",
+    "cat": "\u0268nsen\u00f0r\u0268",
+    "ita": "att\u0283endere",
+    "fra": "alyme",
+    "ron": "aprinde"
+   },
+   "leaf_ned": 0.537
+  },
+  {
+   "concept": "830_pickup",
+   "latin": "tolere",
+   "latin_len": 6,
+   "root": {
+    "top": [
+     [
+      "rakoaier",
+      0.15
+     ],
+     [
+      "rekoaier",
+      0.064
+     ],
+     [
+      "rekoaer",
+      0.032
+     ]
+    ],
+    "logp_latin": -19.02,
+    "logp_mode": -1.9,
+    "mode_len": 8,
+    "ned": 0.75
+   },
+   "ibero": {
+    "top": [
+     [
+      "rekoaer",
+      0.069
+     ],
+     [
+      "rekoaier",
+      0.068
+     ],
+     [
+      "rekoaeir",
+      0.033
+     ]
+    ],
+    "logp_latin": -19.84,
+    "logp_mode": -2.67,
+    "mode_len": 7,
+    "ned": 0.714
+   },
+   "italo": {
+    "top": [
+     [
+      "rakoaier",
+      0.216
+     ],
+     [
+      "rako\u028eier",
+      0.162
+     ],
+     [
+      "rekoaier",
+      0.059
+     ]
+    ],
+    "logp_latin": -20.88,
+    "logp_mode": -1.53,
+    "mode_len": 8,
+    "ned": 0.75
+   },
+   "leaves": {
+    "spa": "rekoxer",
+    "por": "apa\u0272ar",
+    "cat": "\u0268\u0283\u0268ka",
+    "ita": "rako\u028eiere",
+    "fra": "ramase",
+    "ron": "ridika"
+   },
+   "leaf_ned": 0.851
+  },
+  {
+   "concept": "843_spin",
+   "latin": "torkere",
+   "latin_len": 7,
+   "root": {
+    "top": [
+     [
+      "\u0292irar",
+      0.46
+     ],
+     [
+      "d\u0292irar",
+      0.039
+     ],
+     [
+      "rirar",
+      0.03
+     ]
+    ],
+    "logp_latin": -21.78,
+    "logp_mode": -0.78,
+    "mode_len": 5,
+    "ned": 0.714
+   },
+   "ibero": {
+    "top": [
+     [
+      "\u0292irar",
+      0.822
+     ],
+     [
+      "\u0292ira",
+      0.099
+     ]
+    ],
+    "logp_latin": -24.06,
+    "logp_mode": -0.2,
+    "mode_len": 5,
+    "ned": 0.714
+   },
+   "italo": {
+    "top": [
+     [
+      "\u0292irar",
+      0.439
+     ],
+     [
+      "d\u0292irar",
+      0.189
+     ],
+     [
+      "rirar",
+      0.032
+     ]
+    ],
+    "logp_latin": -22.6,
+    "logp_mode": -0.82,
+    "mode_len": 5,
+    "ned": 0.714
+   },
+   "leaves": {
+    "spa": "bolver",
+    "por": "\u0292irar",
+    "cat": "\u0292ira",
+    "ita": "d\u0292irare",
+    "fra": "tordr\u0268",
+    "ron": "\u0268nv\u0268rt"
+   },
+   "leaf_ned": 0.667
+  },
+  {
+   "concept": "856_cutoff",
+   "latin": "desekare",
+   "latin_len": 8,
+   "root": {
+    "top": [
+     [
+      "kortar",
+      0.136
+     ],
+     [
+      "korta",
+      0.098
+     ],
+     [
+      "skortar",
+      0.065
+     ]
+    ],
+    "logp_latin": -26.09,
+    "logp_mode": -1.99,
+    "mode_len": 6,
+    "ned": 0.75
+   },
+   "ibero": {
+    "top": [
+     [
+      "ta\u028ear",
+      0.216
+     ],
+     [
+      "kortar",
+      0.206
+     ],
+     [
+      "korta",
+      0.063
+     ]
+    ],
+    "logp_latin": -27.88,
+    "logp_mode": -1.53,
+    "mode_len": 5,
+    "ned": 0.75
+   },
+   "italo": {
+    "top": [
+     [
+      "skorta",
+      0.13
+     ],
+     [
+      "korta",
+      0.108
+     ],
+     [
+      "kortar",
+      0.046
+     ]
+    ],
+    "logp_latin": -27.9,
+    "logp_mode": -2.04,
+    "mode_len": 6,
+    "ned": 0.75
+   },
+   "leaves": {
+    "spa": "kortar",
+    "por": "ta\u028ear",
+    "cat": "t\u0268\u028ea",
+    "ita": "ta\u028eare",
+    "fra": "kupe",
+    "ron": "skurta"
+   },
+   "leaf_ned": 0.75
+  },
+  {
+   "concept": "860_knock",
+   "latin": "pultare",
+   "latin_len": 7,
+   "root": {
+    "top": [
+     [
+      "troukan",
+      0.044
+     ],
+     [
+      "trowkan",
+      0.037
+     ],
+     [
+      "trokan",
+      0.017
+     ]
+    ],
+    "logp_latin": -22.78,
+    "logp_mode": -3.13,
+    "mode_len": 7,
+    "ned": 1.0
+   },
+   "ibero": {
+    "top": [
+     [
+      "troukan",
+      0.071
+     ],
+     [
+      "dolpear",
+      0.058
+     ],
+     [
+      "trowkan",
+      0.041
+     ]
+    ],
+    "logp_latin": -22.99,
+    "logp_mode": -2.65,
+    "mode_len": 7,
+    "ned": 1.0
+   },
+   "italo": {
+    "top": [
+     [
+      "tjokan",
+      0.01
+     ],
+     [
+      "t\u0283rokan",
+      0.009
+     ],
+     [
+      "mi\u0268",
+      0.004
+     ]
+    ],
+    "logp_latin": -23.28,
+    "logp_mode": -4.66,
+    "mode_len": 6,
+    "ned": 0.857
+   },
+   "leaves": {
+    "spa": "golpear",
+    "por": "bater",
+    "cat": "truka",
+    "ita": "batere",
+    "fra": "frape",
+    "ron": "t\u0283jok\u0268n"
+   },
+   "leaf_ned": 0.762
+  },
+  {
+   "concept": "880_hide",
+   "latin": "abdere",
+   "latin_len": 6,
+   "root": {
+    "top": [
+     [
+      "askonder",
+      0.469
+     ],
+     [
+      "eskonder",
+      0.102
+     ],
+     [
+      "askonrer",
+      0.019
+     ]
+    ],
+    "logp_latin": -20.47,
+    "logp_mode": -0.76,
+    "mode_len": 8,
+    "ned": 0.625
+   },
+   "ibero": {
+    "top": [
+     [
+      "eskonder",
+      0.242
+     ],
+     [
+      "askonder",
+      0.213
+     ],
+     [
+      "askondr",
+      0.005
+     ]
+    ],
+    "logp_latin": -21.49,
+    "logp_mode": -1.42,
+    "mode_len": 8,
+    "ned": 0.75
+   },
+   "italo": {
+    "top": [
+     [
+      "askonder",
+      0.839
+     ],
+     [
+      "askonrer",
+      0.0
+     ],
+     [
+      "skonder",
+      0.0
+     ]
+    ],
+    "logp_latin": -23.68,
+    "logp_mode": -0.18,
+    "mode_len": 8,
+    "ned": 0.625
+   },
+   "leaves": {
+    "spa": "eskonder",
+    "por": "i\u0283koder",
+    "cat": "\u0268m\u0268\u0295a",
+    "ita": "naskondere",
+    "fra": "ka\u0283e",
+    "ron": "askunde"
+   },
+   "leaf_ned": 0.752
+  },
+  {
+   "concept": "884_add",
+   "latin": "adere",
+   "latin_len": 5,
+   "root": {
+    "top": [
+     [
+      "afa\u0292ir",
+      0.131
+     ],
+     [
+      "adauir",
+      0.035
+     ],
+     [
+      "afauir",
+      0.027
+     ]
+    ],
+    "logp_latin": -15.79,
+    "logp_mode": -2.03,
+    "mode_len": 6,
+    "ned": 0.833
+   },
+   "ibero": {
+    "top": [
+     [
+      "afa\u0292ir",
+      0.486
+     ],
+     [
+      "afa\u00f0ir",
+      0.075
+     ],
+     [
+      "a\u0272a\u0292ir",
+      0.036
+     ]
+    ],
+    "logp_latin": -19.86,
+    "logp_mode": -0.72,
+    "mode_len": 6,
+    "ned": 0.833
+   },
+   "italo": {
+    "top": [
+     [
+      "ad\u0268wga",
+      0.087
+     ],
+     [
+      "adawgr",
+      0.022
+     ],
+     [
+      "ad\u0268uga",
+      0.014
+     ]
+    ],
+    "logp_latin": -17.23,
+    "logp_mode": -2.44,
+    "mode_len": 6,
+    "ned": 0.667
+   },
+   "leaves": {
+    "spa": "a\u0272a\u00f0ir",
+    "por": "akr\u0268\u0283setar",
+    "cat": "\u0268f\u0268\u0292i",
+    "ita": "add\u0292und\u0292ere",
+    "fra": "a\u0292ute",
+    "ron": "ad\u0268wga"
+   },
+   "leaf_ned": 0.724
+  },
+  {
+   "concept": "88_dirt",
+   "latin": "sordes",
+   "latin_len": 6,
+   "root": {
+    "top": [
+     [
+      "suritsare",
+      0.072
+     ],
+     [
+      "murdare",
+      0.031
+     ],
+     [
+      "sudlt\u0283um",
+      0.031
+     ]
+    ],
+    "logp_latin": -20.83,
+    "logp_mode": -2.64,
+    "mode_len": 8,
+    "ned": 0.75
+   },
+   "ibero": {
+    "top": [
+     [
+      "brutisia",
+      0.092
+     ],
+     [
+      "\u0283ule\u00f0a\u00f0e",
+      0.084
+     ],
+     [
+      "su\u0292e\u00f0a\u00f0e",
+      0.066
+     ]
+    ],
+    "logp_latin": -22.35,
+    "logp_mode": -2.39,
+    "mode_len": 8,
+    "ned": 0.875
+   },
+   "italo": {
+    "top": [
+     [
+      "murd\u0268re",
+      0.053
+     ],
+     [
+      "sudlt\u0283um",
+      0.052
+     ],
+     [
+      "murdare",
+      0.013
+     ]
+    ],
+    "logp_latin": -21.79,
+    "logp_mode": -2.94,
+    "mode_len": 7,
+    "ned": 0.714
+   },
+   "leaves": {
+    "spa": "su\u03b8je\u00f0a\u00f0",
+    "por": "\u0283u\u0292i\u00f0a\u00f0e",
+    "cat": "brutisia",
+    "ita": "sudit\u0283ume",
+    "fra": "bu",
+    "ron": "murd\u0268rje"
+   },
+   "leaf_ned": 0.875
+  },
+  {
+   "concept": "891_hinder",
+   "latin": "impedire",
+   "latin_len": 8,
+   "root": {
+    "top": [
+     [
+      "imp\u0268\u00f0ir",
+      0.221
+     ],
+     [
+      "impedir",
+      0.097
+     ],
+     [
+      "impe\u00f0ir",
+      0.087
+     ]
+    ],
+    "logp_latin": -11.16,
+    "logp_mode": -1.51,
+    "mode_len": 7,
+    "ned": 0.375
+   },
+   "ibero": {
+    "top": [
+     [
+      "imp\u0268\u00f0ir",
+      0.733
+     ],
+     [
+      "imp\u0268dir",
+      0.123
+     ],
+     [
+      "imp\u0268\u00f0i",
+      0.103
+     ]
+    ],
+    "logp_latin": -21.01,
+    "logp_mode": -0.31,
+    "mode_len": 7,
+    "ned": 0.375
+   },
+   "italo": {
+    "top": [
+     [
+      "impedir",
+      0.185
+     ],
+     [
+      "impe\u00f0ir",
+      0.134
+     ],
+     [
+      "imp\u0268\u00f0ir",
+      0.124
+     ]
+    ],
+    "logp_latin": -12.66,
+    "logp_mode": -1.69,
+    "mode_len": 7,
+    "ned": 0.125
+   },
+   "leaves": {
+    "spa": "estorvar",
+    "por": "ip\u0268\u00f0ir",
+    "cat": "imp\u0268\u00f0i",
+    "ita": "impedire",
+    "fra": "\u0292ene",
+    "ron": "stinger"
+   },
+   "leaf_ned": 0.604
+  },
+  {
+   "concept": "89_lake",
+   "latin": "lakus",
+   "latin_len": 5,
+   "root": {
+    "top": [
+     [
+      "lako",
+      0.83
+     ],
+     [
+      "lakoo",
+      0.021
+     ],
+     [
+      "laako",
+      0.003
+     ]
+    ],
+    "logp_latin": -13.11,
+    "logp_mode": -0.19,
+    "mode_len": 4,
+    "ned": 0.4
+   },
+   "ibero": {
+    "top": [
+     [
+      "lako",
+      0.84
+     ],
+     [
+      "lakoo",
+      0.016
+     ]
+    ],
+    "logp_latin": -19.16,
+    "logp_mode": -0.17,
+    "mode_len": 4,
+    "ned": 0.4
+   },
+   "italo": {
+    "top": [
+     [
+      "lako",
+      0.926
+     ],
+     [
+      "lak",
+      0.07
+     ]
+    ],
+    "logp_latin": -22.01,
+    "logp_mode": -0.08,
+    "mode_len": 4,
+    "ned": 0.4
+   },
+   "leaves": {
+    "spa": "la\u0295o",
+    "por": "la\u0295u",
+    "cat": "\u028eak",
+    "ita": "lago",
+    "fra": "lak",
+    "ron": "lak"
+   },
+   "leaf_ned": 0.5
+  },
+  {
+   "concept": "900_give",
+   "latin": "donare",
+   "latin_len": 6,
+   "root": {
+    "top": [
+     [
+      "re\u0295alar",
+      0.369
+     ],
+     [
+      "regalar",
+      0.203
+     ],
+     [
+      "r\u0268\u0295alar",
+      0.048
+     ]
+    ],
+    "logp_latin": -19.85,
+    "logp_mode": -1.0,
+    "mode_len": 7,
+    "ned": 0.857
+   },
+   "ibero": {
+    "top": [
+     [
+      "re\u0295alar",
+      0.7
+     ],
+     [
+      "r\u0268\u0295alar",
+      0.178
+     ]
+    ],
+    "logp_latin": -27.53,
+    "logp_mode": -0.36,
+    "mode_len": 7,
+    "ned": 0.857
+   },
+   "italo": {
+    "top": [
+     [
+      "regalar",
+      0.434
+     ],
+     [
+      "re\u0295alar",
+      0.234
+     ],
+     [
+      "rekalar",
+      0.043
+     ]
+    ],
+    "logp_latin": -20.94,
+    "logp_mode": -0.83,
+    "mode_len": 7,
+    "ned": 0.857
+   },
+   "leaves": {
+    "spa": "re\u0295alar",
+    "por": "uf\u0268r\u0268ser",
+    "cat": "r\u0268\u0295\u0268la",
+    "ita": "regalare",
+    "fra": "ofrir",
+    "ron": "d\u0268ruj"
+   },
+   "leaf_ned": 0.837
+  },
+  {
+   "concept": "907_wake",
+   "latin": "ekskitare",
+   "latin_len": 9,
+   "root": {
+    "top": [
+     [
+      "despertar",
+      0.24
+     ],
+     [
+      "espertar",
+      0.191
+     ],
+     [
+      "zvejar",
+      0.014
+     ]
+    ],
+    "logp_latin": -29.7,
+    "logp_mode": -1.43,
+    "mode_len": 9,
+    "ned": 0.667
+   },
+   "ibero": {
+    "top": [
+     [
+      "despertar",
+      0.771
+     ]
+    ],
+    "logp_latin": -36.65,
+    "logp_mode": -0.26,
+    "mode_len": 9,
+    "ned": 0.667
+   },
+   "italo": {
+    "top": [
+     [
+      "zvejar",
+      0.043
+     ],
+     [
+      "espertar",
+      0.026
+     ],
+     [
+      "esperar",
+      0.025
+     ]
+    ],
+    "logp_latin": -31.9,
+    "logp_mode": -3.14,
+    "mode_len": 6,
+    "ned": 0.778
+   },
+   "leaves": {
+    "spa": "despertar",
+    "por": "akur\u00f0ar",
+    "cat": "d\u0268sp\u0268rta",
+    "ita": "zve\u028eare",
+    "fra": "eveje",
+    "ron": "trez"
+   },
+   "leaf_ned": 0.722
+  },
+  {
+   "concept": "916_invite",
+   "latin": "inwitare",
+   "latin_len": 8,
+   "root": {
+    "top": [
+     [
+      "imvitar",
+      0.649
+     ],
+     [
+      "imeitar",
+      0.006
+     ],
+     [
+      "imvitap",
+      0.004
+     ]
+    ],
+    "logp_latin": -20.2,
+    "logp_mode": -0.43,
+    "mode_len": 7,
+    "ned": 0.375
+   },
+   "ibero": {
+    "top": [
+     [
+      "imvitar",
+      0.867
+     ]
+    ],
+    "logp_latin": -24.31,
+    "logp_mode": -0.14,
+    "mode_len": 7,
+    "ned": 0.375
+   },
+   "italo": {
+    "top": [
+     [
+      "imvitar",
+      0.718
+     ],
+     [
+      "imvita",
+      0.023
+     ],
+     [
+      "imvitap",
+      0.002
+     ]
+    ],
+    "logp_latin": -22.28,
+    "logp_mode": -0.33,
+    "mode_len": 7,
+    "ned": 0.375
+   },
+   "leaves": {
+    "spa": "imbitar",
+    "por": "kovi\u00f0ar",
+    "cat": "imvita",
+    "ita": "imvitare",
+    "fra": "evite",
+    "ron": "invita"
+   },
+   "leaf_ned": 0.458
+  },
+  {
+   "concept": "949_hunt",
+   "latin": "wenari",
+   "latin_len": 6,
+   "root": {
+    "top": [
+     [
+      "kasar",
+      0.422
+     ],
+     [
+      "katsar",
+      0.208
+     ],
+     [
+      "kasrar",
+      0.108
+     ]
+    ],
+    "logp_latin": -21.31,
+    "logp_mode": -0.86,
+    "mode_len": 5,
+    "ned": 0.667
+   },
+   "ibero": {
+    "top": [
+     [
+      "kasar",
+      0.854
+     ],
+     [
+      "ka\u03b8ar",
+      0.045
+     ],
+     [
+      "katsar",
+      0.016
+     ]
+    ],
+    "logp_latin": -27.81,
+    "logp_mode": -0.16,
+    "mode_len": 5,
+    "ned": 0.667
+   },
+   "italo": {
+    "top": [
+     [
+      "kasar",
+      0.342
+     ],
+     [
+      "katsar",
+      0.241
+     ],
+     [
+      "kasrar",
+      0.075
+     ]
+    ],
+    "logp_latin": -22.31,
+    "logp_mode": -1.07,
+    "mode_len": 5,
+    "ned": 0.667
+   },
+   "leaves": {
+    "spa": "ka\u03b8ar",
+    "por": "kasar",
+    "cat": "k\u0268sa",
+    "ita": "katt\u0283are",
+    "fra": "\u0283ase",
+    "ron": "v\u0268na"
+   },
+   "leaf_ned": 0.73
+  },
+  {
+   "concept": "959_ripen",
+   "latin": "matureskere",
+   "latin_len": 11,
+   "root": {
+    "top": [
+     [
+      "maturear",
+      0.312
+     ],
+     [
+      "ma\u00f0urear",
+      0.216
+     ],
+     [
+      "maturiar",
+      0.191
+     ]
+    ],
+    "logp_latin": -33.21,
+    "logp_mode": -1.17,
+    "mode_len": 8,
+    "ned": 0.364
+   },
+   "ibero": {
+    "top": [
+     [
+      "ma\u00f0urear",
+      0.665
+     ],
+     [
+      "ma\u00f0uriar",
+      0.2
+     ],
+     [
+      "ma\u00f0urar",
+      0.053
+     ]
+    ],
+    "logp_latin": -45.08,
+    "logp_mode": -0.41,
+    "mode_len": 8,
+    "ned": 0.455
+   },
+   "italo": {
+    "top": [
+     [
+      "maturiar",
+      0.439
+     ],
+     [
+      "maturear",
+      0.27
+     ],
+     [
+      "ma\u00f0urar",
+      0.067
+     ]
+    ],
+    "logp_latin": -40.99,
+    "logp_mode": -0.82,
+    "mode_len": 8,
+    "ned": 0.455
+   },
+   "leaves": {
+    "spa": "ma\u00f0urar",
+    "por": "ama\u00f0ureser",
+    "cat": "m\u0268\u00f0ura",
+    "ita": "maturare",
+    "fra": "myrir",
+    "ron": "p\u0268rguj"
+   },
+   "leaf_ned": 0.606
+  },
+  {
+   "concept": "96_mountain",
+   "latin": "mos",
+   "latin_len": 3,
+   "root": {
+    "top": [
+     [
+      "montae",
+      0.073
+     ],
+     [
+      "mont\u0272e",
+      0.071
+     ],
+     [
+      "muonta\u0272e",
+      0.048
+     ]
+    ],
+    "logp_latin": -14.39,
+    "logp_mode": -2.61,
+    "mode_len": 6,
+    "ned": 0.667
+   },
+   "ibero": {
+    "top": [
+     [
+      "munta\u0272a",
+      0.08
+     ],
+     [
+      "munta\u0272e",
+      0.08
+     ],
+     [
+      "munta\u0272\u0268",
+      0.06
+     ]
+    ],
+    "logp_latin": -15.41,
+    "logp_mode": -2.52,
+    "mode_len": 7,
+    "ned": 0.857
+   },
+   "italo": {
+    "top": [
+     [
+      "monte",
+      0.638
+     ]
+    ],
+    "logp_latin": -16.68,
+    "logp_mode": -0.45,
+    "mode_len": 5,
+    "ned": 0.6
+   },
+   "leaves": {
+    "spa": "monte",
+    "por": "mot\u0268",
+    "cat": "munta\u0272\u0268",
+    "ita": "monte",
+    "fra": "mo",
+    "ron": "munte"
+   },
+   "leaf_ned": 0.615
+  },
+  {
+   "concept": "972_sweep",
+   "latin": "werere",
+   "latin_len": 6,
+   "root": {
+    "top": [
+     [
+      "varer",
+      0.044
+     ],
+     [
+      "m\u0268tura",
+      0.039
+     ],
+     [
+      "spattsar",
+      0.031
+     ]
+    ],
+    "logp_latin": -18.97,
+    "logp_mode": -3.12,
+    "mode_len": 5,
+    "ned": 0.5
+   },
+   "ibero": {
+    "top": [
+     [
+      "varer",
+      0.3
+     ],
+     [
+      "askumvra",
+      0.073
+     ],
+     [
+      "varlr",
+      0.03
+     ]
+    ],
+    "logp_latin": -18.88,
+    "logp_mode": -1.2,
+    "mode_len": 5,
+    "ned": 0.5
+   },
+   "italo": {
+    "top": [
+     [
+      "m\u0268tura",
+      0.098
+     ],
+     [
+      "spattsar",
+      0.058
+     ],
+     [
+      "apattsar",
+      0.038
+     ]
+    ],
+    "logp_latin": -19.73,
+    "logp_mode": -2.33,
+    "mode_len": 6,
+    "ned": 0.833
+   },
+   "leaves": {
+    "spa": "barer",
+    "por": "varer",
+    "cat": "\u0268skumvra",
+    "ita": "spattsare",
+    "fra": "baleje",
+    "ron": "m\u0268tura"
+   },
+   "leaf_ned": 0.688
+  }
+ ],
+ "secs": 495.52202463150024
+}

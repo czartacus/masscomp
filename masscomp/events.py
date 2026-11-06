@@ -2,7 +2,7 @@
 import math, os
 import numpy as np
 from scipy import stats
-from .segments import N_SEG, N_OUT
+from .segments import N_SEG, N_OUT, N_ENV
 
 INHERIT, REPLACE, BORROW = 0, 1, 2
 MIN_LEN, MAX_LEN = 2, 6
@@ -27,20 +27,27 @@ SIGMA2_U = 16.0                           # u_e[s,s'] ~ N(0, t_e * SIGMA2_U); sl
 # by more than a few percent (identity sits at logit ~6, a one-feature neighbour at ~ -0.3), so
 # no prior-drawn rule is audible in the data and the u layer cannot be tested. Sound laws are
 # near-categorical: a slab wide enough to reach logit parity with identity is the right prior.
-# Rule slots: (s, o) substitution / deletion, ("ins", o) insertion; with MASSCOMP_U_CONTEXT=1 also the
-# left-context-conditioned (s, o, ctx) and ("ins", o, ctx), ctx = the preceding input segment or
-# N_SEG (start of form). An unconditioned rule applies in every context; a conditioned one adds to a
-# single context (transducer.py builds a (ctx, s, o) table and the exact DP reads it; the alignment
-# lattice proposes from the context-free table and the moves correct by Metropolis-Hastings).
-U_CONTEXT = os.environ.get("MASSCOMP_U_CONTEXT", "0") == "1"
-N_U_SLOTS = N_SEG * (N_OUT - 1) + N_SEG   # off-diagonal sub/del entries + insertion entries (context-free)
-if U_CONTEXT:
-    N_U_SLOTS += (N_SEG + 1) * (N_SEG * (N_OUT - 1) + N_SEG)
-# Rule budget: each slot present w.p. pi_u(t). The plan's prior expects 3 rules per edge whatever its
-# length (MASSCOMP_U_RULES, default 3). MASSCOMP_U_PER_T=<kappa> makes it kappa * t_e rules per edge
-# instead (a real edge carries dozens; the budget should scale with time like the slab variance does).
+# Rule slots: (s, o) substitution / deletion and ("ins", o) insertion are context-free: a rule applies
+# wherever its input segment occurs on the edge. With MASSCOMP_U_ENV_RULES > 0 there are also the
+# conditioned slots (s, o, env) and ("ins", o, env), env one of segments.ENV_NAMES (initial / final
+# position, after or before a vowel, between vowels, after or before a consonant, before a front or a
+# high vowel, after a nasal): the rule adds its weight only at positions where the environment holds,
+# so a conditioned sound change pays no penalty for the input segment staying put elsewhere. The two
+# kinds have separate budgets, so a conditioned rule costs log(N_ENV) more than a context-free one -
+# the price of naming its environment - and no more. The transducer builds per-position tables for
+# edges carrying conditioned rules and the exact DP reads them; the alignment lattice proposes from
+# the context-free tables and the moves correct by Metropolis-Hastings.
+N_U_SLOTS = N_SEG * (N_OUT - 1) + N_SEG   # context-free: off-diagonal sub/del entries + insertion entries
+N_U_ENV_SLOTS = N_ENV * (N_SEG * (N_OUT - 1) + N_SEG)
+# Rule budget: each context-free slot present w.p. pi_u(t). The plan's prior expects 3 rules per edge
+# whatever its length (MASSCOMP_U_RULES, default 3). MASSCOMP_U_PER_T=<kappa> makes it kappa * t_e rules
+# per edge instead (a real edge carries dozens; the budget should scale with time like the slab variance
+# does). MASSCOMP_U_ENV_RULES is the expected number of conditioned rules per edge (0 = none, the
+# plan's model).
 U_RULES = float(os.environ.get("MASSCOMP_U_RULES", "3"))
 U_PER_T = float(os.environ.get("MASSCOMP_U_PER_T", "0"))
+U_ENV_RULES = float(os.environ.get("MASSCOMP_U_ENV_RULES", "0"))
+PI_U_ENV = U_ENV_RULES / N_U_ENV_SLOTS if U_ENV_RULES > 0 else 0.0
 PI_U = U_RULES / N_U_SLOTS                 # the length-free default, kept for callers that need a number
 
 
@@ -189,20 +196,37 @@ def sample_G(rng):
 def u_slots():
     out = [(s, o) for s in range(N_SEG) for o in range(N_OUT) if o != s]
     out += [("ins", s) for s in range(N_SEG)]
-    if U_CONTEXT:
-        out += [(s, o, ctx) for ctx in range(N_SEG + 1) for s in range(N_SEG) for o in range(N_OUT) if o != s]
-        out += [("ins", s, ctx) for ctx in range(N_SEG + 1) for s in range(N_SEG)]
     assert len(out) == N_U_SLOTS
     return out
 
 
+def u_env_slots():
+    out = [(s, o, env) for env in range(N_ENV) for s in range(N_SEG) for o in range(N_OUT) if o != s]
+    out += [("ins", s, env) for env in range(N_ENV) for s in range(N_SEG)]
+    assert len(out) == N_U_ENV_SLOTS
+    return out
+
+
 U_SLOTS = u_slots()
+U_ENV_SLOTS = u_env_slots() if U_ENV_RULES > 0 else []
+U_ALL_SLOTS = U_SLOTS + U_ENV_SLOTS            # every slot a birth may propose
+N_U_ALL_SLOTS = len(U_ALL_SLOTS)
+
+
+def is_env_slot(slot):
+    return len(slot) == 3
 
 
 def log_prior_u(u, t):
-    """Sparse spike-and-slab: each slot present w.p. pi_u(t), value N(0, t*SIGMA2_U)."""
-    k = len(u); p = pi_u(t)
+    """Sparse spike-and-slab: each context-free slot present w.p. pi_u(t), each conditioned slot w.p.
+    PI_U_ENV; values N(0, t*SIGMA2_U)."""
+    k_env = sum(1 for sl in u if len(sl) == 3); k = len(u) - k_env
+    p = pi_u(t)
     lp = k * math.log(p) + (N_U_SLOTS - k) * math.log1p(-p)
+    if k_env or U_ENV_RULES > 0:
+        if PI_U_ENV <= 0.0:
+            return -math.inf                                   # conditioned rules are off
+        lp += k_env * math.log(PI_U_ENV) + (N_U_ENV_SLOTS - k_env) * math.log1p(-PI_U_ENV)
     var = t * SIGMA2_U
     for w in u.values():
         lp += -0.5 * w * w / var - 0.5 * math.log(2 * math.pi * var)
@@ -210,18 +234,19 @@ def log_prior_u(u, t):
 
 
 def sample_u(t, rng, p=None):
-    """Draw a rule set from the prior; `p` overrides the inclusion probability (the simulator's own
-    budget, MASSCOMP_SIM_U_RULES, so a study can fit with a larger budget than the data were made with)."""
+    """Draw a rule set from the prior; `p` overrides the context-free inclusion probability (the
+    simulator's own budget, MASSCOMP_SIM_U_RULES, so a study can fit with a larger budget than the
+    data were made with). The context-free slots are drawn one uniform each, exactly as before, so
+    the seeded datasets are unchanged; the conditioned slots are drawn after them."""
     u = {}
     p = pi_u(t) if p is None else p
-    if not U_CONTEXT:                 # the plan's slots, drawn exactly as before (seeded datasets unchanged)
-        for slot in U_SLOTS:
-            if rng.random() < p:
-                u[slot] = float(rng.normal(0, math.sqrt(t * SIGMA2_U)))
-        return u
-    hit = np.nonzero(rng.random(N_U_SLOTS) < p)[0]
-    for i in hit:
-        u[U_SLOTS[int(i)]] = float(rng.normal(0, math.sqrt(t * SIGMA2_U)))
+    for slot in U_SLOTS:
+        if rng.random() < p:
+            u[slot] = float(rng.normal(0, math.sqrt(t * SIGMA2_U)))
+    if U_ENV_RULES > 0:
+        hit = np.nonzero(rng.random(N_U_ENV_SLOTS) < PI_U_ENV)[0]
+        for i in hit:
+            u[U_ENV_SLOTS[int(i)]] = float(rng.normal(0, math.sqrt(t * SIGMA2_U)))
     return u
 
 

@@ -13,7 +13,7 @@ The DP is written in plain Python on float lists: ~10x faster than numpy scalars
 import math
 import numpy as np
 from numba import njit
-from .segments import N_SEG, N_OUT, EPS, DIST, FORTITION
+from .segments import N_SEG, N_OUT, EPS, DIST, FORTITION, ENV_MASK, BOUNDARY
 
 FLOOR, FLOOR_PER_SEG = -40.0, 8.0
 DUMMY = N_SEG          # "previous segment" index at the start of the form
@@ -75,19 +75,19 @@ def _dp(ls, li, y1, y2):
 
 
 @njit(cache=True, fastmath=False)
-def _dp3(ls3, li, y1, y2):
-    """_dp with a left-context substitution table ls3[prev, s, o] (prev = the input segment before s,
-    DUMMY at the start): the rules u_e[(s, o, prev)] condition on the preceding input segment."""
-    EPS = ls3.shape[1]; NOINS = EPS; DUMMY = EPS
-    n = y1.shape[0]; m = y2.shape[0]
+def _dp_pos(lsp, lip, y2):
+    """_dp with position-indexed tables: lsp[i, o] is the log-substitution row of input position i and
+    lip[i, o] the log-insertion row of the slot before position i (lip[n] the final slot). Edges with
+    conditioned rules build these per input form (EdgeParams.pos_tables), since a row then depends on
+    the segments either side of the position."""
+    EPS = lsp.shape[1] - 1; NOINS = EPS
+    n = lsp.shape[0]; m = y2.shape[0]
     cur = np.full(m + 1, NEG)
     cur[0] = 0.0
     nxt = np.full(m + 1, NEG)
     for i in range(n):
-        prev = y1[i - 1] if i > 0 else DUMMY
-        s = y1[i]
-        noins = li[prev, NOINS]
-        ldel = ls3[prev, s, EPS]
+        noins = lip[i, NOINS]
+        ldel = lsp[i, EPS]
         for j in range(m + 1):
             nxt[j] = NEG
         for j in range(m + 1):
@@ -97,26 +97,37 @@ def _dp3(ls3, li, y1, y2):
             nxt[j] = _lae_j(nxt[j], f + noins + ldel)
             if j < m:
                 o = y2[j]
-                v = _lae_j(f + noins + ls3[prev, s, o], f + li[prev, o] + ldel)
+                v = _lae_j(f + noins + lsp[i, o], f + lip[i, o] + ldel)
                 nxt[j + 1] = _lae_j(nxt[j + 1], v)
                 if j + 1 < m:
-                    nxt[j + 2] = _lae_j(nxt[j + 2], f + li[prev, o] + ls3[prev, s, y2[j + 1]])
+                    nxt[j + 2] = _lae_j(nxt[j + 2], f + lip[i, o] + lsp[i, y2[j + 1]])
         tmp = cur; cur = nxt; nxt = tmp
-    prev = y1[n - 1] if n > 0 else DUMMY
-    out = cur[m] + li[prev, NOINS]
+    out = cur[m] + lip[n, NOINS]
     if m > 0:
-        out = _lae_j(out, cur[m - 1] + li[prev, y2[m - 1]])
+        out = _lae_j(out, cur[m - 1] + lip[n, y2[m - 1]])
+    return out
+
+
+def _upd(lst, match, delta, new_entry):
+    """The rule list with `delta` added to the weight of the entry that `match`es (dropped when the
+    weight becomes 0, i.e. a death), or `new_entry` appended when none does (a birth)."""
+    out, found = [], False
+    for it in lst:
+        if match(it):
+            found = True
+            w = it[-1] + delta
+            if w != 0.0:
+                out.append(it[:-1] + (w,))
+        else:
+            out.append(it)
+    if not found:
+        out.append(new_entry)
     return out
 
 
 def _lse_rows(a):
     m = a.max(axis=1, keepdims=True)
     return m + np.log(np.exp(a - m).sum(axis=1, keepdims=True))
-
-
-def _norm3(psi3):
-    m = psi3.max(axis=2, keepdims=True)
-    return psi3 - (m + np.log(np.exp(psi3 - m).sum(axis=2, keepdims=True)))
 
 
 _ARR = {}
@@ -168,27 +179,72 @@ class EdgeParams:
             psi[:, :N_SEG] += shift * (1.0 - np.eye(N_SEG))
             psi[:, EPS] += shift
             ins[:, :N_SEG] += shift
-        psi3 = None                                       # (N_SEG+1 contexts, N_SEG, N_OUT), only with conditioned rules
+        # conditioned rules (s, o, env) / ("ins", o, env) are kept sparse: env_sub[s] = [(o, env, w)],
+        # env_ins[env] = [(o, w)]; pos_tables() turns them into per-position rows for one input form
+        env_sub, env_ins = {}, {}
         for key, w in u.items():
             if key[0] == "ins":
-                if len(key) == 3:                         # ("ins", o, ctx): insertion of o after ctx only
-                    ins[key[2], key[1]] += w
+                if len(key) == 3:
+                    env_ins.setdefault(key[2], []).append((key[1], w))
                 else:
                     ins[:, key[1]] += w
-            elif len(key) == 3:                           # (s, o, ctx): s -> o after ctx only
-                if psi3 is None:
-                    psi3 = np.repeat(psi[None, :, :], N_SEG + 1, axis=0)
-                psi3[key[2], key[0], key[1]] += w
+            elif len(key) == 3:
+                env_sub.setdefault(key[0], []).append((key[1], key[2], w))
             else:
                 psi[key[0], key[1]] += w
-                if psi3 is not None:
-                    psi3[:, key[0], key[1]] += w
-        self._psi, self._ins, self._psi3 = psi, ins, psi3   # unnormalised, kept for derive()
+        self._psi, self._ins = psi, ins                    # unnormalised, kept for derive()
+        self.env_sub, self.env_ins = env_sub, env_ins
         self.log_sub_np = psi - _lse_rows(psi)             # the context-free table: the lattice proposals use it
         self.log_ins_np = ins - _lse_rows(ins)
-        self.log_sub3_np = _norm3(psi3) if psi3 is not None else None
         self._cache = {}
         self._cache_lat = None
+        self._pos_cache = {}
+
+    @property
+    def conditioned(self):
+        return bool(self.env_sub or self.env_ins)
+
+    def pos_tables(self, y1):
+        """(lsp, lip) for input form y1: lsp[i] the normalised log-substitution row of position i, lip[i]
+        the log-insertion row of the slot before position i (lip[n]: the final slot). Rows without a
+        conditioned rule in force are the context-free ones; memoised per form."""
+        tabs = self._pos_cache.get(y1)
+        if tabs is not None:
+            return tabs
+        n = len(y1)
+        y = _arr(y1)
+        lsp = self.log_sub_np[y] if n else np.zeros((0, N_OUT))
+        prevs = np.concatenate(([DUMMY], y))                                   # slot i: after prevs[i], before y1[i]
+        lip = self.log_ins_np[prevs]
+        if self.env_sub or self.env_ins:
+            lsp = lsp.copy(); lip = lip.copy()
+            for i in range(n + 1):
+                prev = y1[i - 1] if i > 0 else BOUNDARY
+                here = y1[i] if i < n else BOUNDARY
+                nxt = y1[i + 1] if i + 1 < n else BOUNDARY
+                if self.env_ins:                                               # the slot before position i
+                    mask = int(ENV_MASK[prev, here]); row = None
+                    for env, lst in self.env_ins.items():
+                        if mask >> env & 1:
+                            if row is None:
+                                row = self._ins[prev].copy()
+                            for o, w in lst:
+                                row[o] += w
+                    if row is not None:
+                        m = row.max(); lip[i] = row - (m + np.log(np.exp(row - m).sum()))
+                if i < n and here in self.env_sub:
+                    mask = int(ENV_MASK[prev, nxt]); row = None
+                    for o, env, w in self.env_sub[here]:
+                        if mask >> env & 1:
+                            if row is None:
+                                row = self._psi[here].copy()
+                            row[o] += w
+                    if row is not None:
+                        m = row.max(); lsp[i] = row - (m + np.log(np.exp(row - m).sum()))
+        tabs = (lsp, lip)
+        if len(self._pos_cache) < 50000:
+            self._pos_cache[y1] = tabs
+        return tabs
 
     @property
     def top_parents(self):
@@ -208,31 +264,36 @@ class EdgeParams:
     def derive(self, slot, delta):
         """The EdgeParams with `delta` added to one rule slot: for a substitution/deletion slot (s, o)
         only row s of the substitution table changes; for an insertion slot ("ins", o) the insertion
-        table is renormalised. Tables that do not change are shared with self (they are never
-        mutated), so the derived object costs one row or one small table, not a rebuild."""
+        table is renormalised; for a conditioned slot only the sparse rule list changes (the
+        per-position tables are rebuilt on demand). Tables that do not change are shared with self
+        (they are never mutated), so the derived object costs one row or one small table, not a rebuild."""
         new = EdgeParams.__new__(EdgeParams)
-        new._cache = {}; new._cache_lat = None; new.t = self.t
-        new._psi, new._ins, new._psi3 = self._psi, self._ins, self._psi3
-        new.log_sub_np, new.log_ins_np, new.log_sub3_np = self.log_sub_np, self.log_ins_np, self.log_sub3_np
-        if slot[0] == "ins":
-            ins = self._ins.copy()
-            if len(slot) == 3:
-                ins[slot[2], slot[1]] += delta
-                li = self.log_ins_np.copy(); row = ins[slot[2]]; m = row.max()
-                li[slot[2]] = row - (m + np.log(np.exp(row - m).sum()))
-                new.log_ins_np = li
+        new._cache = {}; new._cache_lat = None; new._pos_cache = {}; new.t = self.t
+        new._psi, new._ins = self._psi, self._ins
+        new.log_sub_np, new.log_ins_np = self.log_sub_np, self.log_ins_np
+        new.env_sub, new.env_ins = self.env_sub, self.env_ins
+        if len(slot) == 3:                                 # conditioned: edit the sparse list for that key
+            if slot[0] == "ins":
+                _, o, env = slot
+                new.env_ins = dict(self.env_ins)
+                lst = _upd(self.env_ins.get(env, []), lambda it: it[0] == o, delta, (o, delta))
+                if lst:
+                    new.env_ins[env] = lst
+                else:
+                    new.env_ins.pop(env, None)
             else:
-                ins[:, slot[1]] += delta
-                new.log_ins_np = ins - _lse_rows(ins)
+                s_, o, env = slot
+                new.env_sub = dict(self.env_sub)
+                lst = _upd(self.env_sub.get(s_, []), lambda it: it[0] == o and it[1] == env, delta, (o, env, delta))
+                if lst:
+                    new.env_sub[s_] = lst
+                else:
+                    new.env_sub.pop(s_, None)
+        elif slot[0] == "ins":
+            ins = self._ins.copy()
+            ins[:, slot[1]] += delta
+            new.log_ins_np = ins - _lse_rows(ins)
             new._ins = ins
-        elif len(slot) == 3:
-            s_, o, ctx = slot
-            psi3 = (self._psi3 if self._psi3 is not None else np.repeat(self._psi[None, :, :], N_SEG + 1, axis=0)).copy()
-            psi3[ctx, s_, o] += delta
-            ls3 = self.log_sub3_np.copy() if self.log_sub3_np is not None else np.repeat(self.log_sub_np[None, :, :], N_SEG + 1, axis=0)
-            row = psi3[ctx, s_]; m = row.max()
-            ls3[ctx, s_] = row - (m + np.log(np.exp(row - m).sum()))
-            new._psi3, new.log_sub3_np = psi3, ls3
         else:
             s_, o = slot
             psi = self._psi.copy(); psi[s_, o] += delta
@@ -240,12 +301,6 @@ class EdgeParams:
             row = psi[s_]; m = row.max()
             ls[s_] = row - (m + np.log(np.exp(row - m).sum()))
             new._psi, new.log_sub_np = psi, ls
-            if self._psi3 is not None:
-                psi3 = self._psi3.copy(); psi3[:, s_, o] += delta
-                ls3 = self.log_sub3_np.copy()
-                rows = psi3[:, s_, :]; m3 = rows.max(axis=1, keepdims=True)
-                ls3[:, s_, :] = rows - (m3 + np.log(np.exp(rows - m3).sum(axis=1, keepdims=True)))
-                new._psi3, new.log_sub3_np = psi3, ls3
         return new
 
     # the list and cumulative tables are only needed by the pure-Python reference DP and the simulator
@@ -273,13 +328,6 @@ class EdgeParams:
         return c
 
     @property
-    def _c_sub3(self):
-        c = getattr(self, "_c_sub3_", None)
-        if c is None:
-            c = self._c_sub3_ = np.cumsum(np.exp(self.log_sub3_np), axis=2)
-        return c
-
-    @property
     def _c_ins(self):
         c = getattr(self, "_c_ins_", None)
         if c is None:
@@ -291,8 +339,9 @@ class EdgeParams:
         """An EdgeParams over given (already normalised) log tables; used for proposal transducers."""
         self = cls.__new__(cls)
         self.log_sub_np = np.asarray(log_sub, dtype=float); self.log_ins_np = np.asarray(log_ins, dtype=float)
-        self.log_sub3_np = None; self._psi3 = None
-        self._cache = {}; self._cache_lat = None
+        self.env_sub, self.env_ins = {}, {}
+        self._psi, self._ins = self.log_sub_np, self.log_ins_np
+        self._cache = {}; self._cache_lat = None; self._pos_cache = {}
         return self
 
     def reverse(self):
@@ -329,16 +378,12 @@ class EdgeParams:
                 self._cache[key] = v
         return v
 
-    @property
-    def conditioned(self):
-        return self.log_sub3_np is not None
-
     def logprob_lattice(self, y1, y2):
         """log probability under the context-free tables (log_sub_np, log_ins_np): the density the
         alignment lattice (ffbs.py) samples from. Equal to logprob() unless the edge carries
         context-conditioned substitution rules, in which case the lattice is a proposal and the MH
         ratio uses this for q and logprob() for the target."""
-        if self.log_sub3_np is None:
+        if not self.conditioned:
             return self.logprob(y1, y2)
         if self._cache_lat is None:
             self._cache_lat = {}
@@ -353,8 +398,9 @@ class EdgeParams:
         return v
 
     def _logprob(self, y1, y2):
-        if self.log_sub3_np is not None:
-            v = _dp3(self.log_sub3_np, self.log_ins_np, _arr(y1), _arr(y2))
+        if self.conditioned:
+            lsp, lip = self.pos_tables(y1)
+            v = _dp_pos(lsp, lip, _arr(y2))
         else:
             v = _dp(self.log_sub_np, self.log_ins_np, _arr(y1), _arr(y2))
         if v <= -5e29:
@@ -403,14 +449,17 @@ class EdgeParams:
         us = rng.random(2 * n + 1)
         out = []
         k_u = 0
-        c3 = self._c_sub3 if self.log_sub3_np is not None else None
+        if self.conditioned:
+            lsp, lip = self.pos_tables(y1)
+            c_sub, c_ins = np.cumsum(np.exp(lsp), axis=1), np.cumsum(np.exp(lip), axis=1)
         for i in range(n + 1):
             prev = y1[i - 1] if i > 0 else DUMMY
-            k = int(np.searchsorted(self._c_ins[prev], us[k_u])); k_u += 1
+            crow = c_ins[i] if self.conditioned else self._c_ins[prev]
+            k = int(np.searchsorted(crow, us[k_u])); k_u += 1
             if k < NOINS:
                 out.append(k)
             if i < n:
-                row = c3[prev, y1[i]] if c3 is not None else self._c_sub[y1[i]]
+                row = c_sub[i] if self.conditioned else self._c_sub[y1[i]]
                 o = int(np.searchsorted(row, us[k_u])); k_u += 1
                 if o < EPS:
                     out.append(o)
@@ -418,25 +467,26 @@ class EdgeParams:
 
 
 def brute_force_logprob(ep, y1, y2):
-    """Sum over alignments by explicit recursion (for tests only)."""
-    ls, li = ep.log_sub, ep.log_ins
+    """Sum over alignments by explicit recursion (for tests only); reads the per-position tables, so it
+    covers conditioned rules too."""
+    lsp, lip = ep.pos_tables(y1)
+    ls, li = lsp.tolist(), lip.tolist()
 
     def rec(i, j):
         n, m = len(y1), len(y2)
-        prev = y1[i - 1] if i > 0 else DUMMY
         if i == n:
             if j == m:
-                return li[prev][NOINS]
+                return li[n][NOINS]
             if j == m - 1:
-                return li[prev][y2[j]]
+                return li[n][y2[j]]
             return NEG
         total = NEG
         for ins_k in ([NOINS] + ([y2[j]] if j < m else [])):
             jj = j + (0 if ins_k == NOINS else 1)
-            base = li[prev][ins_k]
-            total = _lae(total, base + ls[y1[i]][EPS] + rec(i + 1, jj))
+            base = li[i][ins_k]
+            total = _lae(total, base + ls[i][EPS] + rec(i + 1, jj))
             if jj < m:
-                total = _lae(total, base + ls[y1[i]][y2[jj]] + rec(i + 1, jj + 1))
+                total = _lae(total, base + ls[i][y2[jj]] + rec(i + 1, jj + 1))
         return total
 
     return float(rec(0, 0))

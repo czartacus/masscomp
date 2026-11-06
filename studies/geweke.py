@@ -48,7 +48,7 @@ def _exact_score(in_mode, tab, x, lat, y):
 
 def redraw_data(s, rng):
     """Gibbs pass over the leaf forms given (theta, internal forms, events, donors): each leaf form is
-    drawn from the alignment lattice. With context-conditioned rules (MASSCOMP_U_CONTEXT=1) the lattice
+    drawn from the alignment lattice. With conditioned rules (MASSCOMP_U_ENV_RULES > 0) the lattice
     samples the context-free density, so the draw is accepted by Metropolis-Hastings against the exact
     one (the ratio is exactly 1 without such rules, so nothing changes for the plan's model)."""
     st, f = s.st, s.st.f
@@ -61,7 +61,7 @@ def redraw_data(s, rng):
                              [(ep.log_sub_np, ep.log_ins_np, z) for ep, z in lat])
             if y and len(y) <= MAX_FORM_LEN:
                 cur = st.y[(l, c)]
-                if ev.U_CONTEXT and y != cur:
+                if ev.U_ENV_RULES > 0 and y != cur:
                     d = (_exact_score(in_mode, tab, x, lat, y) - s._ffbs_score(in_mode, tab, x, lat, y)) \
                         - (_exact_score(in_mode, tab, x, lat, cur) - s._ffbs_score(in_mode, tab, x, lat, cur))
                     if not (d >= 0 or rng.random() < np.exp(d)):

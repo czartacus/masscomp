@@ -128,6 +128,47 @@ STRENGTH = np.array([_strength(f) for f in FEATURES])                           
 FORTITION = np.maximum(0, STRENGTH[None, :] - STRENGTH[:, None]).astype(float)  # (s, s'): strength gained by s -> s' (0 for lenition)
 
 
+# Environments for conditioned rules: natural-class predicates on the input segments either side
+# of a position (BOUNDARY = N_SEG at the start and end of a form). A rule (s, o, env) adds its
+# weight to s -> o wherever the environment holds; several can hold at one position, so the
+# environment of a position is a bitmask. These are the classic conditioning environments of
+# attested sound change (initial / final position, intervocalic lenition, palatalisation before
+# front vowels, post-nasal changes); ENV_MASK[prev, next] is the mask of a position.
+ENV_NAMES = ["#_", "_#", "V_", "_V", "V_V", "C_", "_C", "_Vfront", "_Vhigh", "N_"]
+N_ENV = len(ENV_NAMES)
+BOUNDARY = N_SEG
+_IS_V = np.zeros(N_SEG + 1, bool); _IS_V[VOWELS] = True
+_IS_FRONT = np.zeros(N_SEG + 1, bool); _IS_FRONT[[v for v in VOWELS if FEATURES[v][10] == 0]] = True
+_IS_HIGH = np.zeros(N_SEG + 1, bool); _IS_HIGH[[v for v in VOWELS if FEATURES[v][9] == 1]] = True
+_IS_NAS = np.zeros(N_SEG + 1, bool); _IS_NAS[[i for i in range(N_SEG) if FEATURES[i][7] == 1]] = True
+
+
+def env_mask(prev, nxt):
+    """Bitmask of the environments that hold between input segments prev and nxt (BOUNDARY at the ends)."""
+    m = 0
+    if prev == BOUNDARY: m |= 1 << 0
+    if nxt == BOUNDARY: m |= 1 << 1
+    pv, nv = _IS_V[prev], _IS_V[nxt]
+    if pv: m |= 1 << 2
+    if nv: m |= 1 << 3
+    if pv and nv: m |= 1 << 4
+    if prev != BOUNDARY and not pv: m |= 1 << 5
+    if nxt != BOUNDARY and not nv: m |= 1 << 6
+    if _IS_FRONT[nxt]: m |= 1 << 7
+    if _IS_HIGH[nxt]: m |= 1 << 8
+    if _IS_NAS[prev]: m |= 1 << 9
+    return m
+
+
+ENV_MASK = np.array([[env_mask(p, n) for n in range(N_SEG + 1)] for p in range(N_SEG + 1)], dtype=np.int64)
+
+
+def envs_of(prev, nxt):
+    """The environment indices that hold at a position (for proposals and reports)."""
+    m = int(ENV_MASK[prev, nxt])
+    return [k for k in range(N_ENV) if m >> k & 1]
+
+
 def to_str(form):
     return "".join(SEGMENTS[i] for i in form)
 

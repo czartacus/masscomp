@@ -135,7 +135,7 @@ def lbf(p):
                             reps=reps, g=g_mode, len_edge=len_edge, init="prior" if init_prior else "copy", inventory_size=N_SEG,
                             lam_sd=ev.LAM_SD, lam_min=[None if not np.isfinite(x) else float(x) for x in ev.LAM_MIN],
                             rate_time=RATE_TIME, t_ref=T_REF, directional=DIRECTIONAL,
-                            u_context=ev.U_CONTEXT, u_rules=ev.U_RULES, u_per_t=ev.U_PER_T, concepts=concept_set, pool=len(pool),
+                            u_env_rules=ev.U_ENV_RULES, u_rules=ev.U_RULES, u_per_t=ev.U_PER_T, concepts=concept_set, pool=len(pool),
                             donors=donors, dropped_for_donors=dropped, spacing=spacing, direction=direction, ess_min=ess_min, boost=boost,
                             estimator=estimator),
                 known="related" if key in RELATED else "unrelated", deep=key in DEEP, common_concepts=len(common),

@@ -31,7 +31,7 @@ KNOBS = {"regrow_p": "MASSCOMP_REGROW_P", "regrow_events": "MASSCOMP_REGROW_EVEN
          "root_regrow_p": "MASSCOMP_ROOT_REGROW_P", "max_form_len": "MASSCOMP_MAX_FORM_LEN", "geweke_omega": "MASSCOMP_GEWEKE_OMEGA", "geweke_restart": "MASSCOMP_GEWEKE_RESTART",
          "g": "MASSCOMP_G", "inventory": "MASSCOMP_INVENTORY", "lam_sd": "MASSCOMP_LAM_SD", "lam_min": "MASSCOMP_LAM_MIN",
          "rate_time": "MASSCOMP_RATE_TIME", "t_ref": "MASSCOMP_T_REF", "directional": "MASSCOMP_DIRECTIONAL",
-         "u_context": "MASSCOMP_U_CONTEXT", "u_rules": "MASSCOMP_U_RULES", "u_per_t": "MASSCOMP_U_PER_T",
+         "u_env_rules": "MASSCOMP_U_ENV_RULES", "u_rules": "MASSCOMP_U_RULES", "u_per_t": "MASSCOMP_U_PER_T",
          "sim_u_rules": "MASSCOMP_SIM_U_RULES", "spacing": "MASSCOMP_SPACING", "estimator": "MASSCOMP_ESTIMATOR"}
 
 

@@ -8,7 +8,7 @@ Deviations from the plan, recorded here:
 import math
 import itertools
 import numpy as np
-from .segments import N_SEG, EPS
+from .segments import N_SEG, EPS, BOUNDARY, envs_of
 from .transducer import EdgeParams
 from . import events as ev
 from .likelihood import State
@@ -793,38 +793,41 @@ class Sampler:
         """Crude substitution/deletion/insertion counts on edge e from the current
         (parent, child) form pairs: equal length -> position-wise mismatches; child one shorter ->
         the segment(s) whose removal gives the child; child one longer -> the extra segment.
-        Depends on the latent forms only (not on u_e), so forward and reverse proposal
-        probabilities within move_u are computed from the same counts."""
+        With conditioned rules on, every mismatch also counts for the conditioned slots of the
+        environments that hold at its position. Depends on the latent forms only (not on u_e), so
+        forward and reverse proposal probabilities within move_u are computed from the same counts."""
         st, f = self.st, self.st.f
         p = f.parent[e]
         counts = {}
-        ctx = ev.U_CONTEXT
+        env_on = ev.U_ENV_RULES > 0
 
-        def add(slot, prev):
+        def add(slot, prev, nxt):
             counts[slot] = counts.get(slot, 0) + 1
-            if ctx:                                # the same mismatch also counts for its left-context slot
-                counts[slot + (prev,)] = counts.get(slot + (prev,), 0) + 1
+            if env_on:                             # the same mismatch also counts for its environments
+                for k in envs_of(prev, nxt):
+                    counts[slot + (k,)] = counts.get(slot + (k,), 0) + 1
 
         for c in range(st.M):
             x, y = st.y[(p, c)], st.y[(e, c)]      # all pairs: a true inherited-with-u pair may currently be labelled borrow
-            if len(x) == len(y):
+            n = len(x)
+            if n == len(y):
                 for i, (a, b) in enumerate(zip(x, y)):
                     if a != b:
-                        add((a, b), x[i - 1] if i > 0 else N_SEG)
-            elif len(x) == len(y) + 1:
-                for i in range(len(x)):
+                        add((a, b), x[i - 1] if i > 0 else BOUNDARY, x[i + 1] if i + 1 < n else BOUNDARY)
+            elif n == len(y) + 1:
+                for i in range(n):
                     if x[:i] + x[i + 1:] == y:
-                        add((x[i], EPS), x[i - 1] if i > 0 else N_SEG)
-            elif len(y) == len(x) + 1:
+                        add((x[i], EPS), x[i - 1] if i > 0 else BOUNDARY, x[i + 1] if i + 1 < n else BOUNDARY)
+            elif len(y) == n + 1:
                 for j in range(len(y)):
-                    if y[:j] + y[j + 1:] == x:
-                        add(("ins", y[j]), x[j - 1] if j > 0 else N_SEG)
+                    if y[:j] + y[j + 1:] == x:      # the slot before input position j: between x[j-1] and x[j]
+                        add(("ins", y[j]), x[j - 1] if j > 0 else BOUNDARY, x[j] if j < n else BOUNDARY)
         return counts
 
     def _u_slot_logq(self, slot, present, counts):
         """log q(slot) for a birth over the slots absent from `present`: mixture of uniform and
         count-weighted."""
-        n_abs = ev.N_U_SLOTS - len(present)
+        n_abs = ev.N_U_ALL_SLOTS - len(present)
         tot = sum(counts.values()) - sum(counts.get(sl, 0) for sl in present)
         if tot == 0:
             # the data-informed branch falls back to a uniform draw when there are no mismatches,
@@ -883,7 +886,7 @@ class Sampler:
                 prop = dict(u)
                 logq = 0.0
                 if kind == 0:                                  # birth
-                    if len(u) >= ev.N_U_SLOTS:
+                    if len(u) >= ev.N_U_ALL_SLOTS:
                         continue
                     if rng.random() < self.U_DATA_FRAC:
                         tot = sum(counts.values()) - sum(counts.get(sl, 0) for sl in u)
@@ -1208,9 +1211,10 @@ def _lse(xs):
 
 
 def _draw_absent(rng, present):
-    """A uniform draw over the u slots not in `present` (rejection; present is a few slots of ~870)."""
+    """A uniform draw over the u slots (context-free and, when on, conditioned) not in `present`
+    (rejection; present is a few slots of thousands)."""
     while True:
-        sl = ev.U_SLOTS[int(rng.integers(ev.N_U_SLOTS))]
+        sl = ev.U_ALL_SLOTS[int(rng.integers(ev.N_U_ALL_SLOTS))]
         if sl not in present:
             return sl
 
