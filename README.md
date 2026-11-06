@@ -129,9 +129,12 @@ things stand as of 2026-11-05 (the plan's §10 verdict is in the spec, Prototype
 | real data | separates known pairs | NorthEuraLex, 11 family pairs, fitted G, basic vocabulary: related within a family +45 to +89, unrelated −7 to −29; one of two PIE-depth pairs at +7.6; flat G breaks the test (+143 on an unrelated pair) | Real-data relationship tests |
 
 Protocol for real data from here: the extended inventory, G fitted to the languages' other concepts,
-λ free, basic vocabulary, the join-path estimator on the two-sided ladder (`spacing=both,power=3`,
-K = 24, replicates cooled and heated), donor families in the forest for known contact sources that
-are not ancestors, attested older stages inside the tree, and the per-word attribution as the audit.
+λ free, all available basic vocabulary, ten context-free rules per edge (`u_rules=10`), the join-path
+estimator on the two-sided ladder (`spacing=both,power=3`, K = 24, one replicate cooled and one
+heated, the bracket reported), donor families in the forest for known contact sources that are not
+ancestors, and the per-word attribution as the audit. Reference numbers under this protocol:
+Ibero-Romance–Germanic +35 (+22…+48), Ibero-Romance–Slavic +35 (+23…+48), Germanic–Slavic 0 (±3),
+Ibero–Finnic +3 (−3…+8), Germanic–Finnic −6.
 
 ### Model change on 2026-11-02: cross-family borrowing donors, collapsed u move
 
@@ -845,8 +848,15 @@ Context rules make things worse at every budget (+10 to +19 on the Ibero pairs):
 changes that matter here — Grimm's law, satemisation, the vowel shifts — are context-free anyway.
 Germanic–Slavic ends the night at the Occam threshold under every bounded setting: the words it
 finds are the cognates (*water* ~ *voda*, *salt*, *two* ~ *dva*, *stand*, *night*, *not*, *we*,
-*sun*), each worth 0.5–3.5 nats, and ten of them together just pay for the join. Whether twenty or
-forty rules per edge lift it is the one cell left running (`basic_all_rules_20_40`).
+*sun*), each worth 0.5–3.5 nats, and ten of them together just pay for the join. Twenty and forty
+rules per edge (`diag_42138698093.json`) do not lift it honestly: Germanic–Slavic +1.4 (+5.8, −3.0)
+at twenty and +16.0 (**+41.3, −9.3**) at forty, Ibero–Germanic +48.5 (+73.9, +23.2) and +36.7
+(+70.4, +3.0), while the Ibero–Finnic control goes to +12.3 (+32.6, −8.0) and +6.2 (+22.9, −10.4)
+and Germanic–Finnic stays at −9 and −12. Past ten rules the cooled replicate of any pair with a few
+look-alikes finds a rule-rich fit the heated one never reaches, the brackets open to 50 nats, and a
+control's cooled value (+33) overtakes a deep pair's heated one — the overfitting of κ = 30 in a
+milder form. Ten context-free rules per edge is therefore the bounded budget of record: brackets of
+at most 25 nats, controls at or below +8, both Ibero-Romance pairs at +35, Germanic–Slavic at 0.
 
 **Latin inside the Romance tree (`diag_42057315383.json`: `romlat` = (((spa, por), cat), lat), all
 basic vocabulary, two-sided ladder, two seeds).** Romance+Latin against Germanic +11.2 (+14.6, +7.7)
