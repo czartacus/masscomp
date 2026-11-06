@@ -1008,16 +1008,37 @@ Tests (`tests/test_env_rules.py`): environments, conditioning and normalisation,
 force, derive against rebuild, sampling against logprob, the prior's two budgets, and a planted
 intervocalic t → d in eight words the sampler recovers with weight > 2 from a rule-free start.
 
-**First look (local, 300 sweeps × 2 chains, Romance, 100 words, ten free + ten conditioned rules).**
-The rules with posterior inclusion ≥ 0.5 are ones a Romanist would recognise: Catalan final-r loss
-(`r → Ø / _#`), Portuguese `o → u / _#` and `e → ɨ / C_`, Romanian `a → ɨ / C_`, Spanish `Ø → j /
-_Vfront` (diphthongisation) and `s → θ`, Italian final-vowel paragoge (`Ø → e / _#`), Portuguese
-`n → Ø / _C` and `s → ʃ / V_`. Lenition is not among them: without Latin in the tree the model can
-reconstruct the Ibero-Romance ancestor with the lenited consonants, so the test that counts is the
-200-word probe with and without conditioned rules (reconstruction distance to Latin, the rules on
-the ibero and italo edges) and the Geweke battery under the switch — both dispatched on the branch
-(`diag` runs 42221963790, 42221968104). The real-data protocol pairs under conditioned rules follow
-once those pass.
+**Validation on Romance (`diag_42221968104.json`: 200 words, 1,500 sweeps × 2 chains, ten free rules,
+with and without ten conditioned rules, seeds 3 and 4).** The rules with posterior inclusion ≥ 0.5 and
+|weight| ≥ 1, from the reconstructed ancestor with no knowledge of Latin, seed 3 with conditioned rules:
+
+| edge | rules found (inclusion, weight) | the textbook change |
+|---|---|---|
+| ibero | k → ɣ / V_ (0.50, +7.0), t → ð / V_ (0.50, +4.9), d → ð / _V (0.50, +5.1), b → v (0.50, +6.2) | Western Romance lenition, Ibero-Romance side only |
+| italo | nothing of the kind | — |
+| spa | v → b / #_ (0.88, +4.6), ʒ → x (1.00, +6.6), ʎ → x / V_ (1.00, +6.0), s → θ (1.00, +3.5), z → θ / V_V (0.51), Ø → j / _Vfront (0.50, +6.1) | betacism, the sibilant shift, *ceceo*, diphthongisation |
+| cat | l → ʎ / #_ (1.00, +5.6), o → Ø / _# (1.00, +6.7), r → Ø / _# (1.00, +6.4), a → ɨ / _# (1.00), o → u / C_ (1.00), d → ð (0.71) | initial l-palatalisation (*lluna*), final -o and -r loss, vowel reduction |
+| fra | k → ʃ / #_ (0.50, +5.9), o → Ø / _# (1.00), a → Ø / _# (1.00), t → Ø / V_ (0.94), u → y (0.51), r → e / _# (0.95) | *cheval*, final-vowel loss, final-t loss, u-fronting |
+| por | o → u / _# (1.00, +4.3), s → ʃ / V_ (0.54, +5.3), n → Ø (0.77; n → Ø / V_ 0.50), z → ʒ (0.79) | final o → u, coda s → ʃ, intervocalic n-loss (*lua*) |
+| ron | a → ɨ (1.00, +5.0), l → r / V_ (0.50, +4.8), o → Ø / _# (1.00), r → Ø / _# (1.00), s → tʃ / _Vfront (0.50) | ă, intervocalic l → r (*cer*, *soare*) |
+| ita | Ø → e / _# (1.00, +5.7), u → o / _C (0.92), ʒ → dʒ (0.99) | final-vowel paragoge, u → o |
+
+Seed 4 agrees where its chains stay in the connected basin (one chain of each pair sits at t_root 3.4 /
+5.7 with the Ibero root edge 75–92% replaced, the known basin problem, so its reconstruction numbers
+are worse in both settings). The reconstruction itself does not move: root NED to Latin 0.616 → 0.614
+(cognate subset 0.330 → 0.326) on seed 3 — the conditioned rules explain the daughters from the same
+proto-forms, 590 nats better in log-likelihood at the posterior (−8396 → −7809) with ~110 more rules.
+Many rules sit at inclusion 0.50, i.e. in one chain of two: 1,500 sweeps do not settle the rule
+posterior, and longer runs or more chains are needed before a list is final. Cost: +11% per sweep at
+three conditioned rules per edge, +21% at ten (25-concept benchmark).
+
+**Geweke under the switch (`diag_42221963790.json`, three rules of each kind):** full sampler seed 2
+max |z| 1.58, latent moves with borrowing common 1.21; seed 1 full puts −3.18 on t_root (1.97 vs 2.03
+over 12,000 restart draws) with every other statistic within 2.1 — the seed that has thrown a ~3 on
+earlier batteries too; its rerun at 20,000 draws, a third seed and a parameter-moves cell at ten + ten
+rules are in `diag` run 42236296266. The switch stays off by default (`MASSCOMP_U_ENV_RULES=0`), so
+every number above is unchanged; the real-data protocol pairs and controls under conditioned rules are
+the next battery.
 
 ### Pre-v3 notes (kept for the record)
 
