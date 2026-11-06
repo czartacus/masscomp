@@ -273,13 +273,10 @@ def join_path(ds, theta0, seed, K=16, n_sweeps=1000, burn=300, thin=5, power=2.0
     rng = np.random.default_rng(seed)
     # Delta grows with alpha (the join terms matter most near alpha = 1), so the stones are dense at the
     # top by default: alpha_k = 1 - (1 - k/K)^power; spacing="bottom" is the likelihood path's (k/K)^power
-    if spacing == "both":
-        # dense at both ends: at alpha = 0 the joined root is a free G draw and the root-edge events come
-        # from their prior, so Delta has a huge spread there too (real data: mean -400, sd 240 at the bottom
-        # stone of a "top" ladder, ESS ~1); a two-sided power ladder keeps d * sd(Delta) of order one at both ends
-        alphas = [0.5 * (2 * k / K) ** power if 2 * k <= K else 1.0 - 0.5 * (2 * (K - k) / K) ** power for k in range(K + 1)]
-    else:
-        alphas = [1.0 - (1.0 - k / K) ** power for k in range(K + 1)] if spacing == "top" else [(k / K) ** power for k in range(K + 1)]
+    # "both": dense at both ends - at alpha = 0 the joined root is a free G draw and the root-edge events come
+    # from their prior, so Delta has a huge spread there too (real data: mean -400, sd 240 at the bottom
+    # stone of a "top" ladder, ESS ~1); a two-sided power ladder keeps d * sd(Delta) of order one at both ends
+    alphas = join_ladder(K, power, spacing)
     s = Sampler(ds, theta0.copy(), rng, beta=1.0, init_from_prior=init_from_prior)
     assert s.st.joined, "join_path needs the joined (H1) forest"
     terms = [None] * K
@@ -359,6 +356,104 @@ def join_path(ds, theta0, seed, K=16, n_sweeps=1000, burn=300, thin=5, power=2.0
         if at1 is not None:
             trace.update(at1.summary())
     return float(sum(terms)), terms, s
+
+
+def join_ladder(K, power=2.0, spacing="top"):
+    """The alpha ladder of the join path: dense at the top (default), at the bottom, or at both ends
+    (a two-sided power ladder, the real-data setting; see join_path)."""
+    if spacing == "both":
+        return [0.5 * (2 * k / K) ** power if 2 * k <= K else 1.0 - 0.5 * (2 * (K - k) / K) ** power for k in range(K + 1)]
+    return [1.0 - (1.0 - k / K) ** power for k in range(K + 1)] if spacing == "top" else [(k / K) ** power for k in range(K + 1)]
+
+
+def join_path_re(ds, theta0, seed, K=24, n_sweeps=600, burn=200, thin=4, power=3.0, warmup=None, verbose=False,
+                 init_from_prior=False, spacing="both", trace=None, cache_clear=50, **sweep_kw):
+    """The join path with replica exchange: the K + 1 stones run as coupled chains, one per alpha, and
+    neighbouring chains exchange states by Metropolis after every round of sweeps.
+
+    The target at alpha is b(x) exp(alpha Delta(x)) with Delta = State.join_delta (the root-edge terms
+    are mixed linearly in log space), so a swap of the states at alpha_k and alpha_{k+1} is accepted
+    with probability min(1, exp(-(alpha_{k+1} - alpha_k) (Delta_{k+1} - Delta_k))). This is the remedy
+    for the hysteresis of a single chain walked along the ladder: on real data the family roots lock
+    onto the joined root collectively around alpha 0.8-0.95, a chain cooled from 1 stays locked and a
+    chain heated from 0 stays free (brackets of 20-50 nats, README), and no within-stone move crosses;
+    with exchanges a locked state flows down the ladder and a free one up, and each stone samples both
+    modes in their posterior proportion. The stepping-stone terms, the leave-one-concept-out
+    attribution and the alpha = 1 summaries are taken from the chain sitting at each alpha exactly as
+    in join_path. Cost: (K + 1) sweeps per round, n_sweeps + burn rounds, after one warm-up at alpha = 1
+    from which every replica starts. Returns (lbf, per-stone terms, the sampler at alpha = 1)."""
+    rng = np.random.default_rng(seed)
+    alphas = join_ladder(K, power, spacing)
+    s = Sampler(ds, theta0.copy(), rng, beta=1.0, init_from_prior=init_from_prior)
+    assert s.st.joined, "join_path_re needs the joined (H1) forest"
+    M = s.st.M
+    for _ in range(warmup if warmup is not None else 2 * n_sweeps):
+        s.sweep(**sweep_kw)
+    # one replica per stone, all from the warmed alpha = 1 state, each with its own random stream
+    seeds = np.random.SeedSequence(seed).spawn(K + 1)
+    reps = []
+    for k in range(K + 1):
+        st = s.st
+        rk = Sampler(ds, st.theta.copy(), np.random.default_rng(seeds[k]), beta=1.0, init=(dict(st.y), dict(st.event), dict(st.donor)))
+        rk.st.alpha = alphas[k]; rk.st.recompute_all()
+        reps.append(rk)
+    at1 = _Alpha1Record(reps[K]) if trace is not None else None
+    samples = [[] for _ in range(K + 1)]; dcs_k = [[] for _ in range(K + 1)]
+    swap_att = np.zeros(K); swap_acc = np.zeros(K)
+    for r in range(burn + n_sweeps):
+        for rk in reps:
+            rk.sweep(**sweep_kw)
+        dcs = [rk.st.join_delta_by_concept() for rk in reps]
+        deltas = np.array([float(dc.sum()) for dc in dcs])
+        for k in range(r % 2, K, 2):                               # neighbour exchanges, even and odd pairs alternately
+            swap_att[k] += 1
+            logr = -(alphas[k + 1] - alphas[k]) * (deltas[k + 1] - deltas[k])
+            if logr >= 0 or rng.random() < math.exp(logr):
+                swap_acc[k] += 1
+                reps[k], reps[k + 1] = reps[k + 1], reps[k]
+                dcs[k], dcs[k + 1] = dcs[k + 1], dcs[k]
+                deltas[k], deltas[k + 1] = deltas[k + 1], deltas[k]
+                reps[k].st.alpha = alphas[k]; reps[k].st.recompute_all()
+                reps[k + 1].st.alpha = alphas[k + 1]; reps[k + 1].st.recompute_all()
+        if r >= burn and (r - burn) % thin == 0:
+            for k in range(K + 1):
+                samples[k].append(deltas[k]); dcs_k[k].append(dcs[k])
+            if at1 is not None:
+                at1.s = reps[K]; at1.add()
+        if cache_clear and r % cache_clear == cache_clear - 1:      # the transducer memo tables of 25 replicas would otherwise grow without bound
+            for rk in reps:
+                for ep in rk.st.ep.values():
+                    ep._cache.clear(); ep._cache_lat = None
+                rk.st.adapt._cache.clear(); rk.st.adapt._cache_lat = None
+        if verbose and r % 50 == 49:
+            print(f"  round {r + 1}: delta by stone " + " ".join(f"{d:.0f}" for d in deltas) + "  swap acc " +
+                  " ".join(f"{a / max(t, 1):.2f}" for a, t in zip(swap_acc, swap_att)), flush=True)
+    terms = [None] * K
+    dc_mean = np.zeros((K + 1, M)); dc_sd = np.zeros((K + 1, M)); loo = np.zeros(M)
+    for k in range(K + 1):
+        dcs_k[k] = np.array(dcs_k[k]); dc_mean[k] = dcs_k[k].mean(axis=0); dc_sd[k] = dcs_k[k].std(axis=0)
+    for k in range(K):
+        d = alphas[k + 1] - alphas[k]
+        ds_ = np.array(samples[k]); m = ds_.max()
+        w = np.exp(d * (ds_ - m))
+        terms[k] = d * m + math.log(w.mean())
+        if trace is not None:
+            X = ds_[:, None] - dcs_k[k]; mc = X.max(axis=0)
+            loo += terms[k] - (d * mc + np.log(np.exp(d * (X - mc)).mean(axis=0)))
+        if verbose:
+            print(f"  stone {k:2d} alpha={alphas[k]:.4f} mean delta={ds_.mean():.2f} sd={ds_.std():.2f} term={terms[k]:.3f} "
+                  f"ess={w.sum() ** 2 / (w ** 2).sum():.1f} swap acc={swap_acc[k] / max(swap_att[k], 1):.2f}", flush=True)
+    if trace is not None:
+        ti = np.zeros(M)
+        for k in range(K):
+            ti += (alphas[k + 1] - alphas[k]) * 0.5 * (dc_mean[k] + dc_mean[k + 1])
+        trace.update(alphas=[float(a) for a in alphas], delta_c=dc_mean.tolist(), delta_c_sd=dc_sd.tolist(),
+                     ti_concept=ti.tolist(), ti_total=float(ti.sum()), ss_total=float(sum(terms)), loo_concept=loo.tolist(),
+                     stone_terms=[float(t) for t in terms], stone_sweeps=[burn + n_sweeps] * K,
+                     swap_acc=[float(a / max(t, 1)) for a, t in zip(swap_acc, swap_att)], estimator="re")
+        if at1 is not None:
+            trace.update(at1.summary())
+    return float(sum(terms)), terms, reps[K]
 
 
 class _Alpha1Record:

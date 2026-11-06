@@ -8,7 +8,7 @@ from masscomp.simulate import Theta, Dataset
 from masscomp.segments import N_SEG
 from masscomp.transducer import EdgeParams
 from masscomp import events as ev
-from masscomp.marglik import join_path
+from masscomp.marglik import join_path, join_path_re
 
 
 def _tables(theta):
@@ -102,3 +102,7 @@ def test_join_path_toy():
     ds = Dataset(h1, 1, {(3, 0): xa, (4, 0): xb})
     ests = [join_path(ds, theta, seed=seed, K=12, n_sweeps=500, burn=100, thin=2, clamp_params=True, clamp_u=True)[0] for seed in (0, 1)]
     assert abs(np.mean(ests) - exact) < 0.5, (ests, exact)
+    # the replica-exchange version of the same path
+    ests_re = [join_path_re(ds, theta, seed=seed, K=12, n_sweeps=400, burn=100, thin=2, power=2.0, spacing="top", clamp_params=True, clamp_u=True)[0]
+               for seed in (0, 1)]
+    assert abs(np.mean(ests_re) - exact) < 0.5, (ests_re, exact)
