@@ -27,3 +27,11 @@ def test_core_contact(monkeypatch):
     assert not st.is_contact(19)                      # the newcomer's own nodes are not core
     st.mix_edges = set(st.root_edges)                 # pair / all-mixed form: unchanged
     assert not st.is_contact(0)
+
+
+def test_put_first_survives_root_length():
+    from masscomp.tree import with_root_length
+    f = benchmark_n(3, (0, 1, 2), t_root=0.25).put_first([18])
+    g = with_root_length(f, 0.7)
+    assert g.topo == f.topo and g.topo[1] == 18
+    assert g.donor_candidates(0) == [18] and g.donor_candidates(18) == []

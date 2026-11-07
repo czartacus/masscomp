@@ -17,6 +17,7 @@ class Forest:
     roots: list = field(default_factory=list)
     children: dict = field(default_factory=dict)
     names: dict = field(default_factory=dict)
+    first: list = field(default_factory=list)   # join-root children put first in the order (put_first)
 
     def __post_init__(self):
         n = len(self.parent)
@@ -28,6 +29,9 @@ class Forest:
         for v in range(n):
             if self.parent[v] >= 0:
                 self.children[self.parent[v]].append(v)
+        if self.first and self.join_root is not None:
+            R = self.join_root; fs = set(self.first)
+            self.children[R] = [c for c in self.children[R] if c in fs] + [c for c in self.children[R] if c not in fs]
         self.internal = [v for v in range(n) if v not in set(self.leaves)]
         self.edges = [v for v in range(n) if self.parent[v] >= 0]   # edge id == child id
         self.ancestors = {v: self._anc(v) for v in range(n)}
@@ -56,8 +60,8 @@ class Forest:
         borrow FROM the newcomer, not the newcomer's root edge from the core (MASSCOMP_CORE_CONTACT=order).
         Returns self."""
         R = self.join_root
-        first = [c for c in self.children[R] if c in set(nodes)]
-        self.children[R] = first + [c for c in self.children[R] if c not in set(nodes)]
+        self.first = [c for c in self.children[R] if c in set(nodes)]
+        self.children[R] = self.first + [c for c in self.children[R] if c not in set(nodes)]
         self.topo = self._topo()
         return self
 
@@ -136,4 +140,5 @@ def with_root_length(forest, t_root):
     R = forest.join_root
     for c in forest.children[R]:
         length[c] = t_root
-    return Forest(list(forest.parent), length, list(forest.family), list(forest.leaves), names=dict(forest.names))
+    return Forest(list(forest.parent), length, list(forest.family), list(forest.leaves), names=dict(forest.names),
+                  first=list(forest.first))   # keep a put_first order across t_root moves
