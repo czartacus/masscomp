@@ -1242,6 +1242,20 @@ for this form (+7 … +16), so **none of the Saami results is evidence of descen
 A per-concept attribution (which concepts drive the Slavic-core positives) would test the Russian
 reading.
 
+*Cause of the newcomer bias, and the fix (7 Nov afternoon).* In the outsider generator (families 0+1
+joined, family 2 a separate tree) the core's root edges can borrow from family 2's earliest nodes —
+root-level contact. In the fit (all three joined) borrowing between the newcomer's root edge and the
+core's roots was counted as part of the join, so that contact was credited to descent. The pair test
+has no such route (two separate trees have no root edges), which is why its null was clean. Fix:
+`MASSCOMP_CORE_CONTACT=1` (knob `env_core_contact=1`; `State.is_contact`): on a mixed root edge,
+borrowing from a core family (root edge not mixed) is contact and stays at full strength at every
+alpha, like borrowing from an outside tree; only inheritance from the joined root counts toward the
+join. All-mixed (pair) form unchanged; off by default. The same route exists on real data (a
+newcomer's ancestor borrowing from a core proto-language), so all newcomer results so far are
+upper bounds. Check = `study` run 42388997158 (lbfj3, 20 seeds, same settings, fix on). Pass if
+outsiders ≤ +8 on ≥ 19/20 and insiders keep most of their power; then the real-data newcomer cells
+are re-run with the fix before Day 4.
+
 ### Day 3 interim (7 Nov): newcomers to the IE core (four families, five rules, K = 20)
 
 `diag` run 42334127093, all 6 cells: Italo-Romance **+484.3** (joins, shallow — a sanity check),
