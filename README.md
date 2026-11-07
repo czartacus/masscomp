@@ -1282,6 +1282,15 @@ upper bounds. Check = `study` run 42388997158 (lbfj3, 20 seeds, same settings, f
 outsiders ≤ +8 on ≥ 19/20 and insiders keep most of their power; then the real-data newcomer cells
 are re-run with the fix before Day 4.
 
+*Result of the first fix (run 42388997158).* Outsiders: all 20 ≤ +1.0 (median −2.4), so the null is
+clean. Insiders: median +3.7 (was +25.6), only 5/20 > +8 (was 15/20); insider > outsider on 19/20.
+Power is gone: letting the newcomer's root copy a core root at full strength at every alpha mimics
+descent (a core root is itself a near-copy of the joined root). **Second fix**
+(`env_core_contact=order`, `Forest.put_first`): no change to the scoring, only to the borrowing
+order. The newcomer's family root is put first, so the core's root edges (not mixed, full strength)
+can borrow from the newcomer, as in the outsider generator, and the newcomer's root edge has no
+root-level donors at all. Check = run 42407733370 (same 20 seeds and settings).
+
 ### Day 3 interim (7 Nov): newcomers to the IE core (four families, five rules, K = 20)
 
 `diag` run 42334127093, all 6 cells: Italo-Romance **+484.3** (joins, shallow — a sanity check),
