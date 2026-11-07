@@ -1197,6 +1197,14 @@ outsiders do not repeat, the remedy is replicates (read the median of ≥ 3); if
 threshold must be raised for the newcomer form or the newcomer's root edge needs a tighter prior.
 The real-data Saami +11 (Day 3) is the same question in real data.
 
+*Saami: contact or descent?* The user's earlier correlation-of-correlations work found Saami
+pairing with Germanic but not with the other IE branches, a contact signal (North Germanic loans
+into Saami are well attested). If the +11 is Germanic contact, Saami should score high only where
+Germanic or Nordic is in the core. Test = Saami as a newcomer to ibero + slavic (no Germanic),
+ibero + germanic, germanic + slavic and germanic + nordic (three-family settings) = `diag` run
+42367521286. Prediction under contact: ≤ 0 against ibero + slavic, positive wherever Germanic is
+present, highest against germanic + nordic.
+
 ### Day 3 interim (7 Nov): newcomers to the IE core (four families, five rules, K = 20)
 
 `diag` run 42334127093, all 6 cells: Italo-Romance **+484.3** (joins, shallow — a sanity check),
