@@ -1185,6 +1185,14 @@ and a per-concept attribution before anything is read into it. Complete: Nordic 
 +372.0; joins), Turkic −12.2 (−14.7, −9.7). So 2 / 2 insiders join and 3 / 4 outsiders stay below +3;
 Saami is the one open case.
 
+### Day 3 (7 Nov): newcomers to the smaller cores (three families, five rules)
+
+`diag` run 42334134233. Uralic core finnic + saami: Slavic −27.3 (−42.6, −12.1), Germanic −41.0
+(−43.4, −38.5), Turkic −50.0 (−52.6, −47.4). Turkic + mongolic (itself `contested`): Finnic +0.8
+(+0.4, +1.2), Slavic −2.2 (−9.8, +5.5). Every outsider is below the +8 threshold, most far below:
+a tight two-family core (Finnic–Saami, t_root ≈ 1.5) rejects a stranger much more strongly than the
+deep IE core does, because a newcomer must then match a well-determined root, not a vague one.
+
 ### Day 2 results (7 Nov): §8.3 at the protocol (simulated pairs, five rules, RE, K = 24)
 
 `study` run 42306267254 (`lbfj`, 20 seeds × depths 0.25 and 1.0, data generated with three rules
