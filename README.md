@@ -1128,6 +1128,44 @@ families, the transition's ladder density, contact versus descent at the root. P
 NorthEuraLex `forms.csv` is attached: more languages per family (step 5), which is what the
 speculative tests most need.
 
+### Day 1 results (7 Nov): the newcomer null band
+
+`diag` runs 42305651447 (five rules) and 42300145304 (ten rules; conditioned rules where marked).
+Every cell three families, `sweeps=350,burn=120,warmup=500,K=24`, two replicates (shown in brackets).
+
+| newcomer → core | known | 5 rules | 10 rules | 10 + 10 conditioned |
+|---|---|---|---|---|
+| Ibero → Germanic + Slavic | joins | **+67.4** (+65.4, +69.4) | +60 | |
+| Germanic → Ibero + Slavic | joins | **+33.1** (+13.6, +52.6) | +24.8 (+20.1, +29.6) | |
+| Slavic → Ibero + Germanic | joins | **+23.7** (+19.4, +28.0) | +27 (+26, +28) | +25.4 (+18.0, +32.8) |
+| Finnic → Ibero + Germanic | outsider | −1.6 (−3.3, +0.1) | −10 | −12.1 (−15.8, −8.4) |
+| Finnic → Ibero + Slavic | outsider | +3.0 (−6.0, +11.9) | +6 | |
+| Finnic → Germanic + Slavic | outsider | −2.5 (−2.9, −2.2) | +1.8 (+1.2, +2.3) | |
+| Turkic → Ibero + Germanic | outsider | −12.1 (−15.6, −8.7) | | |
+| Turkic → Ibero + Slavic | outsider | +1.7 (−0.9, +4.3) | | |
+| Turkic → Germanic + Slavic | outsider | −7.4 (−7.8, −7.0) | | |
+| Mongolic → Ibero + Germanic | outsider | −4.1 (−13.5, +5.3) | | |
+| Mongolic → Ibero + Slavic | outsider | −2.3 (−8.3, +3.6) | | |
+| Mongolic → Germanic + Slavic | outsider | −9.2 (−10.9, −7.5) | | |
+
+**Decisions.**
+- *The newcomer test separates.* The nine outsiders at five rules lie in −12.1 … +3.0 (none above
+  +10, so no attribution follow-up is due); the three insiders lie in +23.7 … +67.4. Threshold for
+  "joins" = largest outsider + 5 = **+8 nats**. Every insider clears it by ≥ 15; the gap
+  (+3.0 to +23.7) is the cleanest separation the method has shown, against pairs where
+  Ibero–Finnic reached +19 at ten rules and Germanic–Slavic was never found.
+- *Conditioned rules: off for evidence.* Under them the Finnic newcomer stays negative (−12.1) but
+  Slavic does not rise (+25.4 against +27 without), so they add nothing to detection; on pairs they
+  inflated the controls (Slavic–Finnic +21.6, Ibero–Finnic +4.2 … +11.5). They remain the
+  reconstruction tool (the Romance sound laws). Five context-free rules stand.
+- *Ladder: K = 32 for pairs, K = 24 for multi-family cells.* Ibero–Germanic at K = 32 gives +24.2
+  (+23.2, +25.2), a replicate spread of 2 against 6 at K = 24 (+23.7: +21, +27) — down to a third,
+  so it is adopted where time allows (4.7 h a pair). Three- and four-family cells cannot afford it
+  under the 6-hour ceiling; their replicate spread (up to ±20 for Germanic → Ibero + Slavic) is the
+  main noise source and is why each cell is read against the band, not alone.
+- Lost: Germanic–Finnic with 10 + 10 conditioned rules (`diag` 42246673476) hit the time limit; not
+  re-run, since the newcomer form now decides the conditioned-rule question.
+
 ### Pre-v3 notes (kept for the record)
 
 #### §8.3 LBF separation — blocked on estimator noise
