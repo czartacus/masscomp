@@ -1232,6 +1232,16 @@ germanic **−10.0**, germanic + nordic **−49.7**, germanic + slavic pending; 
 being absorbed as borrowing; the weak positive without Germanic is below threshold and, given the
 bias above, not evidence of descent.
 
+*Final cell.* Saami → germanic + slavic **+5.5** (sd 0.3). The four cells: ibero + slavic +2.6,
+germanic + slavic +5.5, ibero + germanic −10.0, germanic + nordic −49.7. The pattern does not follow
+Germanic alone: the mild positives are the two cores containing Slavic, the negatives the two without
+it. A possible reading is Russian contact (East Saami languages carry Russian loans), mirrored by the
+Germanic case: a contact source inside the forest is absorbed as borrowing, but the join path can
+still pick up some of it. All four are below +8 and inside the outsider range the simulations show
+for this form (+7 … +16), so **none of the Saami results is evidence of descent from or with IE**.
+A per-concept attribution (which concepts drive the Slavic-core positives) would test the Russian
+reading.
+
 ### Day 3 interim (7 Nov): newcomers to the IE core (four families, five rules, K = 20)
 
 `diag` run 42334127093, all 6 cells: Italo-Romance **+484.3** (joins, shallow — a sanity check),
