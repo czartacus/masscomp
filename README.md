@@ -1291,6 +1291,12 @@ order. The newcomer's family root is put first, so the core's root edges (not mi
 can borrow from the newcomer, as in the outsider generator, and the newcomer's root edge has no
 root-level donors at all. Check = run 42407733370 (same 20 seeds and settings).
 
+*Run 42407733370 was void.* It reproduced the unfixed run's numbers to the second decimal (outsiders
+10000 +13.51, 10004 +15.72, 10013 +11.25): the sampler rebuilds the forest on every t_root move
+(`with_root_length`) and the rebuild dropped the new order, so the fix never acted. Fixed in 220dd79
+(`Forest.first` carries the order; test added); re-run = 42425552867. (The first fix lives in the
+scoring, not the forest, so its result stands.)
+
 ### Day 3 interim (7 Nov): newcomers to the IE core (four families, five rules, K = 20)
 
 `diag` run 42334127093, all 6 cells: Italo-Romance **+484.3** (joins, shallow — a sanity check),
