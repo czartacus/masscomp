@@ -1173,6 +1173,16 @@ turkic + mongolic — finnic, slavic (three-family settings) = `diag` run 423341
 only a donor in the data set (one language, `DONORS`), so it cannot be a newcomer; the Uralic core's
 "must join" check waits for more Uralic languages.
 
+### Day 3 interim (7 Nov): newcomers to the IE core (four families, five rules, K = 20)
+
+`diag` run 42334127093, 4 of 6 cells: Italo-Romance **+484.3** (joins, shallow — a sanity check),
+Finnic +2.1 (+1.3, +2.9), Mongolic −8.0 (−8.9, −7.1), **Saami +11.0 (+4.1, +18.0)** — the first
+outsider above +10, above the +8 threshold on one replicate. Its high replicate's Saami root edge
+carries two strong, phonetically odd rules (f → t +15.5, ɨ → l +14.3) where the low one carries a
+single e → i: the signature of the rule layer fitting chance matches, at the short four-family
+settings. Follow-up per the plan: two more cells of the same (`seed=2,3`) = `diag` run 42348813065,
+and a per-concept attribution before anything is read into it. Nordic and Turkic still running.
+
 ### Day 2 results (7 Nov): §8.3 at the protocol (simulated pairs, five rules, RE, K = 24)
 
 `study` run 42306267254 (`lbfj`, 20 seeds × depths 0.25 and 1.0, data generated with three rules
