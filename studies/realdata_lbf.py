@@ -122,6 +122,9 @@ def lbf(p):
     f = build_forest(families, len_edge, donors=donors)
     name2v = {v: k for k, v in f.names.items()}
     mix_edges = [name2v[m] for m in mix] if mix else None
+    from masscomp.likelihood import NEWCOMER_FIRST
+    if NEWCOMER_FIRST and mix_edges:
+        f.put_first(mix_edges)
     M = len(chosen)
     ds = Dataset(f, M, {(name2v[L], ci): forms_by[L][c] for L in langs for ci, c in enumerate(chosen)})
     jobs = []

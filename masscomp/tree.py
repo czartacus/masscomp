@@ -50,6 +50,17 @@ class Forest:
             c = stack.pop(); out.add(c); stack.extend(self.children[c])
         return out
 
+    def put_first(self, nodes):
+        """Move `nodes` (children of the join root: newcomer family roots) to the front of the join root's
+        children, so they come first in the topological order and donor_candidates lets the core's root edges
+        borrow FROM the newcomer, not the newcomer's root edge from the core (MASSCOMP_CORE_CONTACT=order).
+        Returns self."""
+        R = self.join_root
+        first = [c for c in self.children[R] if c in set(nodes)]
+        self.children[R] = first + [c for c in self.children[R] if c not in set(nodes)]
+        self.topo = self._topo()
+        return self
+
     def _topo(self):
         order = []; stack = list(self.roots)
         while stack:

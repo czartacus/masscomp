@@ -14,7 +14,13 @@ from .transducer import EdgeParams
 from . import events as ev
 import os
 
-CORE_CONTACT = os.environ.get("MASSCOMP_CORE_CONTACT", "0") == "1"     # see State.is_contact
+# MASSCOMP_CORE_CONTACT: "1" = core donors on a mixed root edge are contact (State.is_contact; cleans the
+# newcomer null but costs most of its power, lbfj3 run 42388997158); "order" = newcomer roots first in the
+# topological order (Forest.put_first, applied by the study scripts), so the core's unmixed root edges can
+# borrow from the newcomer at full strength at every alpha and the newcomer cannot copy the core's root.
+CORE_CONTACT_MODE = os.environ.get("MASSCOMP_CORE_CONTACT", "0")
+CORE_CONTACT = CORE_CONTACT_MODE == "1"
+NEWCOMER_FIRST = CORE_CONTACT_MODE == "order"
 
 
 class State:

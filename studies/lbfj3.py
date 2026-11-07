@@ -23,6 +23,7 @@ from masscomp.marglik import join_path, join_path_re
 from masscomp import events as ev
 from masscomp.simulate import SIM_U_RULES
 from studies.common import save, N_PROCS
+from masscomp.likelihood import NEWCOMER_FIRST
 
 N = int(sys.argv[1]) if len(sys.argv) > 1 else 20
 SEED0 = int(sys.argv[2]) if len(sys.argv) > 2 else 0
@@ -43,6 +44,8 @@ M = 25
 def _estimate(args):
     seed, label, rep, ds = args
     f1 = benchmark_n(3, (0, 1, 2), t_root=0.25)
+    if NEWCOMER_FIRST:
+        f1.put_first(MIX)
     dsh = Dataset(f1, ds.M, ds.leaf_forms)                       # both kinds are fitted on the joined forest
     th = sample_theta(f1, ds.M, np.random.default_rng(seed + 7919 * rep))
     t0 = time.time()
