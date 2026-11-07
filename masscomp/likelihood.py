@@ -12,6 +12,9 @@ import numpy as np
 from .segments import N_SEG
 from .transducer import EdgeParams
 from . import events as ev
+import os
+
+CORE_CONTACT = os.environ.get("MASSCOMP_CORE_CONTACT", "0") == "1"     # see State.is_contact
 
 
 class State:
@@ -41,6 +44,7 @@ class State:
         # does, so the join temperature leaves it at full strength (see edge_terms)
         self.external = {v for v in range(self.f.n) if self.f.parent[v] < 0 and v != self.f.join_root}
         self.external |= {v for v in range(self.f.n) if self.f.ancestors[v] & self.external}
+        self._fam_root = {self.f.family[e]: e for e in self.root_edges}     # family -> its root edge (is_contact)
         # Join temperature (marglik.join_path): the inherit / borrow terms of the root edges are
         # [term]^alpha [G(child)]^(1-alpha). At alpha = 1 this is H1; at alpha = 0 the family roots are
         # ~ G and the joined root, t_root and the root-edge events are decoupled dummies whose priors
@@ -92,7 +96,7 @@ class State:
                 return -1e30, 0.0
             lp_ev += -math.log(len(self.cands[e]))      # donor choice is part of the event prior
             form = self.adapt.logprob(self.y[(dd, c)], yc)
-        if self.alpha != 1.0 and e in self.mix_edges and (k == ev.INHERIT or (k == ev.BORROW and dd not in self.external)):
+        if self.alpha != 1.0 and e in self.mix_edges and (k == ev.INHERIT or (k == ev.BORROW and not self.is_contact(dd))):
             # the join path: inheritance from the joined root, and borrowing from the sister family at
             # root level, are what H1 adds; at alpha = 0 both collapse to G(child). Borrowing from a donor
             # family stays at full strength at every alpha, so H0 and H1 have the same access to it.
@@ -100,6 +104,21 @@ class State:
         if self.is_leaf[e]:
             return lp_ev, form
         return lp_ev + form, 0.0
+
+    def is_contact(self, d):
+        """True if borrowing from donor d on a mixed root edge is contact, which H0 allows as much as H1
+        (full strength at every alpha), rather than part of the join. Donors in outside trees always are.
+        With MASSCOMP_CORE_CONTACT=1 so are donors in a CORE family (one whose root edge is not mixed): in
+        the newcomer form the core's root edges exist under H0 too, so a newcomer root borrowing from the
+        core's proto-language is contact between neighbours, not descent. Without this, early contact was
+        credited to the join and unrelated newcomers scored +7 ... +16 (lbfj3 seeds 10000, 10004, 10013).
+        In the all-mixed (pair) form there is no core and nothing changes."""
+        if d in self.external:
+            return True
+        if not CORE_CONTACT or self.mix_edges == self.root_edge_set:
+            return False
+        fam = self.f.family[d]
+        return fam >= 0 and self._fam_root.get(fam) not in self.mix_edges
 
     def join_delta(self):
         """The join path's power variable: sum over the root edges and concepts of log term - log G(child)
@@ -119,7 +138,7 @@ class State:
                 yc = self.y[(e, c)]
                 if k == ev.INHERIT:
                     out[c] += self.ep[e].logprob(self.y[(p, c)], yc) - ev.log_G(yc)
-                elif k == ev.BORROW and self.donor[(e, c)] not in self.external:
+                elif k == ev.BORROW and not self.is_contact(self.donor[(e, c)]):
                     out[c] += self.adapt.logprob(self.y[(self.donor[(e, c)], c)], yc) - ev.log_G(yc)
         return out
 
