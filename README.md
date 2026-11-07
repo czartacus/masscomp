@@ -1166,6 +1166,13 @@ Every cell three families, `sweeps=350,burn=120,warmup=500,K=24`, two replicates
 - Lost: Germanic–Finnic with 10 + 10 conditioned rules (`diag` 42246673476) hit the time limit; not
   re-run, since the newcomer form now decides the conditioned-rule question.
 
+**Day 3 dispatched 7 Nov** (five rules, queued behind Day 2): newcomers to the IE core
+ibero + germanic + slavic — nordic, italo, finnic, saami, turkic, mongolic (four-family settings) =
+`diag` run 42334127093; newcomers to finnic + saami — slavic, germanic, turkic — and to
+turkic + mongolic — finnic, slavic (three-family settings) = `diag` run 42334134233. Hungarian is
+only a donor in the data set (one language, `DONORS`), so it cannot be a newcomer; the Uralic core's
+"must join" check waits for more Uralic languages.
+
 ### Pre-v3 notes (kept for the record)
 
 #### §8.3 LBF separation — blocked on estimator noise
