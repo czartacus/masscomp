@@ -1211,6 +1211,16 @@ ibero + germanic, germanic + slavic and germanic + nordic (three-family settings
 42367521286. Prediction under contact: ≤ 0 against ibero + slavic, positive wherever Germanic is
 present, highest against germanic + nordic.
 
+*Interim (two of the runs back).* Re-estimates (`study` 42360355581): the high outsiders **repeat**
+— seed 10000 +13.5 → +12.3, +13.1; seed 10013 +11.2 → +7.1, +10.4 (its insider +3.7, −1.1).
+Seed 10004 still running. So this is not single-replicate noise: on some unrelated datasets the
+three-family newcomer form reliably scores > +8. That points to a bias of the form, and the remedy is
+on the threshold / root-edge prior side, not replicates. Contact check, first cell: Saami → germanic +
+nordic **−49.7** (sd 0.1), the opposite of the naive contact prediction. A caveat on that prediction:
+borrowing is modelled between trees in the forest, so where Germanic or Nordic is present, Germanic
+loans in Saami can be explained as borrowing without a join, which should push the score *down*, not
+up. Read the four cells together once all are in.
+
 ### Day 3 interim (7 Nov): newcomers to the IE core (four families, five rules, K = 20)
 
 `diag` run 42334127093, all 6 cells: Italo-Romance **+484.3** (joins, shallow — a sanity check),
