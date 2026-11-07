@@ -1197,6 +1197,12 @@ outsiders do not repeat, the remedy is replicates (read the median of ≥ 3); if
 threshold must be raised for the newcomer form or the newcomer's root edge needs a tighter prior.
 The real-data Saami +11 (Day 3) is the same question in real data.
 
+*Saami replicates* (`diag` run 42348813065): seed 2 +6.0 (+4.4, +7.7), seed 3 +19.5 (+9.6, +29.5).
+All six replicates of Saami → IE core are positive: +4.1, +4.4, +7.7, +9.6, +18.0, +29.5 (median
++8.7). Not noise around zero — Finnic, Turkic and Mongolic into the same core sit at +2.1, −8.0,
+−12.2 — but straddling the threshold with a long upper tail. A real, weak signal; the next check says
+whose.
+
 *Saami: contact or descent?* The user's earlier correlation-of-correlations work found Saami
 pairing with Germanic but not with the other IE branches, a contact signal (North Germanic loans
 into Saami are well attested). If the +11 is Germanic contact, Saami should score high only where
