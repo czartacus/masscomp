@@ -1221,6 +1221,17 @@ borrowing is modelled between trees in the forest, so where Germanic or Nordic i
 loans in Saami can be explained as borrowing without a join, which should push the score *down*, not
 up. Read the four cells together once all are in.
 
+*Update.* Seed 10004 also repeats: outsider +15.7 → +15.5, +9.4. **All three high outsiders repeat,
+so the newcomer form is biased, not noisy.** Across the nine outsider estimates on those seeds the
+range is +7.1 … +15.7; the real-data newcomer threshold of +8 is not safe for this form. Options: a
+newcomer threshold near +16 (costs power: insider median +25.6, 15/20 > +8 would drop), or a tighter
+prior on the newcomer's root edge (removes the cause). Day 4 stays held until one is chosen and
+checked on the 20 seeds. Contact check so far: Saami → ibero + slavic **+2.6** (sd 1.8), ibero +
+germanic **−10.0**, germanic + nordic **−49.7**, germanic + slavic pending; Saami → ibero + germanic
++ slavic was +8.7 (median of 6). Lower wherever Germanic is present, consistent with Germanic loans
+being absorbed as borrowing; the weak positive without Germanic is below threshold and, given the
+bias above, not evidence of descent.
+
 ### Day 3 interim (7 Nov): newcomers to the IE core (four families, five rules, K = 20)
 
 `diag` run 42334127093, all 6 cells: Italo-Romance **+484.3** (joins, shallow — a sanity check),
