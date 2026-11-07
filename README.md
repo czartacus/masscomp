@@ -1173,6 +1173,30 @@ turkic + mongolic — finnic, slavic (three-family settings) = `diag` run 423341
 only a donor in the data set (one language, `DONORS`), so it cannot be a newcomer; the Uralic core's
 "must join" check waits for more Uralic languages.
 
+### Day 2 results (7 Nov): the simulated newcomer test (`lbfj3`)
+
+`study` run 42306299369: 20 seeds, depth 1.0, 25 concepts, three benchmark-A families generated with
+three rules per edge and fitted with five, RE, K = 24, one replicate each. Insider = family 2 shares
+the root of 0 and 1; outsider = family 2 independent; both fitted with only family 2's root mixed.
+
+| | insider (20) | outsider (20) |
+|---|---|---|
+| range | −1.9 … +95.2 | −8.7 … +15.7 |
+| median | +25.6 | −0.7 |
+| > +8 | 15 / 20 | **3 / 20** (seeds 10000 +13.5, 10004 +15.7, 10013 +11.2) |
+
+Insider > outsider on 19 / 20 seeds; the plan's bar (insider > +15 and outsider ≤ 0 on ≥ 18 / 20)
+is met on 5 / 20, so **the simulated newcomer test fails as specified**. The worrying part is the
+outsider tail: on simulated pairs at the same settings no unrelated dataset exceeded +2.4 (0 / 40),
+here 3 / 20 exceed the real-data threshold. Two readings, which the next run separates: estimator
+noise (multi-family cells show replicate spreads up to ±20 on real data, and these are single
+replicates) or a bias of the three-family join (a newcomer root edge that can attach to a deep,
+weakly determined root and soak up chance matches across 25 concepts). Re-estimates of seeds
+10000, 10004, 10013 with fresh sampler seeds (`lbf_reps=2,3`) = `study` run 42360355581. If the high
+outsiders do not repeat, the remedy is replicates (read the median of ≥ 3); if they do, the
+threshold must be raised for the newcomer form or the newcomer's root edge needs a tighter prior.
+The real-data Saami +11 (Day 3) is the same question in real data.
+
 ### Day 3 interim (7 Nov): newcomers to the IE core (four families, five rules, K = 20)
 
 `diag` run 42334127093, all 6 cells: Italo-Romance **+484.3** (joins, shallow — a sanity check),
