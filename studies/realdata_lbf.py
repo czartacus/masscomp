@@ -32,6 +32,13 @@ FAMILIES = {"ibero": (("spa", "por"), "cat"), "italo": (("ita", "fra"), "ron"), 
             "romlat": ((("spa", "por"), "cat"), "lat"),          # Ibero-Romance with Latin as an attested older stage in the tree
             "nordic": (("swe", "dan"), "nor"), "slavic": (("rus", "ukr"), "pol"), "finnic": (("fin", "krl"), "ekk"),
             "saami": (("sme", "smn"), "sma"), "turkic": (("tur", "azj"), "kaz"), "mongolic": (("khk", "bua"), "xal")}
+# Composite families for the macro-family tests (Day 4): the forest is a star (every family hangs from the one joined
+# root), so two families entered as newcomers would also be scored on joining EACH OTHER; entering the group as one
+# family (its subfamilies as subtrees) asks only whether the group joins the core. build_forest halves the edge budget
+# at each nested level, so a composite's internal splits are shallower than a plain family's (a known simplification).
+FAMILIES.update({"uralic": (FAMILIES["finnic"], FAMILIES["saami"]), "altaic": (FAMILIES["turkic"], FAMILIES["mongolic"]),
+                 "ie3": (FAMILIES["ibero"], FAMILIES["germanic"], FAMILIES["slavic"]),
+                 "gmc2": (FAMILIES["germanic"], FAMILIES["nordic"])})     # gmc2: the composite form's positive control
 # donor families: separate trees in the forest under both hypotheses, never joined, so that "shared from Latin" is a
 # borrowing path the model can take instead of evidence for a common ancestor; a bare language name is a root with one leaf
 DONORS = {"latin": "lat", "hungarian": "hun", "basque": "eus", "livonian": "liv"}
@@ -46,7 +53,10 @@ DEEP = {frozenset(p) for p in [("ibero", "germanic"), ("ibero", "nordic"), ("ibe
 # pairs whose relationship is an open question (the Altaic hypothesis): neither a control nor a known
 # relationship, and a positive factor here cannot separate common descent from ancient contact between
 # the two ancestors, which the joined-root hypothesis also covers
-CONTESTED = {frozenset(p) for p in [("turkic", "mongolic")]}
+CONTESTED = {frozenset(p) for p in [("turkic", "mongolic"), ("uralic", "ibero"), ("uralic", "germanic"), ("uralic", "slavic"),
+                                    ("ie3", "finnic"), ("ie3", "saami"), ("altaic", "finnic"), ("altaic", "saami"),
+                                    ("uralic", "turkic"), ("uralic", "mongolic")]}
+RELATED |= {frozenset(p) for p in [("gmc2", "ibero"), ("gmc2", "slavic")]}
 
 # Basic vocabulary: the Swadesh 100-item list and the Leipzig-Jakarta list (Tadmor 2009), mapped onto the NorthEuraLex
 # concepts in data/northeuralex_sel.csv (identifier = NorthEuraLex concept number + gloss). Items with no NorthEuraLex

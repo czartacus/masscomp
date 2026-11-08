@@ -1354,6 +1354,42 @@ it is the deep, low-signal tail, which costs power, not calibration. Power at +8
 75 % at depth 1.0. Seed 10016 (+269.7) is an outlier to inspect (most likely a dataset in which many
 root forms survive unchanged at the planted depth), not a failure.
 
+### Newcomer cells re-run with fix 2 (8 Nov; `diag` run 42440966560, `env_core_contact=order`)
+
+Same cells and settings as Days 1–3 (four-family K = 20 × 250, three-family K = 24 × 350; two
+replicates each). These supersede the earlier newcomer numbers.
+
+| newcomer → core | before | **fix 2** | replicates |
+|---|---|---|---|
+| Italo → ibero + germanic + slavic | +484.3 | **+53.3** | +56.6, +50.1 |
+| Nordic → same | +371.8 | **+123.7** | +133.0, +114.3 |
+| Finnic → same | +2.1 | **−1.2** | +2.9, −5.4 |
+| Saami → same | +8.7 (median of 6) | **−4.1** | −3.9, −4.3 |
+| Mongolic → same | −8.0 | **−6.5** | −4.9, −8.0 |
+| Turkic → same | −12.2 | **−7.6** | −4.7, −10.6 |
+| Slavic → finnic + saami | −27.3 | **−4.0** | −9.3, +1.2 |
+| Germanic → finnic + saami | −41.0 | **−23.0** | −26.4, −19.7 |
+| Turkic → finnic + saami | −50.0 | **−22.3** | −18.3, −26.3 |
+| Finnic → turkic + mongolic | +0.8 | **−2.7** | |
+| Slavic → turkic + mongolic | −2.2 | **−1.7** | +0.6, … |
+
+Every cell is on the right side. The true relatives fall by a factor of 3–9 but stay far above any
+outsider: much of the old size was the newcomer copying the core's root, which fix 2 removes. All
+unrelated cells are below zero, the largest at −1.2. **Newcomer threshold = +4** (largest real
+outsider + 5, the Day 1 rule); the largest single outsider replicate is +2.9. Saami's weak positive
+into the IE core is gone (+8.7 → −4.1). That fits the reading that it came from early contact, which
+the old method counted as descent, and it agrees with the user's correlation-of-correlations finding.
+
+### Day 4 (8 Nov): macro-family newcomers, composite families
+
+The forest is a star, so entering Finnic and Saami as two newcomers would also score them on joining
+each other (a real and strong signal). Each group therefore enters as ONE family with its subfamilies
+as subtrees (`FAMILIES`: uralic = finnic + saami, altaic = turkic + mongolic, ie3 = ibero + germanic
++ slavic, gmc2 = germanic + nordic). Cells, fix 2, threshold +4:
+Uralic → ibero + germanic + slavic; IE3 → finnic + saami; Altaic → finnic + saami; Uralic → turkic +
+mongolic; controls for the composite form: gmc2 → ibero + slavic (should be clearly positive) and
+Altaic → ibero + germanic + slavic (should be negative).
+
 ### Pre-v3 notes (kept for the record)
 
 #### §8.3 LBF separation — blocked on estimator noise
