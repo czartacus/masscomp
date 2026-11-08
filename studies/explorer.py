@@ -37,7 +37,20 @@ def languages():
     return out
 
 
-FAMILY_LABEL = {"ibero": "Ibero-Romance", "italo": "Italo-Romance", "romlat": "Romance + Latin", "latin": "Latin"}
+from studies.realdata_lbf import RELATED, CONTESTED, DEEP, FAMILIES
+COMPOSITES = {"uralic": ["finnic", "saami"], "altaic": ["turkic", "mongolic"], "ie3": ["ibero", "germanic", "slavic"], "gmc2": ["germanic", "nordic"]}
+
+
+def _flat(x):
+    if isinstance(x, (list, tuple)):
+        for y in x:
+            yield from _flat(y)
+    else:
+        yield x
+# newcomer cells of record: run with MASSCOMP_CORE_CONTACT=order (spec 12.27, 12.28); earlier newcomer cells are biased upward
+NEWCOMER_OF_RECORD = {"diag_42440966560.json", "diag_42458306595.json", "diag_42484545979.json"}
+FAMILY_LABEL = {"uralic": "Uralic", "altaic": "Turkic + Mongolic", "ie3": "Ibero-Romance + Germanic + Slavic",
+                "gmc2": "Germanic + Nordic","ibero": "Ibero-Romance", "italo": "Italo-Romance", "romlat": "Romance + Latin", "latin": "Latin"}
 
 
 def build(pairs, out_path, note=""):
@@ -59,12 +72,41 @@ def build(pairs, out_path, note=""):
             walk(sub)
             fams[name] = dict(langs=ls, tree=sub, lat=float(np.mean([langs[L]["lat"] for L in ls])), lon=float(np.mean([langs[L]["lon"] for L in ls])),
                               label=FAMILY_LABEL.get(name, name.capitalize()), family=langs[ls[0]]["family"])
+    # composite families (a group entered as one family) are drawn like a core: one node tied to its member families
+    for name, ms in COMPOSITES.items():
+        if name not in fams:
+            continue
+        for m in ms:
+            if m not in fams:
+                ls = list(_flat(FAMILIES[m]))
+                fams[m] = dict(langs=ls, tree=FAMILIES[m], lat=float(np.mean([langs[L]["lat"] for L in ls])),
+                               lon=float(np.mean([langs[L]["lon"] for L in ls])), label=FAMILY_LABEL.get(m, m.capitalize()), family=langs[ls[0]]["family"])
+        fams[name].update(members=ms, lat=float(np.mean([fams[m]["lat"] for m in ms])), lon=float(np.mean([fams[m]["lon"] for m in ms])))
     # one record per pair (G=fit preferred when both exist; the flat run kept as a control note)
     recs = []
     for r in pairs:
         c = r["config"]
-        if c.get("u_per_t", 0) or c.get("u_context"):            # the unbounded budget overfits and context rules are a stricter prior: not atlas material
+        if c.get("u_per_t", 0) or c.get("u_context") or c.get("u_env_rules"):   # the unbounded budget overfits; context and conditioned rules are not the protocol
             continue
+        newcomer = bool(c.get("mix")) and len(c.get("fams") or []) > 2
+        if newcomer and r.get("source") not in NEWCOMER_OF_RECORD:   # newcomer cells before the core-contact fix are biased (spec 12.27)
+            continue
+        if newcomer:
+            mix = c["mix"][0]; core = [f for f in c["fams"] if f not in c["mix"]]
+            ck = "+".join(core)
+            if ck not in fams:
+                ms = [fams[f] for f in core]
+                fams[ck] = dict(langs=[L for m in ms for L in m["langs"]], members=core, core=True,
+                                lat=float(np.mean([m["lat"] for m in ms])), lon=float(np.mean([m["lon"] for m in ms])),
+                                label=" + ".join(m["label"] for m in ms), family=ms[0]["family"])
+            rel = [frozenset((mix, f)) for f in core]
+            # the newcomer's relation to the core (the core's own status does not enter: Finnic -> Turkic + Mongolic is an outsider)
+            known = ("contested" if any(k in CONTESTED for k in rel) else
+                     "related" if all(k in RELATED for k in rel) else "unrelated")
+            r = dict(r, known=known, deep=any(k in DEEP for k in rel))
+            c = dict(c, fam1=mix, fam2=ck)
+        elif frozenset((c["fam1"], c["fam2"])) in CONTESTED:
+            r = dict(r, known="contested")
         ests = []
         for e in r["estimates"]:
             t = e.get("trace", {})
@@ -72,8 +114,10 @@ def build(pairs, out_path, note=""):
                              t_root_sd=t.get("t_root_sd_at1"), omega=t.get("omega_at1"), lam=t.get("lam_at1"), events=t.get("events_at1"),
                              borrow=t.get("borrow_from_at1"), root_forms=t.get("root_forms_at1"), fam_forms=t.get("fam_forms_at1")))
         recs.append(dict(fam1=c["fam1"], fam2=c["fam2"], known=r["known"], deep=r["deep"], g=c["g"], n=c["n"], K=c["K"], sweeps=c["sweeps"],
-                         cset=(c.get("concepts", "all") + ("_all" if c.get("concepts") == "basic" and c["n"] > 100 else "")
-                               + ("_r10" if c.get("u_rules", 3) == 10 else "")),   # the whole basic list, and the ten-rule budget, are their own sets
+                         cset=("newcomer" if newcomer else
+                               c.get("concepts", "all") + ("_all" if c.get("concepts") == "basic" and c["n"] > 100 else "")
+                               + {10: "_r10", 5: "_r5"}.get(int(c.get("u_rules", 3)), "")),   # the whole basic list, and each rule budget, are their own sets
+                         newcomer=newcomer,
                          pool=c.get("pool"), seed=c.get("seed"), donors=[d for d, _ in (c.get("donors") or [])], ladder=f"{c.get('spacing', 'top')}^{c.get('power', 2):g} K{c['K']}",
                          lbf=r["lbf_mean"], lbf_sd=r["lbf_sd"], estimates=ests, concepts=r.get("concepts"), leaf_forms=r.get("leaf_forms"),
                          tree=r.get("tree"), secs=r.get("secs"), source=r.get("source")))
@@ -87,6 +131,12 @@ def build(pairs, out_path, note=""):
         rs.sort(key=lambda x: ((x["seed"] or 0), -x["K"]))
         main = rs[0]
         main["draws"] = [dict(seed=x["seed"], K=x["K"], n=x["n"], lbf=x["lbf"], lbf_sd=x["lbf_sd"], reps=len(x["estimates"]), ladder=x["ladder"]) for x in rs]
+        if main["newcomer"] and len(rs) > 1:
+            # newcomer cells use every word (n = all basic), so seeds are only more replicates of one question: pool them
+            main["estimates"] = [e for x in rs for e in x["estimates"]]
+            v = [e["lbf"] for e in main["estimates"]]
+            main["lbf"], main["lbf_sd"] = float(np.mean(v)), float(np.std(v))
+            main["draws"] = [main["draws"][0]]
         recs.append(main)
     data = dict(generated=datetime.date.today().isoformat(), note=note, languages={k: v for k, v in langs.items()}, families=fams, pairs=recs)
     html = TEMPLATE.replace("__DATA__", json.dumps(data, separators=(",", ":"))).replace("__LAND__", json.dumps(land, separators=(",", ":")))
@@ -128,6 +178,7 @@ header.top p { margin: 0; color: var(--muted); max-width: 62ch; }
 .legend i { display: inline-block; width: 22px; height: 0; border-top: 3px solid var(--for); vertical-align: middle; margin-right: 6px; }
 .legend i.ag { border-color: var(--against); } .legend i.nl { border-color: var(--null); border-top-style: dashed; }
 .legend i.dp { border-color: var(--for); border-top-style: dotted; }
+.legend i.core { border: 2px solid var(--ink); border-radius: 50%; width: 10px; height: 10px; vertical-align: middle; }
 .legend b { display: inline-block; width: 11px; height: 11px; border-radius: 2px; vertical-align: -1px; margin-right: 6px; }
 svg { display: block; max-width: 100%; height: auto; }
 .scroll { overflow-x: auto; min-width: 0; }
@@ -160,12 +211,15 @@ svg text { font-family: var(--ui); fill: var(--ink); }
 select, button { font: inherit; color: var(--ink); background: var(--panel); border: 1px solid var(--line); border-radius: 4px; padding: 5px 8px; }
 button { cursor: pointer; } button:hover { border-color: var(--ink); }
 select:focus-visible, button:focus-visible, .arc:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
-.seg { margin-left: auto; display: inline-flex; border: 1px solid var(--line); border-radius: 6px; overflow: hidden; background: var(--panel); font-size: 0.82rem; max-width: 100%; }
+.seg { margin-left: auto; display: inline-flex; flex-wrap: wrap; border: 1px solid var(--line); border-radius: 6px; overflow: hidden; background: var(--panel); font-size: 0.82rem; max-width: 100%; }
 .seg button { border: 0; border-radius: 0; padding: 6px 10px; background: transparent; color: var(--muted); }
 .seg button + button { border-left: 1px solid var(--line); }
 .seg button[aria-selected="true"] { background: var(--ink); color: var(--panel); }
 .seg small { display: block; font-size: 0.7rem; opacity: 0.8; }
-@media (max-width: 640px) { .seg { margin-left: 0; } }
+@media (max-width: 640px) { .seg { margin-left: 0; } .seg button { flex: 1 1 45%; } }
+.controls label { display: flex; gap: 6px; align-items: center; min-width: 0; max-width: 100%; }
+#pairsel { min-width: 0; flex: 1 1 auto; max-width: 100%; }
+.core-label { font-weight: 700; }
 .line .ghost { fill: none; stroke: var(--muted); stroke-width: 1.2; }
 .line .ghost-link { stroke: var(--muted); stroke-width: 1; stroke-opacity: 0.45; }
 .bars .lab { font-size: 12px; fill: var(--ink); }
@@ -196,13 +250,13 @@ select:focus-visible, button:focus-visible, .arc:focus-visible { outline: 2px so
       <div class="eyebrow">masscomp &middot; joint-forest model &middot; NorthEuraLex wordlists</div>
       <h1>Evidence Atlas</h1>
     </div>
-    <p>Each arc is a tested pair of language families, weighted by the log Bayes factor for a shared ancestor over separate ones. Faint dashed arcs sit inside the noise band of pairs known to be unrelated. Select an arc to see which words carry the evidence, what happened on each branch, and the reconstructed roots.</p>
+    <p id="intro"></p>
   </header>
   <div id="note" class="panel" style="border-color:var(--against);font-size:0.9rem" hidden></div>
 
   <section class="panel map-wrap">
     <div class="legend" id="legend">
-      <span><i></i>evidence for a shared ancestor</span><span><i class="ag"></i>evidence against</span><span><i class="nl"></i>inside the unrelated band</span><span><i class="dp"></i>related only at Indo-European depth</span>
+      <span id="legitems" style="display:contents"></span>
       <div class="seg" id="setsel" role="tablist" aria-label="Concept set" hidden></div>
     </div>
     <svg id="map" viewBox="0 0 1140 520" role="img" aria-label="Map of tested family pairs"></svg>
@@ -255,11 +309,11 @@ const LAND = __LAND__;
 const css = (n) => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
 const fmt = (x, d = 1) => (x == null ? "–" : (x > 0 ? "+" : "") + x.toFixed(d));
 const famLabel = (f) => DATA.families[f] ? DATA.families[f].label : f;
-const pairName = (p) => `${famLabel(p.fam1)} – ${famLabel(p.fam2)}`;
+const pairName = (p) => p.newcomer ? `${famLabel(p.fam1)} → ${famLabel(p.fam2)}` : `${famLabel(p.fam1)} – ${famLabel(p.fam2)}`;
 
 // one table per concept set (the full list, basic vocabulary); within a set prefer the fitted-G run for a pair and keep flat runs as controls
 const pairKey = (p) => [p.fam1, p.fam2].sort().join("|");
-const SET_LABEL = { all: ["Full list", "50 of 1,016 concepts"], basic: ["Basic vocabulary", "50 of Swadesh + Leipzig-Jakarta"], basic_all: ["All basic vocabulary", "every available item, 125–135"], basic_all_r10: ["All basic, 10 rules", "ten sound-change rules per branch"] };
+const SET_LABEL = { newcomer: ["Newcomer test", "a family joining a joined core · of record"], basic_all_r5: ["Pairs, 5 rules", "all basic vocabulary · pairwise of record"], all: ["Full list", "50 of 1,016 concepts"], basic: ["Basic vocabulary", "50 of Swadesh + Leipzig-Jakarta"], basic_all: ["All basic vocabulary", "every available item, 125–135"], basic_all_r10: ["All basic, 10 rules", "ten sound-change rules per branch"] };
 const setLabel = (s) => (SET_LABEL[s] || [s, ""])[0];
 const byKey = {};
 for (const p of DATA.pairs) {
@@ -267,7 +321,7 @@ for (const p of DATA.pairs) {
   byKey[s] = byKey[s] || {};
   if (!byKey[s][k] || (p.g === "fit" && byKey[s][k].g !== "fit")) byKey[s][k] = p;
 }
-const SET_ORDER = ["all", "basic", "basic_all", "basic_all_r10"];
+const SET_ORDER = ["newcomer", "basic_all_r5", "all", "basic", "basic_all", "basic_all_r10"];
 const SETS = Object.keys(byKey).sort((a, b) => (SET_ORDER.indexOf(a) + 99) % 99 - (SET_ORDER.indexOf(b) + 99) % 99 || a.localeCompare(b));
 const pairsOf = (s) => Object.values(byKey[s] || {}).sort((a, b) => b.lbf - a.lbf);
 const bandOf = (s) => {
@@ -284,7 +338,7 @@ function setSet(s) {
   const k = state.sel ? pairKey(state.sel) : null;
   state.set = s; PAIRS = pairsOf(s); BAND = bandOf(s); unrelated = BAND.unrelated; tau = BAND.tau; lo = BAND.lo; hi = BAND.hi;
   state.sel = (k && byKey[s][k]) || (PAIRS.length ? PAIRS[0] : null);
-  drawSetSwitch(); drawMap(); pairSelect(); drawLine(); drawDossier();
+  drawSetSwitch(); drawLegend(); drawMap(); pairSelect(); drawLine(); drawDossier();
 }
 function drawSetSwitch() {
   const el = document.getElementById("setsel"); el.innerHTML = "";
@@ -297,7 +351,32 @@ function drawSetSwitch() {
   }
 }
 
-function arcClass(p) { if (hi != null && p.lbf <= hi) return "null"; return p.lbf > 0 ? "for" : "against"; }
+// a set with a calibrated threshold (the newcomer test: largest real outsider + 5 nats, spec 12.27) reads three ways:
+// joins (at or above the threshold), unsettled (replicates fall on both sides of it), does not join
+const THRESH = { newcomer: 4 };
+const straddles = (p, T) => { const v = (p.estimates || []).map(e => e.lbf); return v.some(x => x >= T) && v.some(x => x < T); };
+function arcClass(p) {
+  const T = THRESH[p.cset];
+  if (T != null) { if (straddles(p, T)) return "null"; return p.lbf >= T ? "for" : "against"; }
+  if (hi != null && p.lbf <= hi) return "null"; return p.lbf > 0 ? "for" : "against";
+}
+const VERDICT = { newcomer: { for: "joins the core", against: "no evidence that it joins", null: "unsettled: the replicates fall on both sides of the threshold" } };
+function verdictOf(p) { const c = arcClass(p); const V = VERDICT[p.cset]; if (V) return V[c];
+  return c === "null" ? "inside the unrelated band" : (p.lbf > 0 ? "evidence for a shared ancestor" : "evidence against a shared ancestor"); }
+function knownText(p) {
+  if (p.known === "related") return p.deep ? "known to be related, at Indo-European depth" : "known to be related";
+  if (p.known === "contested") return p.newcomer ? "an open question: a positive cannot tell descent from ancient contact" : "contested: the Altaic question, where descent and ancient contact cannot be told apart here";
+  return "known to be unrelated";
+}
+function drawLegend() {
+  const n = THRESH[state.set] != null;
+  document.getElementById("legitems").innerHTML = n
+    ? `<span><i></i>joins (at or above +${THRESH[state.set]} nats)</span><span><i class="ag"></i>no evidence that it joins</span><span><i class="nl"></i>unsettled: replicates on both sides of the threshold</span><span><i class="core"></i>core, already joined</span>`
+    : `<span><i></i>evidence for a shared ancestor</span><span><i class="ag"></i>evidence against</span><span><i class="nl"></i>inside the unrelated band</span><span><i class="dp"></i>related only at Indo-European depth</span>`;
+  document.getElementById("intro").textContent = n
+    ? "The newcomer test asks whether one family joins a core of families already joined under one ancestor. Each arc runs from the newcomer to its core and is weighted by the log Bayes factor; the core's families are drawn joined. Select an arc to see which words carry the evidence, what happened on each branch, and the reconstructed roots."
+    : "Each arc is a tested pair of language families, weighted by the log Bayes factor for a shared ancestor over separate ones. Faint dashed arcs sit inside the noise band of pairs known to be unrelated. Select an arc to see which words carry the evidence, what happened on each branch, and the reconstructed roots.";
+}
 function arcColor(p) { const c = arcClass(p); return c === "null" ? css("--null") : (c === "for" ? css("--for") : css("--against")); }
 
 // ---------- map ----------
@@ -336,7 +415,26 @@ function drawMap() {
   }
   // families and languages
   const fg = g.append("g");
-  for (const [name, f] of Object.entries(DATA.families)) {
+  // only the families this set tests; a core is drawn as a joined tree: its member families tied to one root node
+  const used = new Set(PAIRS.flatMap(p => [p.fam1, p.fam2]));
+  const plain = new Set(), groups = new Map();      // groups keyed by their member set: a composite newcomer and an identical core are one node
+  for (const name of used) {
+    const f = DATA.families[name]; if (!f) continue;
+    if (f.members) { f.members.forEach(m => plain.add(m)); const k = f.members.slice().sort().join("+"); if (!groups.has(k)) groups.set(k, f); }
+    else plain.add(name);
+  }
+  for (const f of groups.values()) {
+    const [cx, cy] = proj([f.lon, f.lat]);
+    for (const m of f.members) {
+      const [mx, my] = proj([DATA.families[m].lon, DATA.families[m].lat]);
+      fg.append("line").attr("x1", cx).attr("y1", cy).attr("x2", mx).attr("y2", my).attr("stroke", css("--ink")).attr("stroke-width", 1.4).attr("stroke-opacity", 0.55);
+    }
+    fg.append("circle").attr("cx", cx).attr("cy", cy).attr("r", 7).attr("fill", css("--panel")).attr("stroke", css("--ink")).attr("stroke-width", 2)
+      .append("title").text(`${f.members.map(famLabel).join(" + ")}, joined`);
+    fg.append("text").attr("class", "fam-label core-label").attr("x", cx + 10).attr("y", cy - 8).text(f.members.map(m => famLabel(m).replace("-Romance", "")).join(" + "));
+  }
+  for (const name of plain) {
+    const f = DATA.families[name]; if (!f) continue;
     const [cx, cy] = proj([f.lon, f.lat]);
     for (const L of f.langs) {
       const l = DATA.languages[L]; const [x, y] = proj([l.lon, l.lat]);
@@ -344,7 +442,7 @@ function drawMap() {
       fg.append("circle").attr("class", "lang-dot").attr("cx", x).attr("cy", y).attr("r", 2.2).append("title").text(l.name);
     }
     fg.append("circle").attr("class", "fam-dot").attr("cx", cx).attr("cy", cy).attr("r", 6);
-    fg.append("text").attr("class", "fam-label").attr("x", cx + 9).attr("y", cy + 4).text(f.label + " (" + f.langs.join(", ") + ")");
+    fg.append("text").attr("class", "fam-label").attr("x", cx + 9).attr("y", cy + 4).text(groups.size ? f.label : f.label + " (" + f.langs.join(", ") + ")");
   }
   highlightMap();
 }
@@ -355,7 +453,7 @@ function showTip(ev, p) {
   const t = document.getElementById("tip");
   const r = document.querySelector("#map").getBoundingClientRect();
   const drawsTxt = (p.draws || []).length > 1 ? `<br><span class="muted">other draws of the words: ${p.draws.slice(1).map(d => fmt(d.lbf)).join(", ")}</span>` : "";
-  t.innerHTML = `<b>${pairName(p)}</b><br>log BF ${fmt(p.lbf)}${p.lbf_sd != null ? " ± " + p.lbf_sd.toFixed(1) + " (replicates)" : ""}<br><span class="muted">${p.known === "related" ? (p.deep ? "known related, Indo-European depth" : "known related") : (p.known === "contested" ? "contested (the Altaic question)" : "known unrelated")} · ${p.n} ${setLabel(p.cset || "all").toLowerCase()} concepts · G ${p.g}</span>${drawsTxt}`;
+  t.innerHTML = `<b>${pairName(p)}</b><br>log BF ${fmt(p.lbf)}${p.lbf_sd != null ? " ± " + p.lbf_sd.toFixed(1) + " (replicates)" : ""}<br><span class="muted">${knownText(p)} · ${p.n} ${setLabel(p.cset || "all").toLowerCase()} concepts · G ${p.g}</span>${drawsTxt}`;
   t.hidden = false;
   const x = ev.clientX - r.left + 14, y = ev.clientY - r.top + 14;
   t.style.left = Math.min(x, r.width - 310) + "px"; t.style.top = y + "px";
@@ -371,7 +469,12 @@ function drawLine() {
   const x = d3.scaleLinear().domain([Math.min(ext[0] - pad, -2), Math.max(ext[1] + pad, 2)]).range([m.l, W - m.r]);
   if (tau != null) {
     svg.append("rect").attr("x", x(lo)).attr("y", 20).attr("width", Math.max(2, x(hi) - x(lo))).attr("height", 78).attr("fill", css("--band"));
-    svg.append("text").attr("x", (x(lo) + x(hi)) / 2).attr("y", 14).attr("text-anchor", "middle").attr("fill", css("--muted")).style("font-size", "11px").text("unrelated pairs");
+    svg.append("text").attr("x", (x(lo) + x(hi)) / 2).attr("y", 14).attr("text-anchor", "middle").attr("fill", css("--muted")).style("font-size", "11px").text(THRESH[state.set] != null ? "outsiders" : "unrelated pairs");
+  }
+  if (THRESH[state.set] != null) {
+    const T = THRESH[state.set];
+    svg.append("line").attr("x1", x(T)).attr("x2", x(T)).attr("y1", 20).attr("y2", 100).attr("stroke", css("--for")).attr("stroke-dasharray", "3 3");
+    svg.append("text").attr("x", x(T) + 4).attr("y", 14).attr("fill", css("--for")).style("font-size", "11px").text(`joins at +${T}`);
   }
   svg.append("g").attr("class", "axis").attr("transform", `translate(0,100)`).call(d3.axisBottom(x).ticks(10));
   svg.append("text").attr("x", W - m.r).attr("y", 132).attr("text-anchor", "end").attr("fill", css("--muted")).style("font-size", "11px").text("log Bayes factor, shared ancestor vs separate (nats)");
@@ -397,11 +500,21 @@ function drawLine() {
     }
     gx.append("circle").attr("r", state.sel === p ? 7 : 5).attr("fill", arcColor(p)).attr("stroke", state.sel === p ? css("--ink") : css("--panel")).attr("stroke-width", 1.5);
     if (p.deep) gx.append("circle").attr("r", 9).attr("fill", "none").attr("stroke", arcColor(p)).attr("stroke-dasharray", "1 3");
-    let row = rowY.findIndex((_, r) => x(p.lbf) - rowLast[r] >= minGap); if (row < 0) row = i % rowY.length; rowLast[row] = x(p.lbf);
-    gx.append("text").attr("class", "plab").attr("y", rowY[row]).attr("text-anchor", "middle").text(`${famLabel(p.fam1).slice(0, 5)}–${famLabel(p.fam2).slice(0, 5)}`);
+    p._gx = gx;
   });
+  // labels, most informative first (near the threshold, then the joins), each in the first row where it overlaps nothing;
+  // a label with no free row is left off (hover names the point)
+  const abbr = (f) => { const F = DATA.families[f]; return F && F.members ? F.members.map(m => famLabel(m)[0]).join("") : famLabel(f).slice(0, 5); };
+  const T0 = THRESH[state.set] ?? (hi ?? 0);
+  const taken = rowY.map(() => []);
+  for (const p of sorted.slice().sort((a, b) => Math.abs(a.lbf - T0) - Math.abs(b.lbf - T0))) {
+    const lab = p.newcomer ? `${abbr(p.fam1)}→${abbr(p.fam2)}` : `${famLabel(p.fam1).slice(0, 5)}–${famLabel(p.fam2).slice(0, 5)}`;
+    const w = lab.length * 6.6 + 6, l = x(p.lbf) - w / 2, r = x(p.lbf) + w / 2;
+    const row = taken.findIndex(iv => iv.every(([a, b]) => r < a || l > b));
+    if (row >= 0) { taken[row].push([l, r]); p._gx.append("text").attr("class", "plab").attr("y", rowY[row]).attr("text-anchor", "middle").text(lab); }
+  }
   const other = SETS.find(s => s !== state.set);
-  document.getElementById("bandnote").textContent = (tau != null ? `Noise band: ${unrelated.length} known-unrelated pairs span ${fmt(lo)} to ${fmt(hi)} nats.` : "")
+  document.getElementById("bandnote").textContent = (tau != null ? (THRESH[state.set] != null ? `${unrelated.length} outsider newcomers span ${fmt(lo)} to ${fmt(hi)} nats; the threshold is the largest plus 5.` : `Noise band: ${unrelated.length} known-unrelated pairs span ${fmt(lo)} to ${fmt(hi)} nats.`) : "")
     + (ghosts ? ` Hollow markers: the same pair on ${setLabel(other).toLowerCase()}.` : "");
 }
 function showTipLine(ev, p) { const t = document.getElementById("tip"); const r = document.querySelector("#map").getBoundingClientRect(); showTip(ev, p); t.style.top = (ev.clientY - r.top + 14) + "px"; }
@@ -420,15 +533,15 @@ function meanOf(arr) { return arr.length ? d3.mean(arr) : null; }
 function drawDossier() {
   const p = state.sel; if (!p) return;
   const cls = arcClass(p);
-  const verdict = cls === "null" ? "inside the unrelated band" : (p.lbf > 0 ? "evidence for a shared ancestor" : "evidence against a shared ancestor");
+  const verdict = verdictOf(p);
   const ests = p.estimates;
   const tr = meanOf(ests.map(e => e.t_root).filter(v => v != null));
   const om = meanOf(ests.map(e => e.omega).filter(v => v != null));
   const q = counterpart(p);
   const qcls = q ? (() => { const b = bandOf(q.cset || "all"); return b.hi != null && q.lbf <= b.hi ? "null" : (q.lbf > 0 ? "for" : "against"); })() : "";
   document.getElementById("stat").innerHTML = `
-    <div><div class="big ${cls}">${fmt(p.lbf)}</div><small>log Bayes factor, ${pairName(p)}${p.lbf_sd != null ? ` · replicates ± ${p.lbf_sd.toFixed(1)}` : ""}</small></div>
-    <div><div style="font-family:var(--display);font-size:1.3rem">${verdict}</div><small>${p.known === "related" ? (p.deep ? "known to be related, at Indo-European depth" : "known to be related") : (p.known === "contested" ? "contested: the Altaic question, where descent and ancient contact cannot be told apart here" : "known to be unrelated")} · ${p.n} concepts · G ${p.g === "fit" ? "fitted to the daughters" : "flat"}</small></div>
+    <div><div class="big ${cls}">${fmt(p.lbf)}</div><small>log Bayes factor, ${pairName(p)}${p.estimates.length > 1 ? ` · ${p.estimates.length} replicates: ${p.estimates.map(e => fmt(e.lbf)).join(", ")}` : ""}</small></div>
+    <div><div style="font-family:var(--display);font-size:1.3rem">${verdict}</div><small>${knownText(p)} · ${p.n} concepts · G ${p.g === "fit" ? "fitted to the daughters" : "flat"}</small></div>
     ${(p.draws || []).length > 1 ? `<div><div class="big" style="font-size:1.6rem">${p.draws.slice(1).map(d => fmt(d.lbf)).join(" · ")}</div><small>the same pair on ${p.draws.length - 1 > 1 ? "other draws" : "another draw"} of ${p.n} words (seed ${p.draws.slice(1).map(d => d.seed).join(", ")}; K = ${p.draws.slice(1).map(d => d.K).join(", ")})</small></div>` : ""}
     ${q ? `<div><div class="big ${qcls}" style="font-size:1.6rem">${fmt(q.lbf)}</div><small>the same pair on ${setLabel(q.cset || "all").toLowerCase()}${q.lbf_sd != null ? ` · ± ${q.lbf_sd.toFixed(1)}` : ""}</small></div>` : ""}
     ${tr != null ? `<div><div class="big" style="font-size:1.6rem">${tr.toFixed(2)}</div><small>t<sub>root</sub>, length of the join edges (posterior mean)</small></div>` : ""}
@@ -597,7 +710,7 @@ function drawLogos(p) {
 function boot() {
   if (!PAIRS.length) { document.getElementById("stat").textContent = "No results yet."; return; }
   if (DATA.note) { const n = document.getElementById("note"); n.textContent = DATA.note; n.hidden = false; }
-  drawSetSwitch(); drawMap(); pairSelect(); drawLine(); drawDossier();
+  drawSetSwitch(); drawLegend(); drawMap(); pairSelect(); drawLine(); drawDossier();
   window.addEventListener("resize", () => {});
 }
 boot();
