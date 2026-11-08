@@ -81,6 +81,13 @@ What the results so far can and cannot show. Each item says where it came from.
 7. **Conditioned sound-change rules are off for evidence.** They improve reconstructions but made the
    score unstable, so evidence runs use context-free rules only.
 8. **Hungarian is a donor only.** It is a single language here, so it cannot be tested as a family.
+9. **The Uralic–Indo-European question does not converge.** Both directions give replicates that
+   scatter by 15–30 nats (Uralic → IE: −4.1 … +13.7 over 8; IE → Uralic: +19.4 and −11.0), and
+   chains end at different root depths. More replicates of the same sampler will not settle it;
+   it needs a mixing fix or a per-concept look at what drives the high replicates.
+10. **Composite families compress internal splits.** A group entered as one family (uralic, altaic,
+   ie3, gmc2) has its subfamily root edges inside the family, with the depth budget shared, so the
+   model sees less time depth between its subfamilies than a free tree would.
 
 ## Timings (profiling.py, one core)
 
@@ -1404,6 +1411,20 @@ First run (diag 42458306595, 2 replicates per cell):
 Both controls behave, so the composite form neither invents nor hides a join. The two cut-off cells
 were re-run at the four-family budget (K=20 × 250), and Uralic → IE with three more seeds at
 K=20 × 200 (6 more replicates) in diag run 42484545979.
+
+Re-run (diag 42484545979):
+
+| Newcomer → core | LBF (replicates) | Read |
+|---|---|---|
+| Uralic → turkic + mongolic | **−1.6** (+0.3, −3.4) | no evidence (below +4) |
+| Uralic → ibero + germanic + slavic | all 8: +6.3, −4.1, −2.1, +11.9, +13.7, +1.4, +0.7, +3.1 (mean +3.9, median +2.3, sd 6.4) | **inconclusive** |
+| IE3 → finnic + saami | +4.2 (+19.4, −11.0) | **inconclusive** |
+
+**Day 4 reading.** The composite form passes both controls. There is no evidence for Altaic–Uralic
+in either direction tested (−13.7, −1.6). Uralic–Indo-European is not settled: both directions
+scatter far more than any other cell (sd 6–15 vs ≤ 1.8), and replicates end at different root
+depths (t_root 0.7–4.0), the sign of a sampler that switches between readings rather than of too
+few runs. Recorded as inconclusive (Limitations 9), not as a no.
 
 ### Pre-v3 notes (kept for the record)
 
