@@ -1426,6 +1426,26 @@ scatter far more than any other cell (sd 6–15 vs ≤ 1.8), and replicates end 
 depths (t_root 0.7–4.0), the sign of a sampler that switches between readings rather than of too
 few runs. Recorded as inconclusive (Limitations 9), not as a no.
 
+**Which words carry Uralic–IE** (per-concept TI attribution, `ti_concept`, all 10 replicates). The same
+eight words lead in every replicate of both directions: *name* (fin nimi, sme nama : spa nombre, eng
+neim, rus jɨmi), *leaf* (fin lehti, sme lasta : rus list), *salt* (fin suola, sme salti : deu zalts,
+rus sol), *who* (fin ken, sme kij : spa kjen, rus kto), *that* (fin se, sme tah : rus to, eng ðat),
+*we* (fin me, sme mij : rus mɨ), *seed* (fin siemen : rus semi) and *root* (sme ruohtas : eng rut).
+That is the classic Indo-Uralic list (the pronouns *ku-/*kʷi-, *te-/*to-, *me-, and *nimi) mixed with
+well-known loans into Finnic and Saami (*suola*, *siemen* from Baltic or Germanic, *ruohtas* from
+Norse) and one chance look-alike (*leaf*). Split of each replicate:
+
+| Direction | LBF | the eight words | the other ~120 words |
+|---|---|---|---|
+| Uralic → IE (8 reps) | −4.1 … +13.7 | +5.2 … +19.4 | −14.1 … −3.5 |
+| IE → Uralic (2 reps) | −11.0, +19.4 | +27.6, +30.3 | −36.7, −11.7 |
+
+Both halves move between replicates: how much the eight words are credited to the root rather than
+to contact lower in the tree, and how much the join costs over the words with no match. Under the
+plan's claim rule (above threshold, runs within 10 nats, carrying words not explainable as loans)
+this is **not separated from chance**: the runs disagree, and three of the eight carrying words are
+known loans. The pronoun-and-*name* core is what any positive reading would rest on.
+
 ### Pre-v3 notes (kept for the record)
 
 #### §8.3 LBF separation — blocked on estimator noise
