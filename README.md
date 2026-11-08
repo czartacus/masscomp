@@ -1297,6 +1297,25 @@ root-level donors at all. Check = run 42407733370 (same 20 seeds and settings).
 (`Forest.first` carries the order; test added); re-run = 42425552867. (The first fix lives in the
 scoring, not the forest, so its result stands.)
 
+*Second fix, valid run (42425552867).*
+
+| | unfixed | fix 1 (`=1`) | **fix 2 (`=order`)** |
+|---|---|---|---|
+| outsider max | +15.7 | +1.0 | **−0.2** |
+| outsiders > +8 | 3 / 20 | 0 / 20 | **0 / 20** |
+| insider median | +25.6 | +3.7 | **+6.1** |
+| insiders > +8 | 15 / 20 | 5 / 20 | **8 / 20** |
+| insider > outsider | 19 / 20 | 19 / 20 | **20 / 20** |
+
+Fix 2 is adopted for the newcomer form: every outsider is ≤ 0 and the ranking is perfect. Power at +8
+on 25 concepts is low, but the null now sits at or below zero, so the newcomer form gets its own
+threshold by the Day 1 rule (largest real outsider + 5), set from the real-data re-runs. At +3 the
+simulations would give 0/20 false and 15/20 true; that is read off the same 20 seeds, so it is not
+used as the threshold. Real data has about 130 concepts, against 25 here, so power there is higher.
+The plan bar (insider > +15 and outsider ≤ 0 on ≥ 18/20) is met on 5/20: a power shortfall, not a
+false-positive problem. Real-data re-runs of all 11 newcomer cells with fix 2 = `diag` run
+42440966560.
+
 ### Day 3 interim (7 Nov): newcomers to the IE core (four families, five rules, K = 20)
 
 `diag` run 42334127093, all 6 cells: Italo-Romance **+484.3** (joins, shallow — a sanity check),
