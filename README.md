@@ -1390,6 +1390,21 @@ Uralic → ibero + germanic + slavic; IE3 → finnic + saami; Altaic → finnic 
 mongolic; controls for the composite form: gmc2 → ibero + slavic (should be clearly positive) and
 Altaic → ibero + germanic + slavic (should be negative).
 
+First run (diag 42458306595, 2 replicates per cell):
+
+| Newcomer → core | Kind | LBF (replicates) | Read |
+|---|---|---|---|
+| gmc2 → ibero + slavic | positive control | **+21.9** (+21.3, +22.6) | related ✓ |
+| Altaic → ibero + germanic + slavic | negative control | **−12.9** (−13.3, −12.5) | unrelated ✓ |
+| Altaic → finnic + saami | contested | **−13.7** (−13.1, −14.3) | no evidence |
+| Uralic → ibero + germanic + slavic | contested | +1.1 (+6.3, −4.1) | below +4, but replicates disagree: re-run |
+| IE3 → finnic + saami | contested | — | hit the 355-min cap |
+| Uralic → turkic + mongolic | contested | — | hit the 355-min cap |
+
+Both controls behave, so the composite form neither invents nor hides a join. The two cut-off cells
+were re-run at the four-family budget (K=20 × 250), and Uralic → IE with three more seeds at
+K=20 × 200 (6 more replicates) in diag run 42484545979.
+
 ### Pre-v3 notes (kept for the record)
 
 #### §8.3 LBF separation — blocked on estimator noise
